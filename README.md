@@ -3,7 +3,7 @@
 ---
 
 This is a guide to set up an environment that provides a ready-to-use Apache Spark cluster containing **one Spark Master**, 
-<br> **N Spark Workers**, and a **JupyterLab** environment for running PySpark notebooks.
+**N Spark Workers**, and a **JupyterLab** environment for running PySpark notebooks.
 
 
 ## Prerequisites
@@ -66,12 +66,11 @@ To configure PyCharm to use the Docker Jupyter server instead of a local Python 
    ```
    Look for a line resembling:
    `http://127.0.0.1:8888/lab?token=521936865204d08c50e582...`
-<br>
    Copy the alphanumeric token and paste it into the token field.
 6. Click **Test Connection** to verify.
 
 > ⚠️ *Important: You will need to copy the token each time you restart the Docker container unless you configure a 
-<br> static token in your docker-compose file.*
+ static token in your docker-compose file.*
 
 ### 🐍 Set up the Python Interpreter in PyCharm
 1. Go to **Settings** ➡️ **Project** ➡️ **Python Interpreter**.
@@ -93,14 +92,14 @@ To configure PyCharm to use the Docker Jupyter server instead of a local Python 
 | **Force Stop & Clean Up** | `docker compose down --remove-orphans` |
 
 > 💾 *Note: Your notebooks, applications, and datasets inside `notebooks/`, `apps/`, and `data/` are persistent and 
-> <br> will remain on your local computer after stopping the containers.*
+>  will remain on your local computer after stopping the containers.*
 
 ---
 
 ## 📝 Word Count Example
 
 Word counting is a fundamental text analysis process that calculates the frequency of words in a document. 
-<br> It serves as the standard "Hello World" benchmark for distributed data processing frameworks.
+ It serves as the standard "Hello World" benchmark for distributed data processing frameworks.
 
 ### Example Case
 * **Input Text:** `"Big data means big opportunities with big challenges."`
@@ -120,7 +119,7 @@ Please test and review the following implementations inside the project:
 | File Path | Description |
 | :--- | :--- |
 | `apps/word_count/sequential_word_count.py` | Native, single-threaded sequential Python implementation. |
-| `notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, <br/> the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
+| `notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
 
 ---
 
