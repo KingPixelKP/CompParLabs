@@ -18,19 +18,34 @@ Ensure you have the following installed on your local machine:
 
 ## 🚀 Getting Started
 
-### 1. Start the Spark Cluster
+
+### 1. Set Jupyter Token
+
+Go to the `docker-spark-env` folder and set the Jupyter token by editing the `docker-compose.yml` file:
+
+```yaml
+services:
+  jupyter:
+    environment:
+      JUPYTER_TOKEN: <your_token_here>
+```
+
+### 2. Start the Spark Cluster
 Open a terminal in the project directory and launch the cluster with your desired number of workers (e.g., 3 workers):
+
 ```bash
 cd docker-spark-env
 docker compose up -d --scale spark-worker=3
 ```
 
-### 2. Verify the Cluster Status
+### 3. Verify the Cluster Status
 Check if all containers are running properly:
+
 ```bash
 docker compose ps
 ```
 **Expected Output:**
+
 * `docker-spark-env-spark-worker-1`
 * `docker-spark-env-spark-worker-2`
 * `docker-spark-env-spark-worker-3`
@@ -44,13 +59,15 @@ Open your browser and navigate to **http://localhost:8080** to view the Spark ex
 
 ## 💻 IDE Integration (PyCharm)
 
+Open your IDE in the `test-project` folder.
 You can open the root project directory directly in PyCharm or your preferred IDE. 
 
 ### Project Structure
 The following folders are mapped directly inside the Docker containers:
-* `notebooks/` — Stores the Jupyter notebooks.
-* `test-project/apps` — Place your standalone Python applications here.
-* `test-project/data` — Contains datasets to be read by your code.
+
+* `notebooks` ➡️ `/workspace/test-project` — Stores the Jupyter notebooks.
+* `data` ➡️ `/data/test-project` — Contains datasets to be read by your code.
+* `apps` ➡️ `/apps/test-project`  — Place your standalone Python applications here.
 
 ### 🔌 Connect the IDE to the Jupyter Server
 The JupyterLab instance is available at **http://localhost:8888**.
@@ -61,22 +78,18 @@ To configure PyCharm to use the Docker Jupyter server instead of a local Python 
 2. Select **Configured Server** and click the `+` icon to add an **External Server**.
 3. **Name:** `Docker Jupyter Server` (or preferred name).
 4. **Server URL:** `http://localhost:8888`
-5. **Token:** Retrieve the token from the container logs by running:
-   ```bash
-   docker compose logs jupyter
-   ```
-   Look for a line resembling:
-   `http://127.0.0.1:8888/lab?token=521936865204d08c50e582...`
-   Copy the alphanumeric token and paste it into the token field.
+5. **Token:** Place the token you defined in the docker-compose file.
 6. Click **Test Connection** to verify.
 
-> ⚠️ *Important: You will need to copy the token each time you restart the Docker container unless you configure a 
- static token in your docker-compose file.*
+### 🐍 Set up the Python Interpreter 
 
-### 🐍 Set up the Python Interpreter in PyCharm
-1. Go to **Settings** ➡️ **Project** ➡️ **Python Interpreter**.
-2. Click **Add Interpreter** ➡️ **On Docker Compose...**
+1. Click **Add Interpreter** ➡️ **On Docker Compose...**
+2. For **Configuration files** find docker-compose file.
 3. Select **Service:** `jupyter`.
+
+
+
+
 
 ---
 
@@ -119,8 +132,8 @@ Please test and review the following implementations inside the project:
 
 | File Path | Description |
 | :--- | :--- |
-| `test-project/apps` | Native, single-threaded sequential Python implementation. |
-| `test-project/notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
+| `apps/sequential_word_count.py` | Native, single-threaded sequential Python implementation. |
+| `notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
 
 ---
 
