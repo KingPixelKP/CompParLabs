@@ -12,9 +12,6 @@ services:
       - "8080:8080"
       - "7077:7077"
 
-    volumes:
-      - ./apps:/apps
-
 
   spark-worker:
     image: spark:python3
@@ -30,12 +27,11 @@ services:
       - spark-master
 
     volumes:
-      - ./apps:/apps
-      - ./data:/data
+      - ../test-project/apps:/apps/test-project
+      - ../test-project/data:/data/test-project
 
   jupyter:
     build:
-      context: .
       dockerfile: Dockerfile
 
     container_name: jupyter
@@ -47,13 +43,14 @@ services:
       JUPYTER_CONFIG_DIR: /tmp/jupyter
       JUPYTER_RUNTIME_DIR: /tmp/jupyter/runtime
       JUPYTER_DATA_DIR: /tmp/jupyter/data
+      JUPYTER_TOKEN: shared_spark_token
 
     ports:
       - "8888:8888"
 
     volumes:
-      - ./notebooks:/workspace
-      - ./data:/data
+      - ../test-project/notebooks:/workspace/test-project
+      - ../test-project/data:/data/test-project
 
     working_dir: /workspace
 

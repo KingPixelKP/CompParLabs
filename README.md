@@ -21,6 +21,7 @@ Ensure you have the following installed on your local machine:
 ### 1. Start the Spark Cluster
 Open a terminal in the project directory and launch the cluster with your desired number of workers (e.g., 3 workers):
 ```bash
+cd docker-spark-env
 docker compose up -d --scale spark-worker=3
 ```
 
@@ -30,11 +31,11 @@ Check if all containers are running properly:
 docker compose ps
 ```
 **Expected Output:**
-* `spark-master`
-* `spark-spark-worker-1`
-* `spark-spark-worker-2`
-* `spark-spark-worker-3`
+* `docker-spark-env-spark-worker-1`
+* `docker-spark-env-spark-worker-2`
+* `docker-spark-env-spark-worker-3`
 * `jupyter`
+* `spark-master`
 
 ### 3. Access the Spark UI
 Open your browser and navigate to **http://localhost:8080** to view the Spark execution environment status and details.
@@ -48,8 +49,8 @@ You can open the root project directory directly in PyCharm or your preferred ID
 ### Project Structure
 The following folders are mapped directly inside the Docker containers:
 * `notebooks/` — Stores the Jupyter notebooks.
-* `apps/` — Place your standalone Python applications here.
-* `data/` — Contains datasets to be read by your code.
+* `test-project/apps` — Place your standalone Python applications here.
+* `test-project/data` — Contains datasets to be read by your code.
 
 ### 🔌 Connect the IDE to the Jupyter Server
 The JupyterLab instance is available at **http://localhost:8888**.
@@ -91,8 +92,8 @@ To configure PyCharm to use the Docker Jupyter server instead of a local Python 
 | **Stop the Cluster Safely** | `docker compose down` |
 | **Force Stop & Clean Up** | `docker compose down --remove-orphans` |
 
-> 💾 *Note: Your notebooks, applications, and datasets inside `notebooks/`, `apps/`, and `data/` are persistent and 
->  will remain on your local computer after stopping the containers.*
+> 💾 *Note: Your notebooks, applications, and datasets inside `notebooks/`, `test-project/apps`, and `test-project/data` are persistent and 
+> will remain on your local computer after stopping the containers.*
 
 ---
 
@@ -118,8 +119,8 @@ Please test and review the following implementations inside the project:
 
 | File Path | Description |
 | :--- | :--- |
-| `apps/word_count/sequential_word_count.py` | Native, single-threaded sequential Python implementation. |
-| `notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
+| `test-project/apps` | Native, single-threaded sequential Python implementation. |
+| `test-project/notebooks/word_count.ipynb` | Interactive Jupyter Notebook containing the sequential Python implementation, the low-level **Spark RDD API** and  the high-level **Spark SQL/DataFrame API**.|
 
 ---
 
