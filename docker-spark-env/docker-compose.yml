@@ -43,7 +43,7 @@ services:
       JUPYTER_CONFIG_DIR: /tmp/jupyter
       JUPYTER_RUNTIME_DIR: /tmp/jupyter/runtime
       JUPYTER_DATA_DIR: /tmp/jupyter/data
-      JUPYTER_TOKEN: shared_spark_token
+      JUPYTER_TOKEN: shared_spark_token # This is the notebook's password
 
     ports:
       - "8888:8888"
