@@ -30,6 +30,9 @@ services:
       - ../test-project/apps:/apps/test-project
       - ../test-project/data:/data/test-project
 
+      - ../lab01/apps:/apps/lab01
+      - ../lab01/data:/data/lab01
+
   jupyter:
     build:
       dockerfile: Dockerfile
@@ -51,6 +54,9 @@ services:
     volumes:
       - ../test-project/notebooks:/workspace/test-project
       - ../test-project/data:/data/test-project
+
+      - ../lab01/notebooks:/workspace/lab01
+      - ../lab01/data:/data/lab01
 
     working_dir: /workspace
 
