@@ -5,9 +5,15 @@ USER root
 ENV SPARK_HOME=/opt/spark
 ENV HOME=/tmp
 
-RUN pip install --no-cache-dir \
+# Add new python packages here
+RUN pip install --no-cache-dir \ 
     jupyterlab \
-    py4j
+    py4j \
+    pandas \
+    matplotlib \
+    pyarrow \
+    matplotlib-inline
+
 
 ENV PYTHONPATH=/opt/spark/python:$PYTHONPATH
 

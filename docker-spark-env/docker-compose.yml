@@ -33,8 +33,8 @@ services:
       - ../lab01/apps:/apps/lab01
       - ../lab01/data:/data/lab01
 
-      - ../lab01/apps:/apps/lab02
-      - ../lab01/data:/data/lab02
+      - ../lab02/apps:/apps/lab02
+      - ../lab02/data:/data/lab02
 
   jupyter:
     build:
@@ -61,8 +61,8 @@ services:
       - ../lab01/notebooks:/workspace/lab01
       - ../lab01/data:/data/lab01
 
-      - ../lab01/notebooks:/workspace/lab02
-      - ../lab01/data:/data/lab02
+      - ../lab02/notebooks:/workspace/lab02
+      - ../lab02/data:/data/lab02
 
     working_dir: /workspace
 
