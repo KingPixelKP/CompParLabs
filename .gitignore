@@ -219,3 +219,6 @@ __marimo__/
 /notebooks/*-pycharm-support-libs/
 
 .idea
+
+
+*data*

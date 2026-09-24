@@ -26,12 +26,15 @@ services:
     depends_on:
       - spark-master
 
-    volumes:
+    volumes: #Edit when add new lab
       - ../test-project/apps:/apps/test-project
       - ../test-project/data:/data/test-project
 
       - ../lab01/apps:/apps/lab01
       - ../lab01/data:/data/lab01
+
+      - ../lab01/apps:/apps/lab02
+      - ../lab01/data:/data/lab02
 
   jupyter:
     build:
@@ -51,12 +54,15 @@ services:
     ports:
       - "8888:8888"
 
-    volumes:
+    volumes: #Edit when add new lab
       - ../test-project/notebooks:/workspace/test-project
       - ../test-project/data:/data/test-project
 
       - ../lab01/notebooks:/workspace/lab01
       - ../lab01/data:/data/lab01
+
+      - ../lab01/notebooks:/workspace/lab02
+      - ../lab01/data:/data/lab02
 
     working_dir: /workspace
 
