@@ -36,6 +36,8 @@ services:
       - ../lab02/apps:/apps/lab02
       - ../lab02/data:/data/lab02
 
+      - ../lab03/apps:/apps/lab03
+
   jupyter:
     build:
       dockerfile: Dockerfile
@@ -53,6 +55,7 @@ services:
 
     ports:
       - "8888:8888"
+      - "4040-4045:4040-4045"
 
     volumes: #Edit when add new lab
       - ../test-project/notebooks:/workspace/test-project
@@ -63,6 +66,8 @@ services:
 
       - ../lab02/notebooks:/workspace/lab02
       - ../lab02/data:/data/lab02
+
+      - ../lab03/notebooks:/workspace/lab03
 
     working_dir: /workspace
 
