@@ -1,5 +1,7 @@
 # Comp Par Labs
 
+Repository that holds code and docs related do Parallel Computing class labs.
+
 ## Settup
 
 - Run [boot.sh](./boot.sh)
