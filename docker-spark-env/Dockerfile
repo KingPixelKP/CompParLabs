@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir \
     pandas \
     matplotlib \
     pyarrow \
-    matplotlib-inline
+    matplotlib-inline \
+    memory_profiler
 
 
 ENV PYTHONPATH=/opt/spark/python:$PYTHONPATH
