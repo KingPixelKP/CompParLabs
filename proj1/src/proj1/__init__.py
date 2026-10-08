@@ -2,6 +2,7 @@ import argparse
 import pathlib
 from enum import Enum
 import logging
+import functools
 
 import pyspark.sql.functions as sf
 from pyspark.sql import (
@@ -59,6 +60,13 @@ def build_arg_parser():
         default=None,
         help="Target partition count for `ratings` after read "
         "(defaults to 2x the driver's default parallelism)",
+    )
+    parser.add_argument(
+        "-od",
+        "--output-dir",
+        type=pathlib.Path,
+        default="out",
+        help="If the chosen command has an output it'll be redirected here",
     )
     parser.add_argument(
         "-d",
@@ -123,33 +131,33 @@ def run_M1(trip_data: DataFrame):
 
     print(f"Cleansed: {trip_data.count() - valid_df.count()} rows")
 
-    print(f"Cleansed: {trip_data.count() - m1_df.count()} rows")
 
+def run_M2(trip_data: DataFrame, zone_data: DataFrame, output_dir: pathlib.Path):
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
 
-def run_M2(trip_data: DataFrame, zone_data: DataFrame):
     dated_df = (
-        (
-            trip_data.withColumn(
-                "day_of_week",
-                sf.dayofweek(sf.timestamp_micros(trip_data.tpep_pickup_datetime)),
-            ).withColumn(
-                "hour_of_day",
-                sf.hour(sf.timestamp_micros(trip_data.tpep_pickup_datetime)),
-            )
-            # Broadcast the zone_data frame (it's small)
-            .join(
-                zone_data.hint("merge"), trip_data.PULocationID == zone_data.LocationID
-            )
+        trip_data.withColumn("day_of_week", sf.dayofweek(pickup_ts))
+        .withColumn("hour_of_day", sf.hour(pickup_ts))
+        .withColumn(
+            "trip_duration_minutes",
+            (sf.col("tpep_dropoff_datetime") - sf.col("tpep_pickup_datetime"))
+            / 60_000_000,
         )
-        .groupBy("day_of_week", "hour_of_day", "LocationID")
+        .join(sf.broadcast(zone_data), trip_data.PULocationID == zone_data.LocationID)
+        .groupBy("Borough", "day_of_week", "hour_of_day")
         .agg(
-            sf.count("fare_amount").alias("count"),
-            sf.mean("fare_amount").alias("mean_fare"),
-            sf.mean("trip_distance").alias("mean_distance"),
+            sf.count("*").alias("total_trip_count"),
+            sf.mean("fare_amount").alias("mean_fare_amount"),
+            sf.mean("trip_duration_minutes").alias("mean_trip_duration_minutes"),
+            sf.mean("trip_distance").alias("mean_trip_distance"),
         )
-        .sort("count", ascending=False)
+        .withColumnRenamed("Borough", "pickup_borough")
     )
-    dated_df.show(dated_df.count(), truncate=False)
+    dated_df.show()
+
+    dated_df.write.mode("overwrite").partitionBy("pickup_borough").parquet(
+        str(output_dir / "temporal")
+    )
 
 
 def main() -> None:
@@ -214,6 +222,6 @@ def main() -> None:
     if args.command == Command.M1:
         run_M1(parquet_df)
     elif args.command == Command.M2:
-        run_M2(parquet_df, zone_df)
+        run_M2(parquet_df, zone_df, args.output_dir)
     else:
         print("Fuck you")
