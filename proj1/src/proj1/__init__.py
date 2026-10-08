@@ -107,17 +107,21 @@ def aggregate_files(data_dir, suffix) -> list[pathlib.Path]:
 
 def run_M1(trip_data: DataFrame):
 
-    not_null = ""
+    not_null = functools.reduce(
+        lambda a, b: a & b, [sf.col(c).isNotNull() for c in trip_data.columns]
+    )
 
-    for col in trip_data.columns:
-        not_null += f" and {col} is not null"
+    valid_df = trip_data.filter(
+        not_null
+        & (sf.col("fare_amount") > 0)
+        & (sf.col("trip_distance") > 0)
+        & sf.col("passenger_count").between(1, 6)
+        & (sf.col("tpep_dropoff_datetime") > sf.col("tpep_pickup_datetime"))
+        & sf.col("PULocationID").between(1, 263)
+        & sf.col("DOLocationID").between(1, 263)
+    )
 
-    m1_df = trip_data.filter(f"""fare_amount <= 0
-    and trip_distance <= 0
-    and (passenger_count = 0 or passenger_count > 6)
-    and not (tpep_pickup_datetime = tpep_dropoff_datetime)
-    and (PULocationID >= 1 and PULocationID <= 263)
-    and (DOLocationID >= 1 and DOLocationID <= 263){not_null}""")
+    print(f"Cleansed: {trip_data.count() - valid_df.count()} rows")
 
     print(f"Cleansed: {trip_data.count() - m1_df.count()} rows")
 
