@@ -6,9 +6,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 from tqdm import tqdm
 
-
 links = [
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-01.parquet",
+    *[
+        f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-{month:02d}.parquet"
+        for month in range(1, 9)
+    ],
     "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv",
 ]
 
@@ -16,7 +18,10 @@ links = [
 def fetch_file(link: str, data_dir: str, position: int) -> None:
     filename = os.path.basename(urllib.parse.urlparse(link).path)
     destination = os.path.join(data_dir, filename)
-
+    
+    if os.path.exists(destination):
+        print(f"Destination for {filename} is full") 
+        return
     downloaded = 0
 
     with tqdm(
@@ -50,7 +55,7 @@ def fetch_file(link: str, data_dir: str, position: int) -> None:
                 pbar.update(delta)
                 downloaded = current
 
-        urllib.request.urlretrieve(
+        urllib.request.re(
             link,
             destination,
             reporthook,
@@ -81,9 +86,7 @@ def fetch(data_dir: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Download NYC taxi data."
-    )
+    parser = argparse.ArgumentParser(description="Download NYC taxi data.")
 
     parser.add_argument(
         "--data-dir",
