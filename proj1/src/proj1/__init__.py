@@ -3,6 +3,7 @@ import pathlib
 from enum import Enum
 import logging
 import functools
+import pandas as pd
 
 import pyspark.sql.functions as sf
 from pyspark.sql import (
@@ -22,6 +23,7 @@ from pyspark.sql.types import (
 import proj1.spark_profiler
 
 logger = None
+# TODO: Column prune zone everywhere
 
 
 class Command(Enum):
@@ -113,13 +115,12 @@ def aggregate_files(data_dir, suffix) -> list[pathlib.Path]:
     return files
 
 
-def run_M1(trip_data: DataFrame):
-
+def get_clean(trip_df: DataFrame):
     not_null = functools.reduce(
-        lambda a, b: a & b, [sf.col(c).isNotNull() for c in trip_data.columns]
+        lambda a, b: a & b, [sf.col(c).isNotNull() for c in trip_df.columns]
     )
 
-    valid_df = trip_data.filter(
+    valid_df = trip_df.filter(
         not_null
         & (sf.col("fare_amount") > 0)
         & (sf.col("trip_distance") > 0)
@@ -129,22 +130,35 @@ def run_M1(trip_data: DataFrame):
         & sf.col("DOLocationID").between(1, 263)
     )
 
-    print(f"Cleansed: {trip_data.count() - valid_df.count()} rows")
+    return valid_df
 
 
-def run_M2(trip_data: DataFrame, zone_data: DataFrame, output_dir: pathlib.Path):
+def run_M1(trip_df: DataFrame):
+
+    print(f"Cleansed: {trip_df.count() - get_clean.count()} rows")
+
+
+def run_M2(trip_df: DataFrame, zone_df: DataFrame, output_dir: pathlib.Path):
     pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
 
+    valid_df = get_clean(trip_df)
+
     dated_df = (
-        trip_data.withColumn("day_of_week", sf.dayofweek(pickup_ts))
+        valid_df.join(  # TODO: Profile join here vs bellow
+            sf.broadcast(zone_df), valid_df.PULocationID == zone_df.LocationID
+        )
+        .withColumn("day_of_week", sf.dayofweek(pickup_ts))
         .withColumn("hour_of_day", sf.hour(pickup_ts))
         .withColumn(
             "trip_duration_minutes",
             (sf.col("tpep_dropoff_datetime") - sf.col("tpep_pickup_datetime"))
             / 60_000_000,
         )
-        .join(sf.broadcast(zone_data), trip_data.PULocationID == zone_data.LocationID)
-        .groupBy("Borough", "day_of_week", "hour_of_day")
+        .groupBy(
+            "Borough",
+            "day_of_week",
+            "hour_of_day",
+        )
         .agg(
             sf.count("*").alias("total_trip_count"),
             sf.mean("fare_amount").alias("mean_fare_amount"),
@@ -153,11 +167,110 @@ def run_M2(trip_data: DataFrame, zone_data: DataFrame, output_dir: pathlib.Path)
         )
         .withColumnRenamed("Borough", "pickup_borough")
     )
+
     dated_df.show()
 
     dated_df.write.mode("overwrite").partitionBy("pickup_borough").parquet(
         str(output_dir / "temporal")
     )
+
+
+def run_M3(trip_df: DataFrame, zone_df: DataFrame):
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+
+    #NOTE: Column pruning here removed a little of cpu executor_cpu_time_ms 112303 -> 98501
+    zone_df = zone_df.select(zone_df.Zone, zone_df.Borough, zone_df.LocationID)
+
+    valid_df = get_clean(trip_df).select(
+        "tpep_pickup_datetime",
+        "tpep_dropoff_datetime",
+        "trip_distance",
+        "PULocationID",
+        "fare_amount",
+    )
+
+    monthly = (
+        valid_df.join(  # TODO: Profile join here vs bellow
+            sf.broadcast(zone_df), valid_df.PULocationID == zone_df.LocationID
+        )
+        .withColumn("pickup_month", sf.month(pickup_ts))
+        .groupBy(
+            "Zone",
+            "Borough",  # This here doesn't really matter to be here or not its just included so that a join after isnt needed
+            "pickup_month",
+        )
+        .agg(
+            sf.count("*").alias("trip_volume"),
+            sf.mean("fare_amount").alias("mean_fare"),
+            sf.stddev("fare_amount").alias("stddev_fare"),
+            sf.mean("trip_distance").alias("mean_distance"),
+            sf.stddev("trip_distance").alias("stddev_distance"),
+        )
+    )
+
+    rank_window = Window.partitionBy("Borough", "pickup_month").orderBy(
+        sf.col("trip_volume").desc()
+    )
+
+    monthly = monthly.withColumn("volume_rank", sf.dense_rank().over(rank_window))
+
+    zone_rolling_window = (
+        Window.partitionBy("Zone").orderBy("pickup_month").rowsBetween(-2, 0)
+    )
+
+    monthly = monthly.withColumn(
+        "rolling_3m_volume", sf.sum("trip_volume").over(zone_rolling_window)
+    )
+
+    borough_monthly = monthly.groupBy("Borough", "pickup_month").agg(
+        sf.sum("trip_volume").alias("borough_trip_volume")
+    )
+
+    borough_rolling_window = (
+        Window.partitionBy("Borough").orderBy("pickup_month").rowsBetween(-2, 0)
+    )
+
+    borough_monthly = borough_monthly.withColumn(
+        "borough_rolling_3m_volume",
+        sf.sum("borough_trip_volume").over(borough_rolling_window),
+    )
+
+    monthly = monthly.join(
+        borough_monthly.select(
+            "Borough",
+            "pickup_month",
+            "borough_rolling_3m_volume",
+        ),
+        on=["Borough", "pickup_month"],
+        how="left",
+    )
+
+    monthly = monthly.withColumn(
+        "rolling_3m_trip_share",
+        sf.col("rolling_3m_volume") / sf.col("borough_rolling_3m_volume"),
+    )
+
+    volume_history_window = (
+        Window.partitionBy("Zone").orderBy("pickup_month").rowsBetween(-2, -1)
+    )
+
+    monthly = (
+        monthly.withColumn(
+            "rolling_mean_volume", sf.mean("trip_volume").over(volume_history_window)
+        )
+        .withColumn(
+            "rolling_stddev_volume",
+            sf.stddev("trip_volume").over(volume_history_window),
+        )
+        .withColumn(
+            "volume_anomaly",
+            sf.abs(sf.col("trip_volume") - sf.col("rolling_mean_volume"))
+            > 1.5 * sf.col("rolling_stddev_volume"),
+        )
+    )
+
+    monthly.show()
 
 
 def main() -> None:
@@ -219,9 +332,17 @@ def main() -> None:
         *aggregate_files(args.data_dir, ".csv")
     )
 
-    if args.command == Command.M1:
-        run_M1(parquet_df)
-    elif args.command == Command.M2:
-        run_M2(parquet_df, zone_df, args.output_dir)
-    else:
-        print("Fuck you")
+    profiler = proj1.spark_profiler.SparkProfiler(spark)
+    with profiler.profile(f"{args.command}"):
+        if args.command == Command.M1:
+            run_M1(parquet_df)
+        elif args.command == Command.M2:
+            run_M2(parquet_df, zone_df, args.output_dir)
+        elif args.command == Command.M3:
+            run_M3(parquet_df, zone_df)
+        else:
+            print("Fuck you")
+
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(profiler.report())
+
