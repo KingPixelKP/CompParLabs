@@ -3,7 +3,9 @@ import pathlib
 from enum import Enum
 import logging
 import functools
+from typing import get_type_hints
 import pandas as pd
+from dataclasses import dataclass, field, fields
 
 import pyspark.sql.functions as sf
 from pyspark.sql import (
@@ -19,24 +21,84 @@ from pyspark.sql.types import (
     StructType,
     StringType,
 )
+from pyspark import StorageLevel
 
 import proj1.spark_profiler
 
 logger = None
-# TODO: Column prune zone everywhere
 
 
 class Command(Enum):
     M1 = "M1"
     M2 = "M2"
     M3 = "M3"
+    OX1 = "OX1"
+    OX2 = "OX2"
 
     def __str__(self):
         return self.value
 
 
+class Master(Enum):
+    Local = ("local", "local[*]")
+    Docker = ("docker", "spark://spark-master:7077")
+
+    def __init__(self, value: str, url: str):
+        self._value_ = value
+        self.url = url
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass(frozen=True)
+class Features:
+    explain_plan: bool = field(
+        default=False,
+        metadata={"help": "Emit physical and logical plans."},
+    )
+    prune_column: bool = field(
+        default=False,
+        metadata={"help": "Remove unused columns before processing."},
+    )
+    broadcast_join: bool = field(
+        default=True,
+        metadata={"help": "Broadcast the zone DataFrame during joins."},
+    )
+    cache_dataframe: bool = field(
+        default=False,
+        metadata={"help": "Cache intermediate DataFrames for reuse."},
+    )
+
+
+def add_dataclass_arguments(parser: argparse.ArgumentParser, cls: type) -> None:
+    hints = get_type_hints(cls)
+
+    for f in fields(cls):
+        help_text = f.metadata.get("help", "")
+        option = f"--{f.name.replace('_', '-')}"
+
+        if hints[f.name] is bool:
+            parser.add_argument(
+                option,
+                action=argparse.BooleanOptionalAction,
+                default=f.default,
+                help=help_text,
+            )
+        else:
+            parser.add_argument(
+                option,
+                type=hints[f.name],
+                default=f.default,
+                help=help_text,
+            )
+
+
 def build_arg_parser():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "command",
         type=Command,
@@ -46,9 +108,9 @@ def build_arg_parser():
     parser.add_argument(
         "-m",
         "--master",
-        type=str,
-        default="local[*]",
-        help="Spark master to use",
+        type=Master,
+        default=Master.Local,
+        help=f"Spark master to use (available: {', '.join(m.value for m in Master)})",
     )
     parser.add_argument(
         "--data-dir",
@@ -73,26 +135,23 @@ def build_arg_parser():
     parser.add_argument(
         "-d",
         "--debug",
-        help="Print lots of debugging statements",
-        action="store_const",
-        dest="loglevel",
-        const=logging.DEBUG,
-        default=logging.WARNING,
+        action="store_true",
+        help="Enable debug logging",
     )
     parser.add_argument(
         "-v",
         "--verbose",
+        action="store_true",
         help="Be verbose",
-        action="store_const",
-        dest="loglevel",
-        const=logging.INFO,
     )
+    add_dataclass_arguments(parser, Features)
     return parser
 
 
-def create_spark_session():
+def create_spark_session(master: Master):
     return (
-        SparkSession.builder.appName("spark-profiling-tuned-pipeline")
+        SparkSession.builder.appName("proj1")
+        .master(master.url)
         .config("spark.driver.memory", "2g")
         .config(
             "spark.executor.memory", "1536m"
@@ -133,25 +192,45 @@ def get_clean(trip_df: DataFrame):
     return valid_df
 
 
-def run_M1(trip_df: DataFrame):
-    
+def explain_df(df: DataFrame, features: Features):
+
+    if not features.explain_plan:
+        return
+
+    df.explain("formatted")
+    df.explain(True)
+
+
+def run_M1(trip_df: DataFrame, features: Features):
+
     clean = get_clean(trip_df)
-    
-    clean.explain("formatted")
-    clean.explain(True)
+
+    explain_df(clean, features)
 
     print(f"Cleansed: {trip_df.count() - clean.count()} rows")
-    
 
 
-def run_M2(trip_df: DataFrame, zone_df: DataFrame, output_dir: pathlib.Path):
+def run_M2(
+    trip_df: DataFrame, zone_df: DataFrame, features: Features, output_dir: pathlib.Path
+):
     pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
 
-    valid_df = get_clean(trip_df)
+    if features.prune_column:
+        zone_df = zone_df.select("Zone", "Borough", "LocationID")
+        trip_df = trip_df.select(
+            "tpep_pickup_datetime",
+            "tpep_dropoff_datetime",
+            "trip_distance",
+            "PULocationID",
+            "fare_amount",
+        )
+
+    zone_to_join = sf.broadcast(zone_df) if features.broadcast_join else zone_df
 
     dated_df = (
-        valid_df.join(  # TODO: Profile join here vs bellow
-            sf.broadcast(zone_df), valid_df.PULocationID == zone_df.LocationID
+        trip_df.join(
+            zone_to_join,
+            trip_df.PULocationID == zone_df.LocationID,
         )
         .withColumn("day_of_week", sf.dayofweek(pickup_ts))
         .withColumn("hour_of_day", sf.hour(pickup_ts))
@@ -160,23 +239,20 @@ def run_M2(trip_df: DataFrame, zone_df: DataFrame, output_dir: pathlib.Path):
             (sf.col("tpep_dropoff_datetime") - sf.col("tpep_pickup_datetime"))
             / 60_000_000,
         )
-        .groupBy(
-            "Borough",
-            "day_of_week",
-            "hour_of_day",
-        )
+        .groupBy("Borough", "day_of_week", "hour_of_day")
         .agg(
             sf.count("*").alias("total_trip_count"),
             sf.mean("fare_amount").alias("mean_fare_amount"),
             sf.mean("trip_duration_minutes").alias("mean_trip_duration_minutes"),
             sf.mean("trip_distance").alias("mean_trip_distance"),
         )
-        .withColumnRenamed("Borough", "pickup_borough")
     )
+
+    explain_df(dated_df, features)
 
     dated_df.show()
 
-    dated_df.write.mode("overwrite").partitionBy("pickup_borough").parquet(
+    dated_df.write.mode("overwrite").partitionBy("Borough").parquet(
         str(output_dir / "temporal")
     )
 
@@ -281,13 +357,26 @@ def run_M3(trip_df: DataFrame, zone_df: DataFrame):
 
 def main() -> None:
     args = build_arg_parser().parse_args()
-    logging.basicConfig(level=args.loglevel)
+    from dataclasses import fields
+
+    feature_names = {f.name for f in fields(Features)}
+    features = Features(**{k: v for k, v in vars(args).items() if k in feature_names})
+
+    logging.basicConfig(
+        level=(
+            (
+                logging.DEBUG
+                if args.debug
+                else logging.INFO if args.verbose else logging.WARNING
+            ),
+        ),
+    )
 
     global logger
     logger = logging.getLogger(__name__)
 
     logger.debug("Creating Spark Session")
-    spark = create_spark_session()
+    spark = create_spark_session(args.master)
     spark.sparkContext.setLogLevel("WARN")
     logger.debug("Spark Session Created")
 
@@ -341,14 +430,36 @@ def main() -> None:
     profiler = proj1.spark_profiler.SparkProfiler(spark)
     with profiler.profile(f"{args.command}"):
         if args.command == Command.M1:
-            run_M1(parquet_df)
+            run_M1(
+                parquet_df,
+                features,
+            )
         elif args.command == Command.M2:
-            run_M2(parquet_df, zone_df, args.output_dir)
+            run_M2(
+                parquet_df,
+                zone_df,
+                features,
+                args.output_dir,
+            )
         elif args.command == Command.M3:
-            run_M3(parquet_df, zone_df)
+            run_M3(
+                parquet_df,
+                zone_df,
+                features,
+            )
         else:
-            print("Fuck you")
+            raise NotImplementedError("Nope!!!")
 
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    with pd.option_context(
+        "display.max_rows",
+        None,
+        "display.max_columns",
+        None,
+        "display.expand_frame_repr",
+        False,
+    ):
         print(profiler.report())
 
+    logger.info("Done")
+
+    input("Keeping WebUI Up, Hit Enter to Exit!")
