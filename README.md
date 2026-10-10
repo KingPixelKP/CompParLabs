@@ -2,11 +2,13 @@
 
 Repository that holds code and docs related do Parallel Computing class labs.
 
-## Local with uv
+## Running
+
+### Local with uv
 
 In dev environments it is much faster and easier to use uv.
 
-### Setup
+#### Setup
 
 First we must create the python kernel with uv packages:
 
@@ -14,12 +16,12 @@ First we must create the python kernel with uv packages:
 uv run ipython kernel install --user --env VIRTUAL_ENV $(pwd)/.venv --name=comp-par-labs
 ```
 
-With the kernel created all we must do noww is select it as the kernel to be used in the top right of the notebook (assuming VsCode).
+With the kernel created all we must do now is select it as the kernel to be used in the top right of the notebook (assuming VsCode).
 
 > [!NOTE]
 > Reminder that master in the notebooks must be changed to `local[*]`
 
-### Adding uv packages
+#### Adding uv packages
 
 To add uv packages use:
 
@@ -31,9 +33,9 @@ Or manually introduce it in [pyproject.toml](./pyproject.toml)
 
 After adding the package run the steps described in [Setup](#setup).
 
-## Docker
+### Docker
 
-### Setup
+#### Setup
 
 - Run [boot.sh](./boot.sh)
 - Reload VsCode Window
@@ -42,8 +44,14 @@ After adding the package run the steps described in [Setup](#setup).
 > [!NOTE]
 > Reminder that master in the notebooks must be changed to `spark://spark-master:7077`
 
-### Adding pip packages
+#### Adding pip packages
 
 - Add packages to the [Dockerfile](./docker-spark-env/Dockerfile)
 - Run [build.sh](./build.sh)
 - Restart the containers
+
+## Projects
+
+### Project 1
+
+The first project is located at [proj1](./proj1/)
