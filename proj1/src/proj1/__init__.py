@@ -54,7 +54,7 @@ def build_arg_parser():
         "--data-dir",
         type=pathlib.Path,
         default="./proj1/data",
-        help="Data dir to retrieve data from, if not given it'll be infered from the master",
+        help="Data dir to retrieve data from, if not given it'll be inferred from the master",
     )
     parser.add_argument(
         "--partitions",
