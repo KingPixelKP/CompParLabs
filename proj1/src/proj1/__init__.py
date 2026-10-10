@@ -57,8 +57,14 @@ class Features:
         default=False,
         metadata={"help": "Emit physical and logical plans."},
     )
-    prune_column: bool = field(
+    use_cleansed: bool = field(
         default=False,
+        metadata={
+            "help": "Use the output DataFrame of M1 in all other commands (No op on M1)"
+        },
+    )
+    prune_column: bool = field(
+        default=True,
         metadata={"help": "Remove unused columns before processing."},
     )
     broadcast_join: bool = field(
@@ -215,6 +221,9 @@ def run_M2(
 ):
     pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
 
+    if features.use_cleansed:
+        trip_df = get_clean(trip_df)
+
     if features.prune_column:
         zone_df = zone_df.select("Zone", "Borough", "LocationID")
         trip_df = trip_df.select(
@@ -259,6 +268,9 @@ def run_M2(
 
 def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+    if features.use_cleansed:
+        trip_df = get_clean(trip_df)
 
     if features.prune_column:
         zone_df = zone_df.select(zone_df.Zone, zone_df.Borough, zone_df.LocationID)
