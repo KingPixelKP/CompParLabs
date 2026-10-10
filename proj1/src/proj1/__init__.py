@@ -134,8 +134,14 @@ def get_clean(trip_df: DataFrame):
 
 
 def run_M1(trip_df: DataFrame):
+    
+    clean = get_clean(trip_df)
+    
+    clean.explain("formatted")
+    clean.explain(True)
 
-    print(f"Cleansed: {trip_df.count() - get_clean.count()} rows")
+    print(f"Cleansed: {trip_df.count() - clean.count()} rows")
+    
 
 
 def run_M2(trip_df: DataFrame, zone_df: DataFrame, output_dir: pathlib.Path):
