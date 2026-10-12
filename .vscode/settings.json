@@ -4,7 +4,9 @@
         "dayofweek",
         "dropoff",
         "ipython",
+        "pbar",
         "pyproject",
+        "reporthook",
         "tpep",
         "venv"
     ]

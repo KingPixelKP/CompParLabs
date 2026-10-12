@@ -32,8 +32,8 @@ class Command(Enum):
     M1 = "M1"
     M2 = "M2"
     M3 = "M3"
-    OX1 = "OX1"
-    OX2 = "OX2"
+    O1 = "O1"
+    O2 = "O2"
 
     def __str__(self):
         return self.value
@@ -331,6 +331,216 @@ def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     monthly.show()
 
 
+def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features):
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+    if features.use_cleansed:
+        trip_df = get_clean(trip_df)
+
+    if features.prune_column:
+        zone_df = zone_df.select(zone_df.Zone, zone_df.Borough, zone_df.LocationID)
+        trip_df = trip_df.select(
+            "tpep_pickup_datetime",
+            "tpep_dropoff_datetime",
+            "trip_distance",
+            "PULocationID",
+            "fare_amount",
+            "payment_type",
+        )
+
+    zone_to_join = sf.broadcast(zone_df) if features.broadcast_join else zone_df
+
+    base = (
+        trip_df.join(
+            zone_to_join,
+            trip_df.PULocationID == zone_df.LocationID,
+        )
+        .withColumn(
+            "per_km_fare",
+            sf.try_divide(sf.col("fare_amount"), sf.col("trip_distance")),
+        )
+        .withColumn("hour_of_day", sf.hour(pickup_ts))
+    )
+
+    bucket_window = Window.partitionBy("PULocationID", "hour_of_day")
+
+    base = (
+        base.withColumn("mean_per_km", sf.mean("per_km_fare").over(bucket_window))
+        .withColumn("stddev_per_km", sf.stddev("per_km_fare").over(bucket_window))
+        .withColumn(
+            "is_anomaly",
+            sf.col("per_km_fare")
+            > (sf.col("mean_per_km") + 3 * sf.col("stddev_per_km")),
+        )
+    )
+
+    # What does this mean? TODO: compare weekday vs. weekend anomaly rates broken down by payment_type and pickup
+    # borough.
+
+    explain_df(base, features)
+
+    base.show()
+
+
+def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+    if features.use_cleansed:
+        trip_df = get_clean(trip_df)
+
+    if features.prune_column:
+        zone_df = zone_df.select(zone_df.Zone, zone_df.Borough, zone_df.LocationID)
+        trip_df = trip_df.select(
+            "tpep_pickup_datetime",
+            "tpep_dropoff_datetime",
+            "trip_distance",
+            "PULocationID",
+            "DOLocationID",
+            "fare_amount",
+            "payment_type",
+        )
+
+    zone_df = sf.broadcast(zone_df) if features.broadcast_join else zone_df
+
+    if features.cache_dataframe:
+        zone_df = zone_df.cache()  # This isn't worth it here it just adds more stages
+
+    # 2. Count trips per route per month
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+    monthly_routes = (
+        trip_df.withColumn("pickup_month", sf.month(pickup_ts))
+        .groupBy(
+            "PULocationID",
+            "DOLocationID",
+            "pickup_month",
+        )
+        .agg(sf.count("*").alias("trip_volume"))
+    )
+
+    # 3. Calculate total outbound trips and route shares
+    outbound_w = Window.partitionBy(
+        "PULocationID",
+        "pickup_month",
+    )
+
+    monthly_routes = monthly_routes.withColumn(
+        "month_volume",
+        sf.sum("trip_volume").over(outbound_w),
+    ).withColumn(
+        "monthly_share",
+        sf.col("trip_volume") / sf.col("month_volume"),
+    )
+
+    # 4. Resolve pickup and dropoff zone names and boroughs
+    pickup_zones = zone_df.select(
+        sf.col("LocationID").alias("pickup_id"),
+        sf.col("Zone").alias("pickup_zone"),
+        sf.col("Borough").alias("pickup_borough"),
+    )
+
+    dropoff_zones = zone_df.select(
+        sf.col("LocationID").alias("dropoff_id"),
+        sf.col("Zone").alias("dropoff_zone"),
+        sf.col("Borough").alias("dropoff_borough"),
+    )
+
+    routes = (
+        monthly_routes.join(
+            pickup_zones,
+            monthly_routes.PULocationID == pickup_zones.pickup_id,
+        )
+        .join(
+            dropoff_zones,
+            monthly_routes.DOLocationID == dropoff_zones.dropoff_id,
+        )
+        .drop("pickup_id", "dropoff_id")
+    )
+
+    # 5. Find the top 20 routes per pickup borough
+    borough_routes = routes.groupBy(
+        "pickup_borough",
+        "pickup_zone",
+        "dropoff_borough",
+        "dropoff_zone",
+    ).agg(
+        sf.sum("trip_volume").alias("total_trips"),
+    )
+
+    top_w = Window.partitionBy("pickup_borough").orderBy(
+        sf.desc("total_trips"),
+        sf.asc("pickup_zone"),
+        sf.asc("dropoff_zone"),
+    )
+
+    top20 = borough_routes.withColumn(
+        "route_rank",
+        sf.row_number().over(top_w),
+    ).filter(sf.col("route_rank") <= 20)
+
+    # 6. Compare route shares between Q1 and Q3
+    # Compare Jan -> Mar against Jul -> Sep.
+    route_trends = (
+        routes.groupBy(
+            "PULocationID",
+            "DOLocationID",
+            "pickup_borough",
+            "pickup_zone",
+            "dropoff_borough",
+            "dropoff_zone",
+        )
+        .pivot("pickup_month", list(range(1, 13)))
+        .agg(sf.first("monthly_share"))
+    )
+
+    route_trends = route_trends.withColumn(
+        "q1_change",
+        sf.col("3") - sf.col("1"),
+    ).withColumn(
+        "q3_change",
+        sf.col("9") - sf.col("7"),
+    )
+
+    reversals = route_trends.filter(
+        ((sf.col("q1_change") > 0) & (sf.col("q3_change") < 0))
+        | ((sf.col("q1_change") < 0) & (sf.col("q3_change") > 0))
+    )
+
+    # 7. Explain and display the results
+    explain_df(routes, features)
+    explain_df(top20, features)
+    explain_df(reversals, features)
+
+    print("Monthly route counts and shares:")
+    routes.orderBy(
+        "PULocationID",
+        "pickup_month",
+        sf.desc("trip_volume"),
+    ).show(20, truncate=False)
+
+    print("Top 20 routes per pickup borough:")
+    top20.orderBy(
+        "pickup_borough",
+        "route_rank",
+    ).show(100, truncate=False)
+
+    print("Routes with Q1/Q3 share reversals:")
+    reversals.select(
+        "PULocationID",
+        "DOLocationID",
+        "pickup_zone",
+        "dropoff_zone",
+        "pickup_borough",
+        "dropoff_borough",
+        "1",
+        "3",
+        "7",
+        "9",
+        "q1_change",
+        "q3_change",
+    ).show(100, truncate=False)
+
+
 def main() -> None:
     args = build_arg_parser().parse_args()
     from dataclasses import fields
@@ -340,12 +550,10 @@ def main() -> None:
 
     logging.basicConfig(
         level=(
-            (
-                logging.DEBUG
-                if args.debug
-                else logging.INFO if args.verbose else logging.WARNING
-            ),
-        ),
+            logging.DEBUG
+            if args.debug
+            else logging.INFO if args.verbose else logging.WARNING
+        )
     )
 
     global logger
@@ -396,7 +604,7 @@ def main() -> None:
         ]
     )
 
-    parquet_df = spark.read.schema(parquet_schema).parquet(
+    trip_df = spark.read.schema(parquet_schema).parquet(
         *aggregate_files(args.data_dir, ".parquet")
     )
     zone_df = spark.read.schema(zone_schema).csv(
@@ -404,22 +612,38 @@ def main() -> None:
     )
 
     profiler = proj1.spark_profiler.SparkProfiler(spark)
-    with profiler.profile(f"{args.command}"):
+    feature_str = ", ".join(
+        f"{f.name}={getattr(features, f.name)}" for f in fields(features)
+    )
+
+    with profiler.profile(f"{args.command}-features:{feature_str}"):
         if args.command == Command.M1:
             run_M1(
-                parquet_df,
+                trip_df,
                 features,
             )
         elif args.command == Command.M2:
             run_M2(
-                parquet_df,
+                trip_df,
                 zone_df,
                 features,
                 args.output_dir,
             )
         elif args.command == Command.M3:
             run_M3(
-                parquet_df,
+                trip_df,
+                zone_df,
+                features,
+            )
+        elif args.command == Command.O1:
+            run_O1(
+                trip_df,
+                zone_df,
+                features,
+            )
+        elif args.command == Command.O2:
+            run_O2(
+                trip_df,
                 zone_df,
                 features,
             )
