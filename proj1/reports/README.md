@@ -16,7 +16,7 @@ A report should include the following
 - Date of report
 - Findings section including
   - Bottleneck found
-  - An association of the bottleneck and the plans
+  - An association of the bottleneck and the plans and profiling reports
 - Evidence Section
   - A screenshot of the SparkWebUI pipeline timeline
   - A screenshot of the any SQL query from SparkWebUI

@@ -10,13 +10,17 @@ No bottleneck was found this is an example after all
 
 ### Plans
 
-### Physical
+#### Physical
 
 The plan has 2 steps not much can be explain tbh.
 
-### Logical
+#### Logical
 
 The plan is simple just `isNotNull` and the conditions asked in the assignment.
+
+### Profiling report
+
+Idk something did not change!
 
 ## Pre Fix
 
