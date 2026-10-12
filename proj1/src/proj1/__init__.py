@@ -439,13 +439,11 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     # 4. Resolve pickup and dropoff zone names and boroughs
     pickup_zones = zone_df.select(
         sf.col("LocationID").alias("pickup_id"),
-        sf.col("Zone").alias("pickup_zone"),
         sf.col("Borough").alias("pickup_borough"),
     )
 
     dropoff_zones = zone_df.select(
         sf.col("LocationID").alias("dropoff_id"),
-        sf.col("Zone").alias("dropoff_zone"),
         sf.col("Borough").alias("dropoff_borough"),
     )
 
@@ -458,23 +456,22 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             dropoff_zones,
             monthly_routes.DOLocationID == dropoff_zones.dropoff_id,
         )
-        .drop("pickup_id", "dropoff_id")
     )
 
     # 5. Find the top 20 routes per pickup borough
     borough_routes = routes.groupBy(
         "pickup_borough",
-        "pickup_zone",
+        "pickup_id",
         "dropoff_borough",
-        "dropoff_zone",
+        "dropoff_id",
     ).agg(
         sf.sum("trip_volume").alias("total_trips"),
     )
 
     top_w = Window.partitionBy("pickup_borough").orderBy(
         sf.desc("total_trips"),
-        sf.asc("pickup_zone"),
-        sf.asc("dropoff_zone"),
+        sf.asc("pickup_id"),
+        sf.asc("dropoff_id"),
     )
 
     top20 = borough_routes.withColumn(
@@ -489,9 +486,9 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             "PULocationID",
             "DOLocationID",
             "pickup_borough",
-            "pickup_zone",
+            "pickup_id",
             "dropoff_borough",
-            "dropoff_zone",
+            "dropoff_id",
         )
         .pivot("pickup_month", list(range(1, 13)))
         .agg(sf.first("monthly_share"))
@@ -532,8 +529,8 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     reversals.select(
         "PULocationID",
         "DOLocationID",
-        "pickup_zone",
-        "dropoff_zone",
+        "pickup_id",
+        "dropoff_id",
         "pickup_borough",
         "dropoff_borough",
         "1",
