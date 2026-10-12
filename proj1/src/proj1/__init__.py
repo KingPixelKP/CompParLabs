@@ -6,6 +6,7 @@ import functools
 from typing import get_type_hints
 import pandas as pd
 from dataclasses import dataclass, field, fields
+import sys
 
 import pyspark.sql.functions as sf
 from pyspark.sql import (
@@ -64,11 +65,11 @@ class Features:
         },
     )
     prune_column: bool = field(
-        default=True,
+        default=False,
         metadata={"help": "Remove unused columns before processing."},
     )
     broadcast_join: bool = field(
-        default=True,
+        default=False,
         metadata={"help": "Broadcast the zone DataFrame during joins."},
     )
     cache_dataframe: bool = field(
@@ -163,6 +164,9 @@ def create_spark_session(master: Master):
             "spark.executor.memory", "1536m"
         )  # stay under the worker's --memory 2G cap
         .config("spark.ui.showConsoleProgress", "false")
+        .config(
+            "spark.sql.autoBroadcastJoinThreshold", "-1"
+        )  # NOTE: This is for profiling purposes
         .getOrCreate()
     )
 
@@ -234,11 +238,11 @@ def run_M2(
             "fare_amount",
         )
 
-    zone_to_join = sf.broadcast(zone_df) if features.broadcast_join else zone_df
+    zone_df = sf.broadcast(zone_df) if features.broadcast_join else zone_df
 
     dated_df = (
         trip_df.join(
-            zone_to_join,
+            zone_df,
             trip_df.PULocationID == zone_df.LocationID,
         )
         .withColumn("day_of_week", sf.dayofweek(pickup_ts))
@@ -348,11 +352,11 @@ def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             "payment_type",
         )
 
-    zone_to_join = sf.broadcast(zone_df) if features.broadcast_join else zone_df
+    zone_df = sf.broadcast(zone_df) if features.broadcast_join else zone_df
 
     base = (
         trip_df.join(
-            zone_to_join,
+            zone_df,
             trip_df.PULocationID == zone_df.LocationID,
         )
         .withColumn(
@@ -553,7 +557,8 @@ def main() -> None:
             logging.DEBUG
             if args.debug
             else logging.INFO if args.verbose else logging.WARNING
-        )
+        ),
+        stream=sys.stdout,
     )
 
     global logger
@@ -569,6 +574,14 @@ def main() -> None:
     logger.info(f"Spark UI: {spark.sparkContext.uiWebUrl}")
     logger.info(f"Default parallelism: {spark.sparkContext.defaultParallelism}")
     logger.info(f"Target partitions for ratings: {target_partitions}")
+
+    logger.info(
+        "autoBroadcastJoinThreshold=%s",
+        spark.conf.get("spark.sql.autoBroadcastJoinThreshold"),
+    )
+
+    for f in fields(features):
+        logger.info(f"{f.name}={getattr(features, f.name)}")
 
     parquet_schema = StructType(
         [
