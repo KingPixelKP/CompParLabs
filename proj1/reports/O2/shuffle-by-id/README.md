@@ -46,7 +46,7 @@ TODO:
 
 ### Reproducing
 
-**Git Commit Hash:** `5dcc723d22f695dddfd54d69b839ff03ab5ecc66`
+**Git Commit Hash:** `[5dcc723d22f695dddfd54d69b839ff03ab5ecc66](https://github.com/KingPixelKP/CompParLabs/commit/5dcc723d22f695dddfd54d69b839ff03ab5ecc66)`
 **UV Command:** `uv run proj1 O2 -v`
 
 ## Post Fix
@@ -71,5 +71,5 @@ TODO:
 
 ### Reproducing
 
-**Git Commit Hash:** `ebcbea19253ca93423a0dcd840845c22a0c9d257`
+**Git Commit Hash:** `[ebcbea19253ca93423a0dcd840845c22a0c9d257](https://github.com/KingPixelKP/CompParLabs/commit/ebcbea19253ca93423a0dcd840845c22a0c9d257)`
 **UV Command:** `uv run proj1 O2 -v`
