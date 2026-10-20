@@ -1,18 +1,24 @@
 import argparse
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 from tqdm import tqdm
 
-links = [
-    *[
-        f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-{month:02d}.parquet"
-        for month in range(1, 9)
-    ],
-    "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv",
-]
+MAX_PARALLEL_DOWNLOADS = 8
+
+
+def build_links(years: list[int]) -> list[str]:
+    return [
+        *[
+            f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year}-{month:02d}.parquet"
+            for year in years
+            for month in range(1, 13)
+        ],
+        "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv",
+    ]
 
 
 def fetch_file(link: str, data_dir: str, position: int) -> None:
@@ -55,11 +61,18 @@ def fetch_file(link: str, data_dir: str, position: int) -> None:
                 pbar.update(delta)
                 downloaded = current
 
-        urllib.request.urlretrieve(
-            link,
-            destination,
-            reporthook,
-        )
+        try:
+            urllib.request.urlretrieve(
+                link,
+                destination,
+                reporthook,
+            )
+        except urllib.error.HTTPError as e:
+            # Months not yet published (e.g. the rest of the current year) 404
+            if os.path.exists(destination):
+                os.remove(destination)
+            pbar.write(f"Skipping {filename}: HTTP {e.code}")
+            return
 
         # Ensure the bar ends exactly at the actual file size.
         actual_size = os.path.getsize(destination)
@@ -71,10 +84,11 @@ def fetch_file(link: str, data_dir: str, position: int) -> None:
         pbar.refresh()
 
 
-def fetch(data_dir: str) -> None:
+def fetch(data_dir: str, years: list[int]) -> None:
     os.makedirs(data_dir, exist_ok=True)
+    links = build_links(years)
 
-    with ThreadPoolExecutor(max_workers=len(links)) as pool:
+    with ThreadPoolExecutor(max_workers=MAX_PARALLEL_DOWNLOADS) as pool:
         futures = [
             pool.submit(fetch_file, link, data_dir, position)
             for position, link in enumerate(links)
@@ -93,7 +107,14 @@ def main() -> None:
         default="data",
         help="Directory for downloaded files (default: data)",
     )
+    parser.add_argument(
+        "--years",
+        type=int,
+        nargs="+",
+        default=list(range(2016, 2021)),
+        help="Years of yellow taxi trip data to download (default: 2016-2020, as in the assignment)",
+    )
 
     args = parser.parse_args()
 
-    fetch(args.data_dir)
+    fetch(args.data_dir, args.years)
