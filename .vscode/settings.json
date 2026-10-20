@@ -7,6 +7,7 @@
         "pbar",
         "pyproject",
         "reporthook",
+        "toggleable",
         "tpep",
         "venv"
     ]

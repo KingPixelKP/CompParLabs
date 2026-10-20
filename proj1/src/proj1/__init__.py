@@ -35,6 +35,7 @@ class Command(Enum):
     M3 = "M3"
     O1 = "O1"
     O2 = "O2"
+    O4 = "O4"
 
     def __str__(self):
         return self.value
@@ -75,6 +76,12 @@ class Features:
     cache_dataframe: bool = field(
         default=False,
         metadata={"help": "Cache intermediate DataFrames for reuse."},
+    )
+    string_to_id: bool = field(
+        default=False,
+        metadata={
+            "help": "Convert string columns to integer IDs for joins."
+        },  # TODO: Implement this feature
     )
 
 
@@ -439,11 +446,13 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     # 4. Resolve pickup and dropoff zone names and boroughs
     pickup_zones = zone_df.select(
         sf.col("LocationID").alias("pickup_id"),
+        sf.col("Zone").alias("pickup_zone"),
         sf.col("Borough").alias("pickup_borough"),
     )
 
     dropoff_zones = zone_df.select(
         sf.col("LocationID").alias("dropoff_id"),
+        sf.col("Zone").alias("dropoff_zone"),
         sf.col("Borough").alias("dropoff_borough"),
     )
 
@@ -456,22 +465,23 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             dropoff_zones,
             monthly_routes.DOLocationID == dropoff_zones.dropoff_id,
         )
+        .drop("pickup_id", "dropoff_id")
     )
 
     # 5. Find the top 20 routes per pickup borough
     borough_routes = routes.groupBy(
         "pickup_borough",
-        "pickup_id",
+        "pickup_zone",
         "dropoff_borough",
-        "dropoff_id",
+        "dropoff_zone",
     ).agg(
         sf.sum("trip_volume").alias("total_trips"),
     )
 
     top_w = Window.partitionBy("pickup_borough").orderBy(
         sf.desc("total_trips"),
-        sf.asc("pickup_id"),
-        sf.asc("dropoff_id"),
+        sf.asc("pickup_zone"),
+        sf.asc("dropoff_zone"),
     )
 
     top20 = borough_routes.withColumn(
@@ -486,9 +496,9 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             "PULocationID",
             "DOLocationID",
             "pickup_borough",
-            "pickup_id",
+            "pickup_zone",
             "dropoff_borough",
-            "dropoff_id",
+            "dropoff_zone",
         )
         .pivot("pickup_month", list(range(1, 13)))
         .agg(sf.first("monthly_share"))
@@ -529,8 +539,8 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     reversals.select(
         "PULocationID",
         "DOLocationID",
-        "pickup_id",
-        "dropoff_id",
+        "pickup_zone",
+        "dropoff_zone",
         "pickup_borough",
         "dropoff_borough",
         "1",
@@ -540,6 +550,114 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
         "q1_change",
         "q3_change",
     ).show(100, truncate=False)
+
+
+def run_O4(trip_df: DataFrame, zone_df: DataFrame, features: Features):
+    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+
+    if features.use_cleansed:
+        trip_df = get_clean(trip_df)
+
+    trip_df = trip_df.withColumn("hour_of_day", sf.hour(pickup_ts)).withColumn(
+        "month", sf.month(pickup_ts)
+    )
+
+    if features.prune_column:
+        trip_df = trip_df.select(
+            "PULocationID",
+            "RatecodeID",
+            "passenger_count",
+            "month",
+            "hour_of_day",
+            "fare_amount",
+            "trip_distance",
+        )
+
+    trip_df = trip_df.repartition(
+        "PULocationID"
+    )  # Repartition by PULocationID to optimize window functions #TODO: Write a report on the performance impact of this repartitioning relevant logs under ./logs/O4/repartition and ./logs/O4/baseline.log
+
+    window = Window.partitionBy("PULocationID", "hour_of_day")
+
+    classified_df = (
+        trip_df.withColumn("trip_count", sf.count("*").over(window))
+        .withColumn(
+            "airport_trips",
+            sf.sum(sf.when(sf.col("RatecodeID").isin([2, 3]), 1).otherwise(0)).over(
+                window
+            ),
+        )
+        .withColumn(
+            "negotiated_rate_trips",
+            sf.sum(sf.when(sf.col("RatecodeID") == 5, 1).otherwise(0)).over(window),
+        )
+        .withColumn(
+            "group_trips",
+            sf.sum(sf.when(sf.col("passenger_count") >= 4, 1).otherwise(0)).over(
+                window
+            ),
+        )
+        .withColumn(
+            "airport_trip_share", sf.col("airport_trips") / sf.col("trip_count")
+        )
+        .withColumn(
+            "negotiated_rate_share",
+            sf.col("negotiated_rate_trips") / sf.col("trip_count"),
+        )
+        .withColumn(
+            "group_trip_share",
+            sf.col("group_trips") / sf.col("trip_count"),
+        )
+    )
+
+    if features.prune_column:
+        classified_df = classified_df.drop(
+            "airport_trips",
+            "negotiated_rate_trips",
+            "group_trips",
+            "hour_of_day",
+            "trip_count",
+            "RatecodeID",
+            "passenger_count",
+        )
+
+    def classify_col(col, residential=0.1, commercial=0.4, transit=0.7):
+        # NOTE: Possible optimization use numbers instead of strings to identify each class
+
+        # TODO: Implement toggleable feature
+
+        return (
+            sf.when(col < residential, 0)
+            .when(col < commercial, 1)
+            .when(col < transit, 2)
+            .otherwise(3)
+        )
+
+    classified_df = (
+        classified_df.withColumn(
+            "airport_zone_type", classify_col(sf.col("airport_trip_share"))
+        )
+        .withColumn(
+            "negotiated_rate_zone_type", classify_col(sf.col("negotiated_rate_share"))
+        )
+        .withColumn("group_trips_zone_type", classify_col(sf.col("group_trip_share")))
+    )
+
+    classified_df = classified_df.groupBy(
+        "month",
+        "airport_zone_type",
+        "negotiated_rate_zone_type",
+        "group_trips_zone_type",
+    ).agg(
+        sf.mean("fare_amount").alias("mean_fare"),
+        sf.stddev("fare_amount").alias("stddev_fare"),
+        sf.mean("trip_distance").alias("mean_distance"),
+        sf.stddev("trip_distance").alias("stddev_distance"),
+    )
+
+    explain_df(classified_df, features)
+
+    classified_df.show(20, truncate=False)
 
 
 def main() -> None:
@@ -653,6 +771,12 @@ def main() -> None:
             )
         elif args.command == Command.O2:
             run_O2(
+                trip_df,
+                zone_df,
+                features,
+            )
+        elif args.command == Command.O4:
+            run_O4(
                 trip_df,
                 zone_df,
                 features,

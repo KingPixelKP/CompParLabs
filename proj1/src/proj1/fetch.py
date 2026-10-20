@@ -55,7 +55,7 @@ def fetch_file(link: str, data_dir: str, position: int) -> None:
                 pbar.update(delta)
                 downloaded = current
 
-        urllib.request.re(
+        urllib.request.urlretrieve(
             link,
             destination,
             reporthook,
