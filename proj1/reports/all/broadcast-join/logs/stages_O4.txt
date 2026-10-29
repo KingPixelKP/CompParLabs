@@ -1,0 +1,17 @@
+stage attempt tasks status run_s shuffleR shuffleW memSpill diskSpill task_ms[min,p50,p75,max] max/med name
+0 0 1 COMPLETE 0.2 0.0MB 0.0MB 0.0MB 0.0MB [210, 210, 210, 210] 1.0 parquet at DirectMethodHandleAccessor.java:104
+1 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [13, 13, 13, 13] 1.0 parquet at DirectMethodHandleAccessor.java:104
+2 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [7, 7, 7, 7] 1.0 parquet at DirectMethodHandleAccessor.java:104
+3 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [6, 6, 6, 6] 1.0 parquet at DirectMethodHandleAccessor.java:104
+4 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [9, 9, 9, 9] 1.0 parquet at DirectMethodHandleAccessor.java:104
+5 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [5, 5, 5, 5] 1.0 parquet at DirectMethodHandleAccessor.java:104
+6 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [6, 6, 6, 6] 1.0 parquet at DirectMethodHandleAccessor.java:104
+7 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [3, 3, 3, 3] 1.0 parquet at DirectMethodHandleAccessor.java:104
+8 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [3, 3, 3, 3] 1.0 parquet at DirectMethodHandleAccessor.java:104
+9 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [3, 3, 3, 3] 1.0 parquet at DirectMethodHandleAccessor.java:104
+10 0 18 COMPLETE 56.7 0.0MB 1.7MB 0.0MB 0.0MB [32, 2765, 5742, 6271] 2.3 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+12 0 1 COMPLETE 0.3 1.7MB 0.0MB 0.0MB 0.0MB [275, 275, 275, 275] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+13 0 18 COMPLETE 62.5 0.0MB 0.0MB 0.0MB 0.0MB [37, 3166, 6242, 6703] 2.1 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+15 0 1 COMPLETE 0.1 0.0MB 0.0MB 0.0MB 0.0MB [51, 51, 51, 51] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+17 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [19, 19, 19, 19] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+20 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [48, 48, 48, 48] 1.0 save at DirectMethodHandleAccessor.java:104
