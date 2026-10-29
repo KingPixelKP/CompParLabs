@@ -1,5 +1,7 @@
 import argparse
+import operator
 import pathlib
+import re
 from enum import Enum
 import logging
 import functools
@@ -10,6 +12,7 @@ import sys
 
 import pyspark.sql.functions as sf
 from pyspark.sql import (
+    Column,
     SparkSession,
     Window,
     DataFrame,
@@ -17,10 +20,10 @@ from pyspark.sql import (
 from pyspark.sql.types import (
     DoubleType,
     IntegerType,
-    LongType,
     StructField,
     StructType,
     StringType,
+    TimestampNTZType,
 )
 from pyspark import StorageLevel
 
@@ -36,6 +39,7 @@ class Command(Enum):
     O1 = "O1"
     O2 = "O2"
     O4 = "O4"
+    All = "all"
 
     def __str__(self):
         return self.value
@@ -53,6 +57,14 @@ class Master(Enum):
         return self.value
 
 
+class Sink(Enum):
+    Show = "show"
+    Noop = "noop"  # Computes every row without printing, use for timing runs
+
+    def __str__(self):
+        return self.value
+
+
 @dataclass(frozen=True)
 class Features:
     explain_plan: bool = field(
@@ -60,7 +72,7 @@ class Features:
         metadata={"help": "Emit physical and logical plans."},
     )
     use_cleansed: bool = field(
-        default=False,
+        default=True,
         metadata={
             "help": "Use the output DataFrame of M1 in all other commands (No op on M1)"
         },
@@ -83,6 +95,61 @@ class Features:
             "help": "Convert string columns to integer IDs for joins."
         },  # TODO: Implement this feature
     )
+    repartition_pickup: bool = field(
+        default=False,
+        metadata={"help": "Repartition trips by PULocationID before O4 bucketing."},
+    )
+
+
+@dataclass(frozen=True)
+class O4Thresholds:
+    transit_threshold: float = field(
+        default=0.2,
+        metadata={
+            "help": "O4: min fraction of airport trips (RatecodeID in {2, 3}) for a transit bucket."
+        },
+    )
+    commercial_threshold: float = field(
+        default=0.01,
+        metadata={
+            "help": "O4: min fraction of negotiated fares (RatecodeID = 5) for a commercial bucket."
+        },
+    )
+    residential_threshold: float = field(
+        default=0.1,
+        metadata={
+            "help": "O4: min fraction of group trips (passenger_count >= 4) for a residential bucket."
+        },
+    )
+
+
+# Columns of the assignment's schema table, with their documented types
+TRIP_SCHEMA = StructType(
+    [
+        StructField("tpep_pickup_datetime", TimestampNTZType(), nullable=True),
+        StructField("tpep_dropoff_datetime", TimestampNTZType(), nullable=True),
+        StructField("PULocationID", IntegerType(), nullable=True),
+        StructField("DOLocationID", IntegerType(), nullable=True),
+        StructField("passenger_count", IntegerType(), nullable=True),
+        StructField("trip_distance", DoubleType(), nullable=True),
+        StructField("RatecodeID", IntegerType(), nullable=True),
+        StructField("payment_type", IntegerType(), nullable=True),
+        StructField("fare_amount", DoubleType(), nullable=True),
+        StructField("tip_amount", DoubleType(), nullable=True),
+        StructField("total_amount", DoubleType(), nullable=True),
+    ]
+)
+
+# Columns every operation relies on, a null in any of them invalidates the record
+REQUIRED_COLUMNS = [
+    "tpep_pickup_datetime",
+    "tpep_dropoff_datetime",
+    "PULocationID",
+    "DOLocationID",
+    "passenger_count",
+    "trip_distance",
+    "fare_amount",
+]
 
 
 def add_dataclass_arguments(parser: argparse.ArgumentParser, cls: type) -> None:
@@ -108,6 +175,11 @@ def add_dataclass_arguments(parser: argparse.ArgumentParser, cls: type) -> None:
             )
 
 
+def dataclass_from_args(cls: type, args: argparse.Namespace):
+    names = {f.name for f in fields(cls)}
+    return cls(**{k: v for k, v in vars(args).items() if k in names})
+
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -117,7 +189,7 @@ def build_arg_parser():
         "command",
         type=Command,
         choices=list(Command),
-        help="Command to run",
+        help="Command to run (all runs every command in order)",
     )
     parser.add_argument(
         "-m",
@@ -130,14 +202,27 @@ def build_arg_parser():
         "--data-dir",
         type=pathlib.Path,
         default="./proj1/data",
-        help="Data dir to retrieve data from, if not given it'll be inferred from the master",
+        help="Directory holding the yellow_tripdata_YYYY-MM.parquet files and taxi_zone_lookup.csv",
     )
     parser.add_argument(
-        "--partitions",
+        "--years",
         type=int,
+        nargs="+",
         default=None,
-        help="Target partition count for `ratings` after read "
-        "(defaults to 2x the driver's default parallelism)",
+        help="Only load trip files of these years (default: every file in --data-dir)",
+    )
+    parser.add_argument(
+        "--sample-fraction",
+        type=float,
+        default=None,
+        help="Run on a random fraction (0-1] of the trip records",
+    )
+    parser.add_argument(
+        "--sink",
+        type=Sink,
+        choices=list(Sink),
+        default=Sink.Show,
+        help="show prints the first rows, noop computes every row without printing (timing runs)",
     )
     parser.add_argument(
         "-od",
@@ -145,6 +230,11 @@ def build_arg_parser():
         type=pathlib.Path,
         default="out",
         help="If the chosen command has an output it'll be redirected here",
+    )
+    parser.add_argument(
+        "--keep-ui",
+        action="store_true",
+        help="Wait for Enter before exiting to keep the Spark WebUI up",
     )
     parser.add_argument(
         "-d",
@@ -159,6 +249,7 @@ def build_arg_parser():
         help="Be verbose",
     )
     add_dataclass_arguments(parser, Features)
+    add_dataclass_arguments(parser, O4Thresholds)
     return parser
 
 
@@ -174,11 +265,14 @@ def create_spark_session(master: Master):
         .config(
             "spark.sql.autoBroadcastJoinThreshold", "-1"
         )  # NOTE: This is for profiling purposes
+        .config(
+            "spark.sql.session.timeZone", "UTC"
+        )  # TLC timestamps are NYC wall-clock times, keep hour/day independent of the host zone
         .getOrCreate()
     )
 
 
-def aggregate_files(data_dir, suffix) -> list[pathlib.Path]:
+def aggregate_files(data_dir, suffix) -> list[str]:
     logger.info(f"Aggregating {suffix} files in {data_dir}")
     files = [
         str(path)
@@ -191,22 +285,59 @@ def aggregate_files(data_dir, suffix) -> list[pathlib.Path]:
     return files
 
 
+def file_year(path: str) -> int:
+    return int(re.search(r"(\d{4})-\d{2}\.parquet$", path).group(1))
+
+
+def load_trips(spark: SparkSession, files: list[str]) -> DataFrame:
+    # Older TLC files store some columns with other physical types (e.g.
+    # passenger_count as double), so files are read in groups of equal schema and
+    # each group is cast to TRIP_SCHEMA before the union.
+    groups: dict[str, list[str]] = {}
+    for path in files:
+        schema = spark.read.parquet(path).schema
+        groups.setdefault(schema.simpleString(), []).append(path)
+
+    def conform(df: DataFrame) -> DataFrame:
+        present = {c.lower() for c in df.columns}
+        return df.select(
+            *[
+                (
+                    sf.col(f.name).try_cast(f.dataType)
+                    if f.name.lower() in present
+                    else sf.lit(None).cast(f.dataType)
+                ).alias(f.name)
+                for f in TRIP_SCHEMA.fields
+            ]
+        )
+
+    return functools.reduce(
+        DataFrame.unionByName,
+        [conform(spark.read.parquet(*paths)) for paths in groups.values()],
+    )
+
+
+def validity_rules() -> dict[str, Column]:
+    """M1 cleaning criteria, a record is kept only if every rule holds.
+
+    Keys name the criterion a record is removed for when its rule fails.
+    """
+    return {
+        "null_field": functools.reduce(
+            operator.and_, [sf.col(c).isNotNull() for c in REQUIRED_COLUMNS]
+        ),
+        "fare_le_0": sf.col("fare_amount") > 0,
+        "distance_le_0": sf.col("trip_distance") > 0,
+        "passengers_out_of_range": sf.col("passenger_count").between(1, 6),
+        "dropoff_le_pickup": sf.col("tpep_dropoff_datetime")
+        > sf.col("tpep_pickup_datetime"),
+        "location_out_of_range": sf.col("PULocationID").between(1, 263)
+        & sf.col("DOLocationID").between(1, 263),
+    }
+
+
 def get_clean(trip_df: DataFrame):
-    not_null = functools.reduce(
-        lambda a, b: a & b, [sf.col(c).isNotNull() for c in trip_df.columns]
-    )
-
-    valid_df = trip_df.filter(
-        not_null
-        & (sf.col("fare_amount") > 0)
-        & (sf.col("trip_distance") > 0)
-        & sf.col("passenger_count").between(1, 6)
-        & (sf.col("tpep_dropoff_datetime") > sf.col("tpep_pickup_datetime"))
-        & sf.col("PULocationID").between(1, 263)
-        & sf.col("DOLocationID").between(1, 263)
-    )
-
-    return valid_df
+    return trip_df.filter(functools.reduce(operator.and_, validity_rules().values()))
 
 
 def explain_df(df: DataFrame, features: Features):
@@ -218,19 +349,42 @@ def explain_df(df: DataFrame, features: Features):
     df.explain(True)
 
 
-def run_M1(trip_df: DataFrame, features: Features):
+def emit(df: DataFrame, sink: Sink, rows: int = 20):
+    if sink == Sink.Noop:
+        df.write.format("noop").mode("overwrite").save()
+    else:
+        df.show(rows, truncate=False)
 
-    clean = get_clean(trip_df)
 
-    explain_df(clean, features)
+def run_M1(trip_df: DataFrame, features: Features, sink: Sink):
+    rules = validity_rules()
+    keep = functools.reduce(operator.and_, rules.values())
 
-    print(f"Cleansed: {trip_df.count() - clean.count()} rows")
+    # A record failing several criteria is counted under each of them, removed
+    # counts it once
+    stats = (
+        trip_df.groupBy(sf.year("tpep_pickup_datetime").alias("year"))
+        .agg(
+            sf.count("*").alias("records"),
+            *[sf.count_if(~rule).alias(name) for name, rule in rules.items()],
+            sf.count_if(~sf.coalesce(keep, sf.lit(False))).alias("removed"),
+        )
+        .orderBy("year")
+    )
+
+    explain_df(stats, features)
+
+    emit(stats, sink, rows=100)
 
 
 def run_M2(
-    trip_df: DataFrame, zone_df: DataFrame, features: Features, output_dir: pathlib.Path
+    trip_df: DataFrame,
+    zone_df: DataFrame,
+    features: Features,
+    sink: Sink,
+    output_dir: pathlib.Path,
 ):
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+    pickup_ts = sf.col("tpep_pickup_datetime")
 
     if features.use_cleansed:
         trip_df = get_clean(trip_df)
@@ -256,8 +410,10 @@ def run_M2(
         .withColumn("hour_of_day", sf.hour(pickup_ts))
         .withColumn(
             "trip_duration_minutes",
-            (sf.col("tpep_dropoff_datetime") - sf.col("tpep_pickup_datetime"))
-            / 60_000_000,
+            sf.timestamp_diff(
+                "SECOND", "tpep_pickup_datetime", "tpep_dropoff_datetime"
+            )
+            / 60,
         )
         .groupBy("Borough", "day_of_week", "hour_of_day")
         .agg(
@@ -270,15 +426,15 @@ def run_M2(
 
     explain_df(dated_df, features)
 
-    dated_df.show()
+    emit(dated_df, sink)
 
     dated_df.write.mode("overwrite").partitionBy("Borough").parquet(
         str(output_dir / "temporal")
     )
 
 
-def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
+    pickup_ts = sf.col("tpep_pickup_datetime")
 
     if features.use_cleansed:
         trip_df = get_clean(trip_df)
@@ -295,13 +451,15 @@ def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
 
     zone_to_join = sf.broadcast(zone_df) if features.broadcast_join else zone_df
 
+    # Zone names are not unique (e.g. Corona is LocationID 56 and 57), group by id
     base = (
         trip_df.join(
             zone_to_join,
             trip_df.PULocationID == zone_df.LocationID,
         )
-        .withColumn("pickup_month", sf.month(pickup_ts))
-        .groupBy("Borough", "Zone", "pickup_month")
+        .withColumn("year", sf.year(pickup_ts))
+        .withColumn("month", sf.month(pickup_ts))
+        .groupBy("Borough", "PULocationID", "Zone", "year", "month")
         .agg(
             sf.count("*").alias("trip_volume"),
             sf.mean("fare_amount").alias("mean_fare"),
@@ -309,16 +467,18 @@ def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             sf.mean("trip_distance").alias("mean_distance"),
             sf.stddev("trip_distance").alias("stddev_distance"),
         )
+        # consecutive months differ by 1, so range frames span calendar months
+        .withColumn("month_index", sf.col("year") * 12 + sf.col("month"))
     )
 
     # every window's partition keys include Borough
-    rank_w = Window.partitionBy("Borough", "pickup_month").orderBy(
+    rank_w = Window.partitionBy("Borough", "month_index").orderBy(
         sf.col("trip_volume").desc()
     )
-    zone_w = Window.partitionBy("Borough", "Zone").orderBy("pickup_month")
-    roll_3 = zone_w.rowsBetween(-2, 0)
-    hist_w = zone_w.rowsBetween(-2, -1)
-    boro_w = Window.partitionBy("Borough").orderBy("pickup_month").rangeBetween(-2, 0)
+    zone_w = Window.partitionBy("Borough", "PULocationID").orderBy("month_index")
+    roll_3 = zone_w.rangeBetween(-2, 0)
+    hist_w = zone_w.rangeBetween(-2, -1)
+    boro_w = Window.partitionBy("Borough").orderBy("month_index").rangeBetween(-2, 0)
 
     monthly = (
         base.withColumn("volume_rank", sf.dense_rank().over(rank_w))
@@ -339,11 +499,11 @@ def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features):
 
     explain_df(monthly, features)
 
-    monthly.show()
+    emit(monthly, sink)
 
 
-def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features):
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
+    pickup_ts = sf.col("tpep_pickup_datetime")
 
     if features.use_cleansed:
         trip_df = get_clean(trip_df)
@@ -371,6 +531,12 @@ def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             sf.try_divide(sf.col("fare_amount"), sf.col("trip_distance")),
         )
         .withColumn("hour_of_day", sf.hour(pickup_ts))
+        .withColumn(
+            "day_type",
+            sf.when(sf.dayofweek(pickup_ts).isin(1, 7), "weekend").otherwise(
+                "weekday"
+            ),
+        )
     )
 
     bucket_window = Window.partitionBy("PULocationID", "hour_of_day")
@@ -385,16 +551,27 @@ def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features):
         )
     )
 
-    # What does this mean? TODO: compare weekday vs. weekend anomaly rates broken down by payment_type and pickup
-    # borough.
+    anomaly_rates = (
+        base.groupBy("Borough", "payment_type")
+        .pivot("day_type", ["weekday", "weekend"])
+        .agg(
+            sf.avg(sf.col("is_anomaly").cast("int")).alias("anomaly_rate"),
+            sf.count(sf.lit(1)).alias("trips"),  # pivot rejects count("*")
+        )
+        .withColumn(
+            "weekend_minus_weekday_rate",
+            sf.col("weekend_anomaly_rate") - sf.col("weekday_anomaly_rate"),
+        )
+        .orderBy("Borough", "payment_type")
+    )
 
-    explain_df(base, features)
+    explain_df(anomaly_rates, features)
 
-    base.show()
+    emit(anomaly_rates, sink, rows=100)
 
 
-def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
+    pickup_ts = sf.col("tpep_pickup_datetime")
 
     if features.use_cleansed:
         trip_df = get_clean(trip_df)
@@ -417,14 +594,14 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
         zone_df = zone_df.cache()  # This isn't worth it here it just adds more stages
 
     # 2. Count trips per route per month
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
-
     monthly_routes = (
-        trip_df.withColumn("pickup_month", sf.month(pickup_ts))
+        trip_df.withColumn("year", sf.year(pickup_ts))
+        .withColumn("month", sf.month(pickup_ts))
         .groupBy(
             "PULocationID",
             "DOLocationID",
-            "pickup_month",
+            "year",
+            "month",
         )
         .agg(sf.count("*").alias("trip_volume"))
     )
@@ -432,7 +609,8 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     # 3. Calculate total outbound trips and route shares
     outbound_w = Window.partitionBy(
         "PULocationID",
-        "pickup_month",
+        "year",
+        "month",
     )
 
     monthly_routes = monthly_routes.withColumn(
@@ -469,7 +647,10 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     )
 
     # 5. Find the top 20 routes per pickup borough
+    # ids are kept since zone names are not unique (e.g. Corona is 56 and 57)
     borough_routes = routes.groupBy(
+        "PULocationID",
+        "DOLocationID",
         "pickup_borough",
         "pickup_zone",
         "dropoff_borough",
@@ -480,8 +661,8 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
 
     top_w = Window.partitionBy("pickup_borough").orderBy(
         sf.desc("total_trips"),
-        sf.asc("pickup_zone"),
-        sf.asc("dropoff_zone"),
+        sf.asc("PULocationID"),
+        sf.asc("DOLocationID"),
     )
 
     top20 = borough_routes.withColumn(
@@ -489,7 +670,7 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
         sf.row_number().over(top_w),
     ).filter(sf.col("route_rank") <= 20)
 
-    # 6. Compare route shares between Q1 and Q3
+    # 6. Compare route shares between Q1 and Q3 of each year
     # Compare Jan -> Mar against Jul -> Sep.
     route_trends = (
         routes.groupBy(
@@ -499,8 +680,9 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             "pickup_zone",
             "dropoff_borough",
             "dropoff_zone",
+            "year",
         )
-        .pivot("pickup_month", list(range(1, 13)))
+        .pivot("month", list(range(1, 13)))
         .agg(sf.first("monthly_share"))
     )
 
@@ -523,43 +705,64 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features):
     explain_df(reversals, features)
 
     print("Monthly route counts and shares:")
-    routes.orderBy(
-        "PULocationID",
-        "pickup_month",
-        sf.desc("trip_volume"),
-    ).show(20, truncate=False)
+    emit(
+        routes.orderBy(
+            "PULocationID",
+            "year",
+            "month",
+            sf.desc("trip_volume"),
+        ),
+        sink,
+    )
 
     print("Top 20 routes per pickup borough:")
-    top20.orderBy(
-        "pickup_borough",
-        "route_rank",
-    ).show(100, truncate=False)
+    emit(
+        top20.orderBy(
+            "pickup_borough",
+            "route_rank",
+        ),
+        sink,
+        rows=100,
+    )
 
     print("Routes with Q1/Q3 share reversals:")
-    reversals.select(
-        "PULocationID",
-        "DOLocationID",
-        "pickup_zone",
-        "dropoff_zone",
-        "pickup_borough",
-        "dropoff_borough",
-        "1",
-        "3",
-        "7",
-        "9",
-        "q1_change",
-        "q3_change",
-    ).show(100, truncate=False)
+    emit(
+        reversals.select(
+            "PULocationID",
+            "DOLocationID",
+            "pickup_zone",
+            "dropoff_zone",
+            "pickup_borough",
+            "dropoff_borough",
+            "year",
+            "1",
+            "3",
+            "7",
+            "9",
+            "q1_change",
+            "q3_change",
+        ),
+        sink,
+        rows=100,
+    )
 
 
-def run_O4(trip_df: DataFrame, zone_df: DataFrame, features: Features):
-    pickup_ts = sf.timestamp_micros("tpep_pickup_datetime")
+def run_O4(
+    trip_df: DataFrame,
+    zone_df: DataFrame,
+    features: Features,
+    sink: Sink,
+    thresholds: O4Thresholds,
+):
+    pickup_ts = sf.col("tpep_pickup_datetime")
 
     if features.use_cleansed:
         trip_df = get_clean(trip_df)
 
-    trip_df = trip_df.withColumn("hour_of_day", sf.hour(pickup_ts)).withColumn(
-        "month", sf.month(pickup_ts)
+    trip_df = (
+        trip_df.withColumn("hour_of_day", sf.hour(pickup_ts))
+        .withColumn("year", sf.year(pickup_ts))
+        .withColumn("month", sf.month(pickup_ts))
     )
 
     if features.prune_column:
@@ -567,105 +770,72 @@ def run_O4(trip_df: DataFrame, zone_df: DataFrame, features: Features):
             "PULocationID",
             "RatecodeID",
             "passenger_count",
+            "year",
             "month",
             "hour_of_day",
             "fare_amount",
             "trip_distance",
         )
 
-    trip_df = trip_df.repartition(
-        "PULocationID"
-    )  # Repartition by PULocationID to optimize window functions #TODO: Write a report on the performance impact of this repartitioning relevant logs under ./logs/O4/repartition and ./logs/O4/baseline.log
+    if features.repartition_pickup:
+        trip_df = trip_df.repartition(
+            "PULocationID"
+        )  # TODO: Write a report on the performance impact of this repartitioning relevant logs under ./logs/O4/repartition and ./logs/O4/baseline.log
 
-    window = Window.partitionBy("PULocationID", "hour_of_day")
-
-    classified_df = (
-        trip_df.withColumn("trip_count", sf.count("*").over(window))
-        .withColumn(
-            "airport_trips",
-            sf.sum(sf.when(sf.col("RatecodeID").isin([2, 3]), 1).otherwise(0)).over(
-                window
+    # NOTE: Possible optimization use numbers instead of strings to identify each class
+    buckets = (
+        trip_df.groupBy("PULocationID", "hour_of_day")
+        .agg(
+            sf.avg(sf.when(sf.col("RatecodeID").isin(2, 3), 1).otherwise(0)).alias(
+                "airport_fraction"
+            ),
+            sf.avg(sf.when(sf.col("RatecodeID") == 5, 1).otherwise(0)).alias(
+                "negotiated_fraction"
+            ),
+            sf.avg(sf.when(sf.col("passenger_count") >= 4, 1).otherwise(0)).alias(
+                "group_fraction"
             ),
         )
         .withColumn(
-            "negotiated_rate_trips",
-            sf.sum(sf.when(sf.col("RatecodeID") == 5, 1).otherwise(0)).over(window),
-        )
-        .withColumn(
-            "group_trips",
-            sf.sum(sf.when(sf.col("passenger_count") >= 4, 1).otherwise(0)).over(
-                window
-            ),
-        )
-        .withColumn(
-            "airport_trip_share", sf.col("airport_trips") / sf.col("trip_count")
-        )
-        .withColumn(
-            "negotiated_rate_share",
-            sf.col("negotiated_rate_trips") / sf.col("trip_count"),
-        )
-        .withColumn(
-            "group_trip_share",
-            sf.col("group_trips") / sf.col("trip_count"),
+            "zone_type",
+            sf.when(
+                sf.col("airport_fraction") >= thresholds.transit_threshold, "transit"
+            )
+            .when(
+                sf.col("negotiated_fraction") >= thresholds.commercial_threshold,
+                "commercial",
+            )
+            .when(
+                sf.col("group_fraction") >= thresholds.residential_threshold,
+                "residential",
+            )
+            .otherwise("mixed"),
         )
     )
 
-    if features.prune_column:
-        classified_df = classified_df.drop(
-            "airport_trips",
-            "negotiated_rate_trips",
-            "group_trips",
-            "hour_of_day",
-            "trip_count",
-            "RatecodeID",
-            "passenger_count",
+    zone_type_stats = (
+        trip_df.join(buckets, ["PULocationID", "hour_of_day"])
+        .groupBy("zone_type", "year", "month")
+        .agg(
+            sf.count("*").alias("trips"),
+            sf.mean("fare_amount").alias("mean_fare"),
+            sf.stddev("fare_amount").alias("stddev_fare"),
+            sf.mean("trip_distance").alias("mean_distance"),
+            sf.stddev("trip_distance").alias("stddev_distance"),
         )
-
-    def classify_col(col, residential=0.1, commercial=0.4, transit=0.7):
-        # NOTE: Possible optimization use numbers instead of strings to identify each class
-
-        # TODO: Implement toggleable feature
-
-        return (
-            sf.when(col < residential, 0)
-            .when(col < commercial, 1)
-            .when(col < transit, 2)
-            .otherwise(3)
-        )
-
-    classified_df = (
-        classified_df.withColumn(
-            "airport_zone_type", classify_col(sf.col("airport_trip_share"))
-        )
-        .withColumn(
-            "negotiated_rate_zone_type", classify_col(sf.col("negotiated_rate_share"))
-        )
-        .withColumn("group_trips_zone_type", classify_col(sf.col("group_trip_share")))
+        .orderBy("zone_type", "year", "month")
     )
 
-    classified_df = classified_df.groupBy(
-        "month",
-        "airport_zone_type",
-        "negotiated_rate_zone_type",
-        "group_trips_zone_type",
-    ).agg(
-        sf.mean("fare_amount").alias("mean_fare"),
-        sf.stddev("fare_amount").alias("stddev_fare"),
-        sf.mean("trip_distance").alias("mean_distance"),
-        sf.stddev("trip_distance").alias("stddev_distance"),
-    )
+    explain_df(zone_type_stats, features)
 
-    explain_df(classified_df, features)
-
-    classified_df.show(20, truncate=False)
+    emit(zone_type_stats, sink, rows=100)
 
 
 def main() -> None:
     args = build_arg_parser().parse_args()
-    from dataclasses import fields
 
-    feature_names = {f.name for f in fields(Features)}
-    features = Features(**{k: v for k, v in vars(args).items() if k in feature_names})
+    features = dataclass_from_args(Features, args)
+    thresholds = dataclass_from_args(O4Thresholds, args)
 
     logging.basicConfig(
         level=(
@@ -684,11 +854,8 @@ def main() -> None:
     spark.sparkContext.setLogLevel("WARN")
     logger.debug("Spark Session Created")
 
-    target_partitions = args.partitions or spark.sparkContext.defaultParallelism * 2
-
     logger.info(f"Spark UI: {spark.sparkContext.uiWebUrl}")
     logger.info(f"Default parallelism: {spark.sparkContext.defaultParallelism}")
-    logger.info(f"Target partitions for ratings: {target_partitions}")
 
     logger.info(
         "autoBroadcastJoinThreshold=%s",
@@ -697,31 +864,6 @@ def main() -> None:
 
     for f in fields(features):
         logger.info(f"{f.name}={getattr(features, f.name)}")
-
-    parquet_schema = StructType(
-        [
-            StructField("VendorID", IntegerType(), nullable=True),
-            StructField("tpep_pickup_datetime", LongType(), nullable=True),
-            StructField("tpep_dropoff_datetime", LongType(), nullable=True),
-            StructField("passenger_count", LongType(), nullable=True),
-            StructField("trip_distance", DoubleType(), nullable=True),
-            StructField("RatecodeID", LongType(), nullable=True),
-            StructField("store_and_fwd_flag", StringType(), nullable=True),
-            StructField("PULocationID", IntegerType(), nullable=True),
-            StructField("DOLocationID", IntegerType(), nullable=True),
-            StructField("payment_type", LongType(), nullable=True),
-            StructField("fare_amount", DoubleType(), nullable=True),
-            StructField("extra", DoubleType(), nullable=True),
-            StructField("mta_tax", DoubleType(), nullable=True),
-            StructField("tip_amount", DoubleType(), nullable=True),
-            StructField("tolls_amount", DoubleType(), nullable=True),
-            StructField("improvement_surcharge", DoubleType(), nullable=True),
-            StructField("total_amount", DoubleType(), nullable=True),
-            StructField("congestion_surcharge", DoubleType(), nullable=True),
-            StructField("Airport_fee", DoubleType(), nullable=True),
-            StructField("cbd_congestion_fee", DoubleType(), nullable=True),
-        ]
-    )
 
     zone_schema = StructType(
         [
@@ -732,57 +874,42 @@ def main() -> None:
         ]
     )
 
-    trip_df = spark.read.schema(parquet_schema).parquet(
-        *aggregate_files(args.data_dir, ".parquet")
-    )
+    trip_files = [
+        f
+        for f in aggregate_files(args.data_dir, ".parquet")
+        if args.years is None or file_year(f) in args.years
+    ]
+    if not trip_files:
+        sys.exit(f"No trip files for years {args.years} in {args.data_dir}")
+
+    trip_df = load_trips(spark, trip_files)
+    if args.sample_fraction is not None:
+        trip_df = trip_df.sample(fraction=args.sample_fraction, seed=42)
+
     zone_df = spark.read.schema(zone_schema).csv(
-        *aggregate_files(args.data_dir, ".csv")
+        *aggregate_files(args.data_dir, ".csv"), header=True
     )
+
+    runners = {
+        Command.M1: lambda: run_M1(trip_df, features, args.sink),
+        Command.M2: lambda: run_M2(
+            trip_df, zone_df, features, args.sink, args.output_dir
+        ),
+        Command.M3: lambda: run_M3(trip_df, zone_df, features, args.sink),
+        Command.O1: lambda: run_O1(trip_df, zone_df, features, args.sink),
+        Command.O2: lambda: run_O2(trip_df, zone_df, features, args.sink),
+        Command.O4: lambda: run_O4(trip_df, zone_df, features, args.sink, thresholds),
+    }
+    commands = list(runners) if args.command == Command.All else [args.command]
 
     profiler = proj1.spark_profiler.SparkProfiler(spark)
     feature_str = ", ".join(
         f"{f.name}={getattr(features, f.name)}" for f in fields(features)
     )
 
-    with profiler.profile(f"{args.command}-features:{feature_str}"):
-        if args.command == Command.M1:
-            run_M1(
-                trip_df,
-                features,
-            )
-        elif args.command == Command.M2:
-            run_M2(
-                trip_df,
-                zone_df,
-                features,
-                args.output_dir,
-            )
-        elif args.command == Command.M3:
-            run_M3(
-                trip_df,
-                zone_df,
-                features,
-            )
-        elif args.command == Command.O1:
-            run_O1(
-                trip_df,
-                zone_df,
-                features,
-            )
-        elif args.command == Command.O2:
-            run_O2(
-                trip_df,
-                zone_df,
-                features,
-            )
-        elif args.command == Command.O4:
-            run_O4(
-                trip_df,
-                zone_df,
-                features,
-            )
-        else:
-            raise NotImplementedError("Nope!!!")
+    for command in commands:
+        with profiler.profile(f"{command}-features:{feature_str}"):
+            runners[command]()
 
     with pd.option_context(
         "display.max_rows",
@@ -796,4 +923,5 @@ def main() -> None:
 
     logger.info("Done")
 
-    input("Keeping WebUI Up, Hit Enter to Exit!")
+    if args.keep_ui:
+        input("Keeping WebUI Up, Hit Enter to Exit!")
