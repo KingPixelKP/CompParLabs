@@ -83,7 +83,9 @@ class Features:
     )
     broadcast_join: bool = field(
         default=False,
-        metadata={"help": "Broadcast the zone DataFrame during joins."},
+        metadata={
+            "help": "Broadcast the small side of joins (zone table, O4 bucket table)."
+        },
     )
     cache_dataframe: bool = field(
         default=False,
@@ -812,6 +814,8 @@ def run_O4(
             .otherwise("mixed"),
         )
     )
+
+    buckets = sf.broadcast(buckets) if features.broadcast_join else buckets
 
     zone_type_stats = (
         trip_df.join(buckets, ["PULocationID", "hour_of_day"])

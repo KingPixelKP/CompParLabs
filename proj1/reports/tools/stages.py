@@ -1,6 +1,6 @@
 """Run one command with --keep-ui and dump per-stage metrics + task duration quantiles.
 
-Usage: python stages.py <CMD> <out.txt>
+Usage: python stages.py <CMD> <out.txt> [extra proj1 args, e.g. --broadcast-join]
 """
 import json
 import socket
@@ -13,7 +13,7 @@ import urllib.request
 API = "http://localhost:4040/api/v1/applications"
 TIMEOUT_S = 600
 
-cmd, out = sys.argv[1], sys.argv[2]
+cmd, out, extra = sys.argv[1], sys.argv[2], sys.argv[3:]
 
 
 def get(url):
@@ -32,7 +32,7 @@ with socket.socket() as sock:
 
 with tempfile.TemporaryFile("w+") as log:
     proc = subprocess.Popen(
-        ["uv", "run", "--package", "proj1", "proj1", cmd, "--sink", "noop", "--keep-ui", "-v"],
+        ["uv", "run", "--package", "proj1", "proj1", cmd, "--sink", "noop", "--keep-ui", "-v", *extra],
         stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT, text=True,
     )
     # --keep-ui logs "Done" then waits for Enter with the UI still up
