@@ -1,0 +1,246 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="391.75000381469727" height="1180" viewBox="-16 -16 391.75000381469727 1180" class=""><style>/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:root, [data-bs-theme="light"] {
+  --spark-sql-cluster-fill: #A0DFFF;
+  --spark-sql-cluster-stroke: #3EC0FF;
+  --spark-sql-node-fill: #C3EBFF;
+  --spark-sql-edge: #444;
+  --spark-sql-selected-fill: #E25A1CFF;
+  --spark-sql-selected-stroke: #317EACFF;
+  --spark-sql-linked-fill: #FFC106FF;
+  --spark-sql-search-stroke: #FD7E14;
+}
+[data-bs-theme="dark"] {
+  --spark-sql-cluster-fill: #1a5276;
+  --spark-sql-cluster-stroke: #5dade2;
+  --spark-sql-node-fill: #1b4f72;
+  --spark-sql-edge: #adb5bd;
+  --spark-sql-selected-fill: #c0470fff;
+  --spark-sql-selected-stroke: #5dade2ff;
+  --spark-sql-linked-fill: #d4a00aff;
+  --spark-sql-search-stroke: #ffa94d;
+}
+
+svg g.label {
+  font-size: 0.85rem;
+  font-weight: normal;
+  text-shadow: none;
+  color: var(--bs-body-color);
+}
+
+svg g.cluster rect {
+  fill: var(--spark-sql-cluster-fill);
+  stroke: var(--spark-sql-cluster-stroke);
+  stroke-width: 1px;
+}
+
+svg g.cluster &gt; g.label {
+  font-size: 0.75em;
+  font-style: italic;
+}
+
+svg g.node rect {
+  fill: var(--spark-sql-node-fill);
+  stroke: var(--spark-sql-cluster-stroke);
+  stroke-width: 1px;
+}
+
+/* Highlight the SparkPlan node name */
+svg text :first-child:not(.stageId-and-taskId-metrics) {
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+svg text {
+  fill: var(--bs-body-color);
+}
+
+svg path {
+  stroke: var(--spark-sql-edge);
+  stroke-width: 1.5px;
+}
+
+/* Breaks the long string like file path when showing tooltips */
+.tooltip-inner {
+  word-wrap:break-word;
+}
+
+/* Breaks the long job url list when showing Details for Query in SQL */
+.job-url {
+  word-wrap: break-word;
+}
+
+svg g.node rect.selected {
+  fill: var(--spark-sql-selected-fill);
+  stroke: var(--spark-sql-selected-stroke);
+  stroke-width: 2px;
+}
+
+svg g.node rect.linked {
+  fill: var(--spark-sql-linked-fill);
+  stroke: var(--spark-sql-selected-stroke);
+  stroke-width: 2px;
+}
+
+svg path.linked {
+  fill: var(--spark-sql-selected-stroke);
+  stroke: var(--spark-sql-selected-stroke);
+  stroke-width: 2px;
+}
+
+/* Detail side panel */
+#plan-viz-details-panel .card {
+  font-size: 0.75rem;
+}
+
+#plan-viz-details-panel .card-body {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#plan-viz-details-panel .card-header {
+  background-color: var(--spark-sql-node-fill);
+  border-bottom-color: var(--spark-sql-cluster-stroke);
+}
+
+#plan-viz-details-panel .table th,
+#plan-viz-details-panel .table td:first-child {
+  white-space: nowrap;
+}
+
+#plan-viz-details-panel .table td:last-child {
+  word-break: break-word;
+}
+
+/* Edge labels showing row counts */
+.edgeLabel text {
+  font-size: 10px;
+  fill: var(--bs-secondary-color);
+}
+
+/* SVG text color for dark mode support */
+#plan-viz-graph .node text,
+#plan-viz-graph g.cluster text {
+  fill: var(--bs-body-color);
+}
+
+#plan-viz-graph {
+  position: relative;
+}
+
+#plan-viz-graph svg {
+  width: 100%;
+  height: 70vh;
+  max-height: 70vh;
+  display: block;
+  cursor: grab;
+  background-color: var(--bs-body-bg);
+  user-select: none;
+}
+
+#plan-viz-graph svg.grabbing {
+  cursor: grabbing;
+}
+
+/* Allow text selection inside HTML labels (detailed mode metrics tables) */
+#plan-viz-graph svg foreignObject,
+#plan-viz-graph svg foreignObject * {
+  user-select: text;
+}
+
+.plan-viz-zoom-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.plan-viz-zoom-toolbar #plan-viz-zoom-level {
+  display: inline-block;
+  min-width: 3.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#plan-viz-search-expanded {
+  width: auto;
+}
+
+#plan-viz-search-input {
+  width: 12rem;
+}
+
+#plan-viz-search-count {
+  min-width: 4.5rem;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+}
+
+#plan-viz-search-count.no-match {
+  color: var(--bs-danger);
+}
+
+/* Search result highlight: outline matched node/cluster with the search color. */
+svg g.node rect.search-match,
+svg g.cluster.search-match &gt; rect {
+  stroke: var(--spark-sql-search-stroke);
+  stroke-width: 3px;
+}
+
+/* Currently active match: keep the outline visible and add an accent fill. */
+svg g.node rect.search-match.search-active {
+  fill: var(--spark-sql-linked-fill);
+}
+
+/* Dim non-matching nodes/clusters when a search is active.
+   `!important` is needed because dagre-d3 writes an inline `opacity: 1`
+   style on each &lt;g class="node"&gt;/&lt;g class="cluster"&gt; at render time. */
+svg g.node.search-dimmed,
+svg g.cluster.search-dimmed {
+  opacity: 0.3 !important;
+}
+
+/* Inline &lt;pre&gt; renderer used by the shared SQL DataTable column factory
+ * (sql-table-utils.js) on the execution detail page. Keeps long SQL/error
+ * text legible without stretching the row. */
+.sql-cell-pre {
+  font-size: 0.85rem;
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  background-color: transparent;
+}
+
+/* Collapsible disclosure used for long Description / Error Message cells.
+ * Uses the native &lt;details&gt;/&lt;summary&gt; element so no JavaScript is needed. */
+.sql-cell-details &gt; summary {
+  cursor: pointer;
+  font-family: var(--bs-font-monospace);
+  font-size: 0.85rem;
+  list-style: revert;
+  user-select: none;
+}
+.sql-cell-details[open] &gt; summary {
+  margin-bottom: 0.25rem;
+}
+</style><g class="zoom-layer"><g><g class="output"><g class="clusters"><g class="cluster" id="cluster2" style="opacity: 1;" transform="translate(188.47916984558105,995.5)"><rect width="118.53333282470703" height="53" x="-59.266666412353516" y="-26.5" rx="5" ry="5"/><g class="label"><g transform="translate(54.266666412353516,-21.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(7) / 95 ms</tspan></text></g></g></g><g class="cluster" id="cluster6" style="opacity: 1;" transform="translate(222.32083702087402,718.5)"><rect width="273.7583351135254" height="179" x="-136.8791675567627" y="-89.5" rx="5" ry="5"/><g class="label"><g transform="translate(131.8791675567627,-84.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(6) / 1.6 m</tspan></text></g></g></g><g class="cluster" id="cluster10" style="opacity: 1;" transform="translate(130.52083587646484,567.5)"><rect width="70.89166641235352" height="53" x="-35.44583320617676" y="-26.5" rx="5" ry="5"/><g class="label"><g transform="translate(30.445833206176758,-21.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(4) / 1.6 m</tspan></text></g></g></g><g class="cluster" id="cluster15" style="opacity: 1;" transform="translate(63.92500114440918,172.5)"><rect width="127.85000228881836" height="199" x="-63.92500114440918" y="-99.5" rx="5" ry="5"/><g class="label"><g transform="translate(58.92500114440918,-94.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(1) / 38.7 s</tspan></text></g></g></g><g class="cluster" id="cluster20" style="opacity: 1;" transform="translate(209.75000381469727,172.5)"><rect width="123.80000305175781" height="199" x="-61.900001525878906" y="-99.5" rx="5" ry="5"/><g class="label"><g transform="translate(56.900001525878906,-94.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(2) / 16.5 s</tspan></text></g></g></g><g class="cluster" id="cluster25" style="opacity: 1;" transform="translate(311.25417137145996,567.5)"><rect width="70.89166641235352" height="53" x="-35.44583320617676" y="-26.5" rx="5" ry="5"/><g class="label"><g transform="translate(30.445833206176758,-21.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(5) / 1.6 m</tspan></text></g></g></g><g class="cluster" id="cluster29" style="opacity: 1;" transform="translate(312.37917137145996,353.5)"><rect width="73.14166641235352" height="53" x="-36.57083320617676" y="-26.5" rx="5" ry="5"/><g class="label"><g transform="translate(31.570833206176758,-21.5)" text-anchor="end"><text><tspan xml:space="preserve" dy="1em" x="1">(3) / 318 ms</tspan></text></g></g></g></g><g class="edgePaths"><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,1095L188.47916984558105,1097.9166666666667C188.47916984558105,1100.8333333333333,188.47916984558105,1106.6666666666667,188.47916984558105,1112.5C188.47916984558105,1118.3333333333333,188.47916984558105,1124.1666666666667,188.47916984558105,1127.0833333333333L188.47916984558105,1130" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead216)" style="fill: none"/><defs><marker id="arrowhead216" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,1004.5L188.47916984558105,1007.4166666666666C188.47916984558105,1010.3333333333334,188.47916984558105,1016.1666666666666,188.47916984558105,1023.6666666666666C188.47916984558105,1031.1666666666667,188.47916984558105,1040.3333333333333,188.47916984558105,1049.5C188.47916984558105,1058.6666666666667,188.47916984558105,1067.8333333333333,188.47916984558105,1072.4166666666667L188.47916984558105,1077" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead217)" style="fill: none"/><defs><marker id="arrowhead217" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,934L188.47916984558105,936.9166666666666C188.47916984558105,939.8333333333334,188.47916984558105,945.6666666666666,188.47916984558105,951.5C188.47916984558105,957.3333333333334,188.47916984558105,963.1666666666666,188.47916984558105,969C188.47916984558105,974.8333333333334,188.47916984558105,980.6666666666666,188.47916984558105,983.5833333333334L188.47916984558105,986.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead218)" style="fill: none"/><defs><marker id="arrowhead218" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,881L188.47916984558105,883.9166666666666C188.47916984558105,886.8333333333334,188.47916984558105,892.6666666666666,188.47916984558105,898.5C188.47916984558105,904.3333333333334,188.47916984558105,910.1666666666666,188.47916984558105,913.0833333333334L188.47916984558105,916" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead219)" style="fill: none"/><defs><marker id="arrowhead219" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,790.5L188.47916984558105,793.4166666666666C188.47916984558105,796.3333333333334,188.47916984558105,802.1666666666666,188.47916984558105,809.6666666666666C188.47916984558105,817.1666666666666,188.47916984558105,826.3333333333334,188.47916984558105,835.5C188.47916984558105,844.6666666666666,188.47916984558105,853.8333333333334,188.47916984558105,858.4166666666666L188.47916984558105,863" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead220)" style="fill: none"/><defs><marker id="arrowhead220" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,737.5L188.47916984558105,740.4166666666666C188.47916984558105,743.3333333333334,188.47916984558105,749.1666666666666,188.47916984558105,755C188.47916984558105,760.8333333333334,188.47916984558105,766.6666666666666,188.47916984558105,769.5833333333334L188.47916984558105,772.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead221)" style="fill: none"/><defs><marker id="arrowhead221" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M188.47916984558105,664.5L188.47916984558105,669.0833333333334C188.47916984558105,673.6666666666666,188.47916984558105,682.8333333333334,188.47916984558105,692C188.47916984558105,701.1666666666666,188.47916984558105,710.3333333333334,188.47916984558105,714.9166666666666L188.47916984558105,719.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead222)" style="fill: none"/><defs><marker id="arrowhead222" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M135.0750026702881,576.5L135.0750026702881,579.4166666666666C135.0750026702881,582.3333333333334,135.0750026702881,588.1666666666666,135.0750026702881,594C135.0750026702881,599.8333333333334,135.0750026702881,605.6666666666666,135.0750026702881,611.5C135.0750026702881,617.3333333333334,135.0750026702881,623.1666666666666,140.95281981222286,629C146.8306369541576,634.8333333333334,158.58627123802714,640.6666666666666,164.4640883799619,643.5833333333334L170.34190552189665,646.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead223)" style="fill: none"/><defs><marker id="arrowhead223" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M135.0750026702881,506L135.0750026702881,508.9166666666667C135.0750026702881,511.8333333333333,135.0750026702881,517.6666666666666,135.0750026702881,523.5C135.0750026702881,529.3333333333334,135.0750026702881,535.1666666666666,135.0750026702881,541C135.0750026702881,546.8333333333334,135.0750026702881,552.6666666666666,135.0750026702881,555.5833333333334L135.0750026702881,558.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead224)" style="fill: none"/><defs><marker id="arrowhead224" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M135.0750026702881,453L135.0750026702881,455.9166666666667C135.0750026702881,458.8333333333333,135.0750026702881,464.6666666666667,135.0750026702881,470.5C135.0750026702881,476.3333333333333,135.0750026702881,482.1666666666667,135.0750026702881,485.0833333333333L135.0750026702881,488" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead225)" style="fill: none"/><defs><marker id="arrowhead225" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M135.0750026702881,362.5L135.0750026702881,365.4166666666667C135.0750026702881,368.3333333333333,135.0750026702881,374.1666666666667,135.0750026702881,381.6666666666667C135.0750026702881,389.1666666666667,135.0750026702881,398.3333333333333,135.0750026702881,407.5C135.0750026702881,416.6666666666667,135.0750026702881,425.8333333333333,135.0750026702881,430.4166666666667L135.0750026702881,435" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead226)" style="fill: none"/><defs><marker id="arrowhead226" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M61.150001525878906,254.5L61.150001525878906,257.4166666666667C61.150001525878906,260.3333333333333,61.150001525878906,266.1666666666667,61.150001525878906,273.6666666666667C61.150001525878906,281.1666666666667,61.150001525878906,290.3333333333333,61.150001525878906,299.5C61.150001525878906,308.6666666666667,61.150001525878906,317.8333333333333,70.55972385406494,325.78978317443404C79.96944618225098,333.74623301553476,98.78889083862305,340.49246603106957,108.19861316680908,343.8655825388369L117.60833549499512,347.2386990466043" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead227)" style="fill: none"/><defs><marker id="arrowhead227" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M61.150001525878906,181.5L61.150001525878906,186.08333333333334C61.150001525878906,190.66666666666666,61.150001525878906,199.83333333333334,61.150001525878906,209C61.150001525878906,218.16666666666666,61.150001525878906,227.33333333333334,61.150001525878906,231.91666666666666L61.150001525878906,236.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead228)" style="fill: none"/><defs><marker id="arrowhead228" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M61.150001525878906,108.5L61.150001525878906,113.08333333333333C61.150001525878906,117.66666666666667,61.150001525878906,126.83333333333333,61.150001525878906,136C61.150001525878906,145.16666666666666,61.150001525878906,154.33333333333334,61.150001525878906,158.91666666666666L61.150001525878906,163.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead229)" style="fill: none"/><defs><marker id="arrowhead229" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M61.150001525878906,18L61.150001525878906,22.583333333333332C61.150001525878906,27.166666666666668,61.150001525878906,36.333333333333336,61.150001525878906,45.5C61.150001525878906,54.666666666666664,61.150001525878906,63.833333333333336,61.150001525878906,71.33333333333333C61.150001525878906,78.83333333333333,61.150001525878906,84.66666666666667,61.150001525878906,87.58333333333333L61.150001525878906,90.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead230)" style="fill: none"/><defs><marker id="arrowhead230" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M209.00000381469727,254.5L209.00000381469727,257.4166666666667C209.00000381469727,260.3333333333333,209.00000381469727,266.1666666666667,209.00000381469727,273.6666666666667C209.00000381469727,281.1666666666667,209.00000381469727,290.3333333333333,209.00000381469727,299.5C209.00000381469727,308.6666666666667,209.00000381469727,317.8333333333333,199.59028148651123,325.78978317443404C190.1805591583252,333.74623301553476,171.36111450195312,340.49246603106957,161.9513921737671,343.8655825388369L152.54166984558105,347.2386990466043" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead231)" style="fill: none"/><defs><marker id="arrowhead231" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M209.00000381469727,181.5L209.00000381469727,186.08333333333334C209.00000381469727,190.66666666666666,209.00000381469727,199.83333333333334,209.00000381469727,209C209.00000381469727,218.16666666666666,209.00000381469727,227.33333333333334,209.00000381469727,231.91666666666666L209.00000381469727,236.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead232)" style="fill: none"/><defs><marker id="arrowhead232" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M209.00000381469727,108.5L209.00000381469727,113.08333333333333C209.00000381469727,117.66666666666667,209.00000381469727,126.83333333333333,209.00000381469727,136C209.00000381469727,145.16666666666666,209.00000381469727,154.33333333333334,209.00000381469727,158.91666666666666L209.00000381469727,163.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead233)" style="fill: none"/><defs><marker id="arrowhead233" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M209.00000381469727,18L209.00000381469727,22.583333333333332C209.00000381469727,27.166666666666668,209.00000381469727,36.333333333333336,209.00000381469727,45.5C209.00000381469727,54.666666666666664,209.00000381469727,63.833333333333336,209.00000381469727,71.33333333333333C209.00000381469727,78.83333333333333,209.00000381469727,84.66666666666667,209.00000381469727,87.58333333333333L209.00000381469727,90.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead234)" style="fill: none"/><defs><marker id="arrowhead234" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M315.8083381652832,576.5L315.8083381652832,579.4166666666666C315.8083381652832,582.3333333333334,315.8083381652832,588.1666666666666,315.8083381652832,594C315.8083381652832,599.8333333333334,315.8083381652832,605.6666666666666,315.8083381652832,611.5C315.8083381652832,617.3333333333334,315.8083381652832,623.1666666666666,301.2298657099406,629.1174340438364C286.65139325459796,635.0682014210062,257.4944483439128,641.1364028420124,242.91597588857016,644.1705035525156L228.33750343322754,647.2046042630187" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead235)" style="fill: none"/><defs><marker id="arrowhead235" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M315.8083381652832,506L315.8083381652832,508.9166666666667C315.8083381652832,511.8333333333333,315.8083381652832,517.6666666666666,315.8083381652832,523.5C315.8083381652832,529.3333333333334,315.8083381652832,535.1666666666666,315.8083381652832,541C315.8083381652832,546.8333333333334,315.8083381652832,552.6666666666666,315.8083381652832,555.5833333333334L315.8083381652832,558.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead236)" style="fill: none"/><defs><marker id="arrowhead236" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M315.8083381652832,453L315.8083381652832,455.9166666666667C315.8083381652832,458.8333333333333,315.8083381652832,464.6666666666667,315.8083381652832,470.5C315.8083381652832,476.3333333333333,315.8083381652832,482.1666666666667,315.8083381652832,485.0833333333333L315.8083381652832,488" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead237)" style="fill: none"/><defs><marker id="arrowhead237" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M315.8083381652832,362.5L315.8083381652832,365.4166666666667C315.8083381652832,368.3333333333333,315.8083381652832,374.1666666666667,315.8083381652832,381.6666666666667C315.8083381652832,389.1666666666667,315.8083381652832,398.3333333333333,315.8083381652832,407.5C315.8083381652832,416.6666666666667,315.8083381652832,425.8333333333333,315.8083381652832,430.4166666666667L315.8083381652832,435" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead238)" style="fill: none"/><defs><marker id="arrowhead238" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g><g class="edgePath" style="opacity: 1;"><path class="path" d="M315.8083381652832,254.5L315.8083381652832,257.4166666666667C315.8083381652832,260.3333333333333,315.8083381652832,266.1666666666667,315.8083381652832,273.6666666666667C315.8083381652832,281.1666666666667,315.8083381652832,290.3333333333333,315.8083381652832,299.5C315.8083381652832,308.6666666666667,315.8083381652832,317.8333333333333,315.8083381652832,325.3333333333333C315.8083381652832,332.8333333333333,315.8083381652832,338.6666666666667,315.8083381652832,341.5833333333333L315.8083381652832,344.5" marker-end="url(http://localhost:4040/SQL/execution/?id=0#arrowhead239)" style="fill: none"/><defs><marker id="arrowhead239" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1px; stroke-dasharray: 1px, 0px;"/></marker></defs></g></g><g class="edgeLabels"><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(201.4708366394043,1049.5)"><g transform="translate(-7.991666793823242,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">967</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(205.41250324249268,835.5)"><g transform="translate(-11.933333396911621,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">6,525</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(216.87083625793457,692)"><g transform="translate(-23.391666412353516,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">20,952,103</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(88.54166793823242,209)"><g transform="translate(-22.391666412353516,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">13,518,457</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(89.50000190734863,136)"><g transform="translate(-23.350000381469727,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">15,728,640</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(89.50000190734863,45.5)"><g transform="translate(-23.350000381469727,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">15,728,640</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(235.32500457763672,209)"><g transform="translate(-21.325000762939453,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">7,433,646</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(234.15000343322754,136)"><g transform="translate(-20.149999618530273,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">9,437,184</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(234.15000343322754,45.5)"><g transform="translate(-20.149999618530273,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">9,437,184</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform=""><g transform="translate(0,0)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1"/></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(328.98333835601807,407.5)"><g transform="translate(-8.175000190734863,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">263</tspan></text></g></g><g class="edgeLabel" style="opacity: 1;" transform="translate(328.98333835601807,299.5)"><g transform="translate(-8.175000190734863,-5)" class="label"><text style="font-size: 10px;"><tspan xml:space="preserve" dy="1em" x="1">263</tspan></text></g></g></g><g class="nodes"><g class="node" style="opacity: 1;" id="node0" transform="translate(188.47916984558105,1139)"><rect rx="5" ry="5" x="-89.96666717529297" y="-9" width="179.93333435058594" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-86.96666717529297,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">OverwriteByExpression noop-table</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node1" transform="translate(188.47916984558105,1086)"><rect rx="5" ry="5" x="-50.69166564941406" y="-9" width="101.38333129882812" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-47.69166564941406,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">AdaptiveSparkPlan</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node3" transform="translate(188.47916984558105,995.5)"><rect rx="5" ry="5" x="-41.766666412353516" y="-9" width="83.53333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-38.766666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">HashAggregate</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node4" transform="translate(188.47916984558105,925)"><rect rx="5" ry="5" x="-43.94166564941406" y="-9" width="87.88333129882812" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-40.94166564941406,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">AQEShuffleRead</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node5" transform="translate(188.47916984558105,872)"><rect rx="5" ry="5" x="-27.29166603088379" y="-9" width="54.58333206176758" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-24.29166603088379,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Exchange</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node7" transform="translate(188.47916984558105,781.5)"><rect rx="5" ry="5" x="-41.766666412353516" y="-9" width="83.53333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-38.766666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">HashAggregate</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node8" transform="translate(188.47916984558105,728.5)"><rect rx="5" ry="5" x="-20.549999237060547" y="-9" width="41.099998474121094" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-17.549999237060547,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Project</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node9" transform="translate(188.47916984558105,655.5)"><rect rx="5" ry="5" x="-39.858333587646484" y="-9" width="79.71666717529297" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-36.858333587646484,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">SortMergeJoin</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node11" transform="translate(135.0750026702881,567.5)"><rect rx="5" ry="5" x="-13.391666412353516" y="-9" width="26.78333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-10.391666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Sort</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node12" transform="translate(135.0750026702881,497)"><rect rx="5" ry="5" x="-43.94166564941406" y="-9" width="87.88333129882812" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-40.94166564941406,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">AQEShuffleRead</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node13" transform="translate(135.0750026702881,444)"><rect rx="5" ry="5" x="-27.29166603088379" y="-9" width="54.58333206176758" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-24.29166603088379,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Exchange</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node14" transform="translate(135.0750026702881,353.5)"><rect rx="5" ry="5" x="-17.466666221618652" y="-9" width="34.933332443237305" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-14.466666221618652,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Union</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node16" transform="translate(61.150001525878906,245.5)"><rect rx="5" ry="5" x="-20.549999237060547" y="-9" width="41.099998474121094" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-17.549999237060547,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Project</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node17" transform="translate(61.150001525878906,172.5)"><rect rx="5" ry="5" x="-15.641666412353516" y="-9" width="31.28333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-12.641666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Filter</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node18" transform="translate(61.150001525878906,99.5)"><rect rx="5" ry="5" x="-43.650001525878906" y="-9" width="87.30000305175781" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-40.650001525878906,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">ColumnarToRow</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node19" transform="translate(61.150001525878906,9)"><rect rx="5" ry="5" x="-37.150001525878906" y="-9" width="74.30000305175781" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-34.150001525878906,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Scan parquet </tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node21" transform="translate(209.00000381469727,245.5)"><rect rx="5" ry="5" x="-20.549999237060547" y="-9" width="41.099998474121094" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-17.549999237060547,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Project</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node22" transform="translate(209.00000381469727,172.5)"><rect rx="5" ry="5" x="-15.641666412353516" y="-9" width="31.28333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-12.641666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Filter</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node23" transform="translate(209.00000381469727,99.5)"><rect rx="5" ry="5" x="-43.650001525878906" y="-9" width="87.30000305175781" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-40.650001525878906,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">ColumnarToRow</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node24" transform="translate(209.00000381469727,9)"><rect rx="5" ry="5" x="-37.150001525878906" y="-9" width="74.30000305175781" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-34.150001525878906,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Scan parquet </tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node26" transform="translate(315.8083381652832,567.5)"><rect rx="5" ry="5" x="-13.391666412353516" y="-9" width="26.78333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-10.391666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Sort</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node27" transform="translate(315.8083381652832,497)"><rect rx="5" ry="5" x="-43.94166564941406" y="-9" width="87.88333129882812" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-40.94166564941406,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">AQEShuffleRead</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node28" transform="translate(315.8083381652832,444)"><rect rx="5" ry="5" x="-27.29166603088379" y="-9" width="54.58333206176758" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-24.29166603088379,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Exchange</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node30" transform="translate(315.8083381652832,353.5)"><rect rx="5" ry="5" x="-15.641666412353516" y="-9" width="31.28333282470703" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-12.641666412353516,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Filter</tspan></text></g></g></g><g class="node" style="opacity: 1;" id="node31" transform="translate(315.8083381652832,245.5)"><rect rx="5" ry="5" x="-26.65833282470703" y="-9" width="53.31666564941406" height="18" class="label-container"/><g class="label" transform="translate(0,0)"><g transform="translate(-23.65833282470703,-6)"><text><tspan xml:space="preserve" dy="1em" x="1">Scan csv </tspan></text></g></g></g></g></g></g></g></svg>
