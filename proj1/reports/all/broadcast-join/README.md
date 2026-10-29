@@ -3,7 +3,7 @@
 - Date: 2026-10-29
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: baseline, commit `7c81125` (flag off; the code path without the flag is unchanged since)
-- After: `--broadcast-join`, commit TODO
+- After: `--broadcast-join`, commit `d679ef3` (flag on; the code path with the flag is unchanged since)
 
 ## Bottleneck observed
 
