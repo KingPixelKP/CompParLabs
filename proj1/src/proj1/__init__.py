@@ -89,7 +89,9 @@ class Features:
     )
     cache_dataframe: bool = field(
         default=False,
-        metadata={"help": "Cache intermediate DataFrames for reuse."},
+        metadata={
+            "help": "Persist results reused by several actions (M2 result, O2 routes, O4 trips)."
+        },
     )
     string_to_id: bool = field(
         default=False,
@@ -426,6 +428,10 @@ def run_M2(
         )
     )
 
+    # emit and the parquet write are two actions, without a cache both rerun the scan
+    if features.cache_dataframe:
+        dated_df = dated_df.cache()
+
     explain_df(dated_df, features)
 
     emit(dated_df, sink)
@@ -433,6 +439,9 @@ def run_M2(
     dated_df.write.mode("overwrite").partitionBy("Borough").parquet(
         str(output_dir / "temporal")
     )
+
+    if features.cache_dataframe:
+        dated_df.unpersist()
 
 
 def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
@@ -592,9 +601,6 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sin
 
     zone_df = sf.broadcast(zone_df) if features.broadcast_join else zone_df
 
-    if features.cache_dataframe:
-        zone_df = zone_df.cache()  # This isn't worth it here it just adds more stages
-
     # 2. Count trips per route per month
     monthly_routes = (
         trip_df.withColumn("year", sf.year(pickup_ts))
@@ -647,6 +653,10 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sin
         )
         .drop("pickup_id", "dropoff_id")
     )
+
+    # all 3 outputs are built from routes, without a cache each one rescans the trips
+    if features.cache_dataframe:
+        routes = routes.cache()
 
     # 5. Find the top 20 routes per pickup borough
     # ids are kept since zone names are not unique (e.g. Corona is 56 and 57)
@@ -748,6 +758,9 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sin
         rows=100,
     )
 
+    if features.cache_dataframe:
+        routes.unpersist()
+
 
 def run_O4(
     trip_df: DataFrame,
@@ -767,17 +780,24 @@ def run_O4(
         .withColumn("month", sf.month(pickup_ts))
     )
 
+    used_columns = [
+        "PULocationID",
+        "RatecodeID",
+        "passenger_count",
+        "year",
+        "month",
+        "hour_of_day",
+        "fare_amount",
+        "trip_distance",
+    ]
+
     if features.prune_column:
-        trip_df = trip_df.select(
-            "PULocationID",
-            "RatecodeID",
-            "passenger_count",
-            "year",
-            "month",
-            "hour_of_day",
-            "fare_amount",
-            "trip_distance",
-        )
+        trip_df = trip_df.select(*used_columns)
+
+    # buckets and the join back both read the trips, without a cache both scan and clean them
+    # a cache stops column pruning, so only the used columns are cached
+    if features.cache_dataframe:
+        trip_df = trip_df.select(*used_columns).cache()
 
     if features.repartition_pickup:
         trip_df = trip_df.repartition(
@@ -833,6 +853,9 @@ def run_O4(
     explain_df(zone_type_stats, features)
 
     emit(zone_type_stats, sink, rows=100)
+
+    if features.cache_dataframe:
+        trip_df.unpersist()
 
 
 def main() -> None:

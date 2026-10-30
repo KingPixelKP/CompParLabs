@@ -1,0 +1,25 @@
+stage attempt tasks status run_s shuffleR shuffleW memSpill diskSpill task_ms[min,p50,p75,max] max/med name
+0 0 1 COMPLETE 0.2 0.0MB 0.0MB 0.0MB 0.0MB [214, 214, 214, 214] 1.0 parquet at DirectMethodHandleAccessor.java:104
+1 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [12, 12, 12, 12] 1.0 parquet at DirectMethodHandleAccessor.java:104
+2 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [8, 8, 8, 8] 1.0 parquet at DirectMethodHandleAccessor.java:104
+3 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [6, 6, 6, 6] 1.0 parquet at DirectMethodHandleAccessor.java:104
+4 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [5, 5, 5, 5] 1.0 parquet at DirectMethodHandleAccessor.java:104
+5 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [6, 6, 6, 6] 1.0 parquet at DirectMethodHandleAccessor.java:104
+6 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [10, 10, 10, 10] 1.0 parquet at DirectMethodHandleAccessor.java:104
+7 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [4, 4, 4, 4] 1.0 parquet at DirectMethodHandleAccessor.java:104
+8 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [3, 3, 3, 3] 1.0 parquet at DirectMethodHandleAccessor.java:104
+9 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [2, 2, 2, 2] 1.0 parquet at DirectMethodHandleAccessor.java:104
+10 0 1 COMPLETE 0.2 0.0MB 0.0MB 0.0MB 0.0MB [211, 211, 211, 211] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+11 0 18 COMPLETE 62.5 0.0MB 5.2MB 0.0MB 0.0MB [61, 3200, 6517, 7342] 2.3 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+13 0 5 COMPLETE 2.9 5.2MB 2.8MB 0.0MB 0.0MB [569, 583, 584, 612] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+16 0 200 COMPLETE 16.5 2.8MB 0.0MB 0.0MB 0.0MB [23, 62, 79, 545] 8.8 save at DirectMethodHandleAccessor.java:104
+19 0 200 COMPLETE 3.6 0.0MB 0.0MB 0.0MB 0.0MB [2, 10, 16, 159] 15.9 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+22 0 200 COMPLETE 6.2 0.0MB 9.8MB 0.0MB 0.0MB [10, 29, 40, 100] 3.4 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+26 0 8 COMPLETE 5.3 9.8MB 0.0MB 0.0MB 0.0MB [630, 670, 709, 714] 1.1 save at DirectMethodHandleAccessor.java:104
+29 0 200 COMPLETE 17.7 0.0MB 17.5MB 0.0MB 0.0MB [34, 80, 102, 252] 3.1 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+33 0 8 COMPLETE 5.2 17.5MB 0.0MB 0.0MB 0.0MB [639, 656, 658, 659] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+38 0 1 COMPLETE 0.1 0.0MB 0.0MB 0.0MB 0.0MB [70, 70, 70, 70] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+43 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [21, 21, 21, 21] 1.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+49 0 1 COMPLETE 0.0 0.0MB 0.0MB 0.0MB 0.0MB [24, 24, 24, 24] 1.0 save at DirectMethodHandleAccessor.java:104
+52 0 200 COMPLETE 28.6 0.0MB 19.8MB 0.0MB 0.0MB [57, 127, 165, 385] 3.0 $anonfun$withThreadLocalCaptured$1 at CompletableFuture.java
+56 0 8 COMPLETE 13.5 19.8MB 0.0MB 0.0MB 0.0MB [1616, 1692, 1704, 1726] 1.0 save at DirectMethodHandleAccessor.java:104
