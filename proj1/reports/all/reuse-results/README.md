@@ -3,7 +3,7 @@
 - Date: 2026-10-30
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: `--broadcast-join` ([broadcast-join](../broadcast-join/README.md), commit `004d3e4`)
-- After: `--broadcast-join --cache-dataframe`, commit TODO
+- After: `--broadcast-join --cache-dataframe`, commit `78638d7`
 
 ## Bottleneck observed
 
