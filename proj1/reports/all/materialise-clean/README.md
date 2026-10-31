@@ -3,7 +3,7 @@
 - Date: 2026-10-31
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: `--broadcast-join --cache-dataframe --write-once` (optimised config so far)
-- After: the same plus `--materialise-clean`, commit TODO
+- After: the same plus `--materialise-clean`, commit `7b3d21d`
 - Runs: `all`, before and after interleaved, 3 each
 
 ## Bottleneck observed
