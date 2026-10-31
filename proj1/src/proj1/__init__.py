@@ -103,6 +103,12 @@ class Features:
         default=False,
         metadata={"help": "Repartition trips by PULocationID before O4 bucketing."},
     )
+    write_once: bool = field(
+        default=False,
+        metadata={
+            "help": "M2: write the result first and emit it from the written parquet, so it is computed once."
+        },
+    )
     max_partition_mb: int = field(
         default=128,
         metadata={
@@ -436,11 +442,16 @@ def run_M2(
 
     explain_df(dated_df, features)
 
-    emit(dated_df, sink)
+    temporal_dir = str(output_dir / "temporal")
 
-    dated_df.write.mode("overwrite").partitionBy("Borough").parquet(
-        str(output_dir / "temporal")
-    )
+    # emit and the write are two actions, each recomputes dated_df from the scan
+    # with write_once the second action reads the small written result instead
+    if features.write_once:
+        dated_df.write.mode("overwrite").partitionBy("Borough").parquet(temporal_dir)
+        emit(dated_df.sparkSession.read.parquet(temporal_dir), sink)
+    else:
+        emit(dated_df, sink)
+        dated_df.write.mode("overwrite").partitionBy("Borough").parquet(temporal_dir)
 
 
 def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
