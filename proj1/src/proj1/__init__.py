@@ -90,7 +90,7 @@ class Features:
     cache_dataframe: bool = field(
         default=False,
         metadata={
-            "help": "Persist results reused by several actions (M2 result, O2 routes, O4 trips)."
+            "help": "Persist the O2 routes reused by its 3 outputs (M2/O4 caches were slower, see reports/all/reuse-results)."
         },
     )
     string_to_id: bool = field(
@@ -102,6 +102,12 @@ class Features:
     repartition_pickup: bool = field(
         default=False,
         metadata={"help": "Repartition trips by PULocationID before O4 bucketing."},
+    )
+    max_partition_mb: int = field(
+        default=128,
+        metadata={
+            "help": "spark.sql.files.maxPartitionBytes in MiB, upper bound of a scan split (Spark default 128)."
+        },
     )
 
 
@@ -428,10 +434,6 @@ def run_M2(
         )
     )
 
-    # emit and the parquet write are two actions, without a cache both rerun the scan
-    if features.cache_dataframe:
-        dated_df = dated_df.cache()
-
     explain_df(dated_df, features)
 
     emit(dated_df, sink)
@@ -439,9 +441,6 @@ def run_M2(
     dated_df.write.mode("overwrite").partitionBy("Borough").parquet(
         str(output_dir / "temporal")
     )
-
-    if features.cache_dataframe:
-        dated_df.unpersist()
 
 
 def run_M3(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sink):
@@ -794,11 +793,6 @@ def run_O4(
     if features.prune_column:
         trip_df = trip_df.select(*used_columns)
 
-    # buckets and the join back both read the trips, without a cache both scan and clean them
-    # a cache stops column pruning, so only the used columns are cached
-    if features.cache_dataframe:
-        trip_df = trip_df.select(*used_columns).cache()
-
     if features.repartition_pickup:
         trip_df = trip_df.repartition(
             "PULocationID"
@@ -854,9 +848,6 @@ def run_O4(
 
     emit(zone_type_stats, sink, rows=100)
 
-    if features.cache_dataframe:
-        trip_df.unpersist()
-
 
 def main() -> None:
     args = build_arg_parser().parse_args()
@@ -888,6 +879,8 @@ def main() -> None:
         "autoBroadcastJoinThreshold=%s",
         spark.conf.get("spark.sql.autoBroadcastJoinThreshold"),
     )
+
+    spark.conf.set("spark.sql.files.maxPartitionBytes", f"{features.max_partition_mb}m")
 
     for f in fields(features):
         logger.info(f"{f.name}={getattr(features, f.name)}")
