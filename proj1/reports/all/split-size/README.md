@@ -3,7 +3,7 @@
 - Date: 2026-10-30
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: `--broadcast-join --cache-dataframe` (cache limited to O2 after [reuse-results](../reuse-results/README.md)), `--max-partition-mb 128` (Spark default)
-- After: the same with `--max-partition-mb 64 / 32 / 16 / 8`, commit TODO
+- After: the same with `--max-partition-mb 64 / 32 / 16 / 8`, commit c47ae02
 - Result: **no gain, not adopted**
 
 ## Bottleneck observed
