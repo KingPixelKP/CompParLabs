@@ -3,7 +3,7 @@
 - Date: 2026-10-31
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: `--broadcast-join --cache-dataframe` (current optimised config)
-- After: the same plus `--write-once`, commit TODO
+- After: the same plus `--write-once`, commit `8ff1192`
 - Runs: `M2` alone, before and after interleaved (before 1, after 1, before 2, ...) so that drift on the laptop hits both sides equally
 
 ## Bottleneck observed
