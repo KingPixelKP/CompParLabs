@@ -14,7 +14,7 @@ for path in sys.argv[1:]:
     # the last profiler table is the complete one
     start = max(i for i, l in enumerate(lines) if l.startswith("run "))
     for l in lines[start + 1:]:
-        m = re.match(r"^(M1|M2|M3|O1|O2|O4)-features:\S*.*?\.\.\.\s+(.*)$", l)
+        m = re.match(r"^(clean|M1|M2|M3|O1|O2|O4)-features:\S*.*?\.\.\.\s+(.*)$", l)
         if not m:
             continue
         values = m.group(2).split()

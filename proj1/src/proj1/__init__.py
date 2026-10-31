@@ -7,7 +7,7 @@ import logging
 import functools
 from typing import get_type_hints
 import pandas as pd
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 import sys
 
 import pyspark.sql.functions as sf
@@ -107,6 +107,12 @@ class Features:
         default=False,
         metadata={
             "help": "M2: write the result first and emit it from the written parquet, so it is computed once."
+        },
+    )
+    materialise_clean: bool = field(
+        default=False,
+        metadata={
+            "help": "Write the cleaned trips once as parquet and run M2-O4 on that copy (M1 still reads the raw files)."
         },
     )
     max_partition_mb: int = field(
@@ -354,6 +360,22 @@ def validity_rules() -> dict[str, Column]:
 
 def get_clean(trip_df: DataFrame):
     return trip_df.filter(functools.reduce(operator.and_, validity_rules().values()))
+
+
+# tip_amount and total_amount are read by no operation
+CLEAN_COLUMNS = [
+    f.name for f in TRIP_SCHEMA.fields if f.name not in ("tip_amount", "total_amount")
+]
+
+# Row group size of the cleaned copy, a row group is the unit of scan parallelism
+# (8 MiB gives several row groups per written file, 32 MiB gave one per file)
+CLEAN_ROW_GROUP_BYTES = 8 * 1024 * 1024
+
+
+def materialise_clean(trip_df: DataFrame, path: str):
+    get_clean(trip_df).select(*CLEAN_COLUMNS).write.mode("overwrite").option(
+        "parquet.block.size", CLEAN_ROW_GROUP_BYTES
+    ).parquet(path)
 
 
 def explain_df(df: DataFrame, features: Features):
@@ -921,15 +943,20 @@ def main() -> None:
         *aggregate_files(args.data_dir, ".csv"), header=True
     )
 
+    # M2-O4 inputs, replaced by the cleaned copy with materialise_clean
+    op_df, op_features = trip_df, features
+
     runners = {
         Command.M1: lambda: run_M1(trip_df, features, args.sink),
         Command.M2: lambda: run_M2(
-            trip_df, zone_df, features, args.sink, args.output_dir
+            op_df, zone_df, op_features, args.sink, args.output_dir
         ),
-        Command.M3: lambda: run_M3(trip_df, zone_df, features, args.sink),
-        Command.O1: lambda: run_O1(trip_df, zone_df, features, args.sink),
-        Command.O2: lambda: run_O2(trip_df, zone_df, features, args.sink),
-        Command.O4: lambda: run_O4(trip_df, zone_df, features, args.sink, thresholds),
+        Command.M3: lambda: run_M3(op_df, zone_df, op_features, args.sink),
+        Command.O1: lambda: run_O1(op_df, zone_df, op_features, args.sink),
+        Command.O2: lambda: run_O2(op_df, zone_df, op_features, args.sink),
+        Command.O4: lambda: run_O4(
+            op_df, zone_df, op_features, args.sink, thresholds
+        ),
     }
     commands = list(runners) if args.command == Command.All else [args.command]
 
@@ -937,6 +964,14 @@ def main() -> None:
     feature_str = ", ".join(
         f"{f.name}={getattr(features, f.name)}" for f in fields(features)
     )
+
+    if features.materialise_clean and commands != [Command.M1]:
+        clean_path = str(args.output_dir / "clean")
+        with profiler.profile(f"clean-features:{feature_str}"):
+            materialise_clean(trip_df, clean_path)
+        # the copy is already clean, the operations must not filter it again
+        op_df = spark.read.parquet(clean_path)
+        op_features = replace(features, use_cleansed=False)
 
     for command in commands:
         with profiler.profile(f"{command}-features:{feature_str}"):
