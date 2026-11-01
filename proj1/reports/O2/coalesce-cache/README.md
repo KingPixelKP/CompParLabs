@@ -3,7 +3,7 @@
 - Date: 2026-11-01
 - Data: 2026-01..08 (29.7 M records, 20.95 M after cleaning), local machine (see [baseline](../../baseline/README.md#experimental-setup))
 - Before: `--broadcast-join --cache-dataframe --write-once --materialise-clean` (final config so far)
-- After: the same plus `--coalesce-cache`, commit TODO
+- After: the same plus `--coalesce-cache`, commit `93f3a0c`
 - Runs: `O2` alone, before and after interleaved, each started once the 1-minute load average was below 1.5
 
 ## Bottleneck observed
