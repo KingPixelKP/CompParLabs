@@ -1,0 +1,987 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+26/11/01 17:11:52 WARN Utils: Your hostname, dingusmachine, resolves to a loopback address: 127.0.1.1; using 192.168.1.72 instead (on interface wlan0)
+26/11/01 17:11:52 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/11/01 17:11:53 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+INFO:proj1:Spark UI: http://dingusmachine.lan:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=True
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=True
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:coalesce_cache=True
+INFO:proj1:write_once=True
+INFO:proj1:materialise_clean=True
+INFO:proj1:max_partition_mb=128
+INFO:proj1:Aggregating .parquet files in proj1/data
+INFO:proj1:Found ['proj1/data/yellow_tripdata_2026-01.parquet', 'proj1/data/yellow_tripdata_2026-02.parquet', 'proj1/data/yellow_tripdata_2026-03.parquet', 'proj1/data/yellow_tripdata_2026-04.parquet', 'proj1/data/yellow_tripdata_2026-05.parquet', 'proj1/data/yellow_tripdata_2026-06.parquet', 'proj1/data/yellow_tripdata_2026-07.parquet', 'proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in proj1/data
+INFO:proj1:Found ['proj1/data/taxi_zone_lookup.csv']
+[clean-features:explain_plan=True, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 21.25s (1 stages, 18 tasks) - see profiler.report() / profiler.compare(...)
+== Physical Plan ==
+AdaptiveSparkPlan (28)
++- InMemoryTableScan (1)
+      +- InMemoryRelation (2)
+            +- AdaptiveSparkPlan (27)
+               +- Coalesce (26)
+                  +- Project (25)
+                     +- BroadcastHashJoin Inner BuildRight (24)
+                        :- Project (19)
+                        :  +- BroadcastHashJoin Inner BuildRight (18)
+                        :     :- Project (13)
+                        :     :  +- Filter (12)
+                        :     :     +- Window (11)
+                        :     :        +- Sort (10)
+                        :     :           +- Exchange (9)
+                        :     :              +- HashAggregate (8)
+                        :     :                 +- Exchange (7)
+                        :     :                    +- HashAggregate (6)
+                        :     :                       +- Project (5)
+                        :     :                          +- Filter (4)
+                        :     :                             +- Scan parquet  (3)
+                        :     +- BroadcastExchange (17)
+                        :        +- Project (16)
+                        :           +- Filter (15)
+                        :              +- Scan csv  (14)
+                        +- BroadcastExchange (23)
+                           +- Project (22)
+                              +- Filter (21)
+                                 +- Scan csv  (20)
+
+
+(1) InMemoryTableScan
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+
+(2) InMemoryRelation
+Arguments: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+
+(3) Scan parquet 
+Output [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean]
+PushedFilters: [IsNotNull(PULocationID)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+
+(4) Filter
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Condition : isnotnull(PULocationID#234)
+
+(5) Project
+Output [4]: [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+
+(6) HashAggregate
+Input [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#272L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+
+(7) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+
+(8) HashAggregate
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#256L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count(1)#256L AS trip_volume#244L]
+
+(9) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+
+(10) Sort
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+
+(11) Window
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+
+(12) Filter
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+Condition : isnotnull(DOLocationID#235)
+
+(13) Project
+Output [7]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+
+(14) Scan csv 
+Output [3]: [LocationID#228, Borough#229, Zone#230]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(15) Filter
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+Condition : isnotnull(LocationID#228)
+
+(16) Project
+Output [3]: [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+
+(17) BroadcastExchange
+Input [3]: [pickup_id#260, pickup_zone#261, pickup_borough#262]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+
+(18) BroadcastHashJoin
+Left keys [1]: [PULocationID#234]
+Right keys [1]: [pickup_id#260]
+Join type: Inner
+Join condition: None
+
+(19) Project
+Output [9]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+Input [10]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_id#260, pickup_zone#261, pickup_borough#262]
+
+(20) Scan csv 
+Output [3]: [LocationID#267, Borough#268, Zone#269]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(21) Filter
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+Condition : isnotnull(LocationID#267)
+
+(22) Project
+Output [3]: [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+
+(23) BroadcastExchange
+Input [3]: [dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+
+(24) BroadcastHashJoin
+Left keys [1]: [DOLocationID#235]
+Right keys [1]: [dropoff_id#264]
+Join type: Inner
+Join condition: None
+
+(25) Project
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Input [12]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+
+(26) Coalesce
+Input [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: 8
+
+(27) AdaptiveSparkPlan
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: isFinalPlan=false
+
+(28) AdaptiveSparkPlan
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+Repartition 8, false
++- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+   +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+      :- Join Inner, (PULocationID#234 = pickup_id#260)
+      :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+      :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+      :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+      :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+      :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+      :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+      :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+      :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+      :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+      :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+      :     +- ResolvedHint (strategy=broadcast)
+      :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+      +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+         +- ResolvedHint (strategy=broadcast)
+            +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, year: int, month: int, trip_volume: bigint, month_volume: bigint, monthly_share: double, pickup_zone: string, pickup_borough: string, dropoff_zone: string, dropoff_borough: string
+Repartition 8, false
++- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+   +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+      :- Join Inner, (PULocationID#234 = pickup_id#260)
+      :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+      :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+      :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+      :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+      :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+      :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+      :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+      :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+      :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+      :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+      :     +- ResolvedHint (strategy=broadcast)
+      :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+      +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+         +- ResolvedHint (strategy=broadcast)
+            +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Optimized Logical Plan ==
+InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+   +- AdaptiveSparkPlan isFinalPlan=false
+      +- Coalesce 8
+         +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+            +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+               :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+               :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+               :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+               :     :  +- Filter isnotnull(DOLocationID#235)
+               :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+               :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+               :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+               :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+               :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+               :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+               :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+               :     :                          +- Filter isnotnull(PULocationID#234)
+               :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+               :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+               :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+               :           +- Filter isnotnull(LocationID#228)
+               :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+               +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                  +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                     +- Filter isnotnull(LocationID#267)
+                        +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- InMemoryTableScan [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+      +- InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+            +- AdaptiveSparkPlan isFinalPlan=false
+               +- Coalesce 8
+                  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                     +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+                        :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+                        :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+                        :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                        :     :  +- Filter isnotnull(DOLocationID#235)
+                        :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                        :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+                        :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+                        :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+                        :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+                        :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+                        :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                        :     :                          +- Filter isnotnull(PULocationID#234)
+                        :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+                        :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+                        :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                        :           +- Filter isnotnull(LocationID#228)
+                        :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                        +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                           +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                              +- Filter isnotnull(LocationID#267)
+                                 +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan (38)
++- Filter (37)
+   +- Window (36)
+      +- WindowGroupLimit (35)
+         +- Sort (34)
+            +- Exchange (33)
+               +- WindowGroupLimit (32)
+                  +- Sort (31)
+                     +- HashAggregate (30)
+                        +- Exchange (29)
+                           +- HashAggregate (28)
+                              +- InMemoryTableScan (1)
+                                    +- InMemoryRelation (2)
+                                          +- AdaptiveSparkPlan (27)
+                                             +- Coalesce (26)
+                                                +- Project (25)
+                                                   +- BroadcastHashJoin Inner BuildRight (24)
+                                                      :- Project (19)
+                                                      :  +- BroadcastHashJoin Inner BuildRight (18)
+                                                      :     :- Project (13)
+                                                      :     :  +- Filter (12)
+                                                      :     :     +- Window (11)
+                                                      :     :        +- Sort (10)
+                                                      :     :           +- Exchange (9)
+                                                      :     :              +- HashAggregate (8)
+                                                      :     :                 +- Exchange (7)
+                                                      :     :                    +- HashAggregate (6)
+                                                      :     :                       +- Project (5)
+                                                      :     :                          +- Filter (4)
+                                                      :     :                             +- Scan parquet  (3)
+                                                      :     +- BroadcastExchange (17)
+                                                      :        +- Project (16)
+                                                      :           +- Filter (15)
+                                                      :              +- Scan csv  (14)
+                                                      +- BroadcastExchange (23)
+                                                         +- Project (22)
+                                                            +- Filter (21)
+                                                               +- Scan csv  (20)
+
+
+(1) InMemoryTableScan
+Output [7]: [PULocationID#234, DOLocationID#235, trip_volume#244L, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: [PULocationID#234, DOLocationID#235, trip_volume#244L, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+
+(2) InMemoryRelation
+Arguments: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+
+(3) Scan parquet 
+Output [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean]
+PushedFilters: [IsNotNull(PULocationID)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+
+(4) Filter
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Condition : isnotnull(PULocationID#234)
+
+(5) Project
+Output [4]: [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+
+(6) HashAggregate
+Input [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#272L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+
+(7) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+
+(8) HashAggregate
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#256L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count(1)#256L AS trip_volume#244L]
+
+(9) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+
+(10) Sort
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+
+(11) Window
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+
+(12) Filter
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+Condition : isnotnull(DOLocationID#235)
+
+(13) Project
+Output [7]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+
+(14) Scan csv 
+Output [3]: [LocationID#228, Borough#229, Zone#230]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(15) Filter
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+Condition : isnotnull(LocationID#228)
+
+(16) Project
+Output [3]: [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+
+(17) BroadcastExchange
+Input [3]: [pickup_id#260, pickup_zone#261, pickup_borough#262]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+
+(18) BroadcastHashJoin
+Left keys [1]: [PULocationID#234]
+Right keys [1]: [pickup_id#260]
+Join type: Inner
+Join condition: None
+
+(19) Project
+Output [9]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+Input [10]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_id#260, pickup_zone#261, pickup_borough#262]
+
+(20) Scan csv 
+Output [3]: [LocationID#267, Borough#268, Zone#269]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(21) Filter
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+Condition : isnotnull(LocationID#267)
+
+(22) Project
+Output [3]: [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+
+(23) BroadcastExchange
+Input [3]: [dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+
+(24) BroadcastHashJoin
+Left keys [1]: [DOLocationID#235]
+Right keys [1]: [dropoff_id#264]
+Join type: Inner
+Join condition: None
+
+(25) Project
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Input [12]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+
+(26) Coalesce
+Input [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: 8
+
+(27) AdaptiveSparkPlan
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: isFinalPlan=false
+
+(28) HashAggregate
+Input [7]: [PULocationID#234, DOLocationID#235, trip_volume#244L, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Keys [6]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265]
+Functions [1]: [partial_sum(trip_volume#244L)]
+Aggregate Attributes [1]: [sum#751L]
+Results [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum#752L]
+
+(29) Exchange
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum#752L]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, 200), ENSURE_REQUIREMENTS, [plan_id=160]
+
+(30) HashAggregate
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum#752L]
+Keys [6]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265]
+Functions [1]: [sum(trip_volume#244L)]
+Aggregate Attributes [1]: [sum(trip_volume#244L)#341L]
+Results [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum(trip_volume#244L)#341L AS total_trips#329L]
+
+(31) Sort
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: [pickup_borough#262 ASC NULLS FIRST, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], false, 0
+
+(32) WindowGroupLimit
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], row_number(), 20, Partial
+
+(33) Exchange
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: hashpartitioning(pickup_borough#262, 200), ENSURE_REQUIREMENTS, [plan_id=166]
+
+(34) Sort
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: [pickup_borough#262 ASC NULLS FIRST, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], false, 0
+
+(35) WindowGroupLimit
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], row_number(), 20, Final
+
+(36) Window
+Input [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+Arguments: [row_number() windowspecdefinition(pickup_borough#262, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#342], [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST]
+
+(37) Filter
+Input [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342]
+Condition : (route_rank#342 <= 20)
+
+(38) AdaptiveSparkPlan
+Output [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Filter '`<=`('route_rank, 20)
++- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342]
+   +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342, route_rank#342]
+      +- Window [row_number() windowspecdefinition(pickup_borough#262, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#342], [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST]
+         +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+            +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum(trip_volume#244L) AS total_trips#329L]
+               +- Repartition 8, false
+                  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                     +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+                        :- Join Inner, (PULocationID#234 = pickup_id#260)
+                        :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                        :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+                        :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+                        :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                        :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+                        :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+                        :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                        :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+                        :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+                        :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                        :     +- ResolvedHint (strategy=broadcast)
+                        :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+                        +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                           +- ResolvedHint (strategy=broadcast)
+                              +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, pickup_borough: string, pickup_zone: string, dropoff_borough: string, dropoff_zone: string, total_trips: bigint, route_rank: int
+Filter (route_rank#342 <= 20)
++- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342]
+   +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L, route_rank#342, route_rank#342]
+      +- Window [row_number() windowspecdefinition(pickup_borough#262, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#342], [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST]
+         +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L]
+            +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum(trip_volume#244L) AS total_trips#329L]
+               +- Repartition 8, false
+                  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                     +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+                        :- Join Inner, (PULocationID#234 = pickup_id#260)
+                        :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                        :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+                        :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+                        :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                        :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+                        :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+                        :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                        :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+                        :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+                        :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                        :     +- ResolvedHint (strategy=broadcast)
+                        :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+                        +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                           +- ResolvedHint (strategy=broadcast)
+                              +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Optimized Logical Plan ==
+Filter (route_rank#342 <= 20)
++- Window [row_number() windowspecdefinition(pickup_borough#262, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#342], [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST]
+   +- WindowGroupLimit [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], row_number(), 20
+      +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum(trip_volume#244L) AS total_trips#329L]
+         +- Project [PULocationID#234, DOLocationID#235, trip_volume#244L, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+            +- InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+                  +- AdaptiveSparkPlan isFinalPlan=false
+                     +- Coalesce 8
+                        +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                           +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+                              :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+                              :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+                              :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                              :     :  +- Filter isnotnull(DOLocationID#235)
+                              :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                              :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+                              :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+                              :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+                              :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+                              :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+                              :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                              :     :                          +- Filter isnotnull(PULocationID#234)
+                              :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+                              :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+                              :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                              :           +- Filter isnotnull(LocationID#228)
+                              :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                              +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                                 +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                                    +- Filter isnotnull(LocationID#267)
+                                       +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Filter (route_rank#342 <= 20)
+   +- Window [row_number() windowspecdefinition(pickup_borough#262, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#342], [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST]
+      +- WindowGroupLimit [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], row_number(), 20, Final
+         +- Sort [pickup_borough#262 ASC NULLS FIRST, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], false, 0
+            +- Exchange hashpartitioning(pickup_borough#262, 200), ENSURE_REQUIREMENTS, [plan_id=166]
+               +- WindowGroupLimit [pickup_borough#262], [total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], row_number(), 20, Partial
+                  +- Sort [pickup_borough#262 ASC NULLS FIRST, total_trips#329L DESC NULLS LAST, PULocationID#234 ASC NULLS FIRST, DOLocationID#235 ASC NULLS FIRST], false, 0
+                     +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265], functions=[sum(trip_volume#244L)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, total_trips#329L])
+                        +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, 200), ENSURE_REQUIREMENTS, [plan_id=160]
+                           +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265], functions=[partial_sum(trip_volume#244L)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, sum#752L])
+                              +- InMemoryTableScan [PULocationID#234, DOLocationID#235, trip_volume#244L, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                                    +- InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+                                          +- AdaptiveSparkPlan isFinalPlan=false
+                                             +- Coalesce 8
+                                                +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                                                   +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+                                                      :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+                                                      :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+                                                      :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                                                      :     :  +- Filter isnotnull(DOLocationID#235)
+                                                      :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                                                      :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+                                                      :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+                                                      :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+                                                      :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+                                                      :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+                                                      :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                                                      :     :                          +- Filter isnotnull(PULocationID#234)
+                                                      :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+                                                      :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+                                                      :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                                                      :           +- Filter isnotnull(LocationID#228)
+                                                      :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                                                      +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                                                         +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                                                            +- Filter isnotnull(LocationID#267)
+                                                               +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan (36)
++- Project (35)
+   +- Filter (34)
+      +- HashAggregate (33)
+         +- Exchange (32)
+            +- HashAggregate (31)
+               +- HashAggregate (30)
+                  +- Exchange (29)
+                     +- HashAggregate (28)
+                        +- InMemoryTableScan (1)
+                              +- InMemoryRelation (2)
+                                    +- AdaptiveSparkPlan (27)
+                                       +- Coalesce (26)
+                                          +- Project (25)
+                                             +- BroadcastHashJoin Inner BuildRight (24)
+                                                :- Project (19)
+                                                :  +- BroadcastHashJoin Inner BuildRight (18)
+                                                :     :- Project (13)
+                                                :     :  +- Filter (12)
+                                                :     :     +- Window (11)
+                                                :     :        +- Sort (10)
+                                                :     :           +- Exchange (9)
+                                                :     :              +- HashAggregate (8)
+                                                :     :                 +- Exchange (7)
+                                                :     :                    +- HashAggregate (6)
+                                                :     :                       +- Project (5)
+                                                :     :                          +- Filter (4)
+                                                :     :                             +- Scan parquet  (3)
+                                                :     +- BroadcastExchange (17)
+                                                :        +- Project (16)
+                                                :           +- Filter (15)
+                                                :              +- Scan csv  (14)
+                                                +- BroadcastExchange (23)
+                                                   +- Project (22)
+                                                      +- Filter (21)
+                                                         +- Scan csv  (20)
+
+
+(1) InMemoryTableScan
+Output [9]: [PULocationID#234, DOLocationID#235, year#242, month#243, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: [PULocationID#234, DOLocationID#235, year#242, month#243, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+
+(2) InMemoryRelation
+Arguments: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+
+(3) Scan parquet 
+Output [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean]
+PushedFilters: [IsNotNull(PULocationID)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+
+(4) Filter
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+Condition : isnotnull(PULocationID#234)
+
+(5) Project
+Output [4]: [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+Input [3]: [tpep_pickup_datetime#232, PULocationID#234, DOLocationID#235]
+
+(6) HashAggregate
+Input [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#272L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+
+(7) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+
+(8) HashAggregate
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count#273L]
+Keys [4]: [PULocationID#234, DOLocationID#235, year#242, month#243]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#256L]
+Results [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, count(1)#256L AS trip_volume#244L]
+
+(9) Exchange
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+
+(10) Sort
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+
+(11) Window
+Input [5]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+Arguments: [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+
+(12) Filter
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+Condition : isnotnull(DOLocationID#235)
+
+(13) Project
+Output [7]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+Input [6]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+
+(14) Scan csv 
+Output [3]: [LocationID#228, Borough#229, Zone#230]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(15) Filter
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+Condition : isnotnull(LocationID#228)
+
+(16) Project
+Output [3]: [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+Input [3]: [LocationID#228, Borough#229, Zone#230]
+
+(17) BroadcastExchange
+Input [3]: [pickup_id#260, pickup_zone#261, pickup_borough#262]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+
+(18) BroadcastHashJoin
+Left keys [1]: [PULocationID#234]
+Right keys [1]: [pickup_id#260]
+Join type: Inner
+Join condition: None
+
+(19) Project
+Output [9]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+Input [10]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_id#260, pickup_zone#261, pickup_borough#262]
+
+(20) Scan csv 
+Output [3]: [LocationID#267, Borough#268, Zone#269]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(21) Filter
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+Condition : isnotnull(LocationID#267)
+
+(22) Project
+Output [3]: [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+Input [3]: [LocationID#267, Borough#268, Zone#269]
+
+(23) BroadcastExchange
+Input [3]: [dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+
+(24) BroadcastHashJoin
+Left keys [1]: [DOLocationID#235]
+Right keys [1]: [dropoff_id#264]
+Join type: Inner
+Join condition: None
+
+(25) Project
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Input [12]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_id#264, dropoff_zone#265, dropoff_borough#266]
+
+(26) Coalesce
+Input [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: 8
+
+(27) AdaptiveSparkPlan
+Output [11]: [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Arguments: isFinalPlan=false
+
+(28) HashAggregate
+Input [9]: [PULocationID#234, DOLocationID#235, year#242, month#243, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+Keys [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243]
+Functions [1]: [partial_first(monthly_share#259, false)]
+Aggregate Attributes [2]: [first#966, valueSet#967]
+Results [10]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first#968, valueSet#969]
+
+(29) Exchange
+Input [10]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first#968, valueSet#969]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=197]
+
+(30) HashAggregate
+Input [10]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first#968, valueSet#969]
+Keys [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243]
+Functions [1]: [first(monthly_share#259, false)]
+Aggregate Attributes [1]: [first(monthly_share#259)()#355]
+Results [9]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share#259)()#355 AS first(monthly_share)#356]
+
+(31) HashAggregate
+Input [9]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share)#356]
+Keys [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242]
+Functions [1]: [partial_pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)]
+Aggregate Attributes [12]: [1#357, 2#358, 3#359, 4#360, 5#361, 6#362, 7#363, 8#364, 9#365, 10#366, 11#367, 12#368]
+Results [19]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#369, 2#370, 3#371, 4#372, 5#373, 6#374, 7#375, 8#376, 9#377, 10#378, 11#379, 12#380]
+
+(32) Exchange
+Input [19]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#369, 2#370, 3#371, 4#372, 5#373, 6#374, 7#375, 8#376, 9#377, 10#378, 11#379, 12#380]
+Arguments: hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 200), ENSURE_REQUIREMENTS, [plan_id=201]
+
+(33) HashAggregate
+Input [19]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#369, 2#370, 3#371, 4#372, 5#373, 6#374, 7#375, 8#376, 9#377, 10#378, 11#379, 12#380]
+Keys [7]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242]
+Functions [1]: [pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)]
+Aggregate Attributes [1]: [pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)#381]
+Results [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)#381 AS __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+
+(34) Filter
+Input [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+Condition : ((((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) > 0.0)))
+
+(35) Project
+Output [21]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382[0] AS 1#383, __pivot_first(monthly_share) AS `first(monthly_share)`#382[1] AS 2#384, __pivot_first(monthly_share) AS `first(monthly_share)`#382[2] AS 3#385, __pivot_first(monthly_share) AS `first(monthly_share)`#382[3] AS 4#386, __pivot_first(monthly_share) AS `first(monthly_share)`#382[4] AS 5#387, __pivot_first(monthly_share) AS `first(monthly_share)`#382[5] AS 6#388, __pivot_first(monthly_share) AS `first(monthly_share)`#382[6] AS 7#389, __pivot_first(monthly_share) AS `first(monthly_share)`#382[7] AS 8#390, __pivot_first(monthly_share) AS `first(monthly_share)`#382[8] AS 9#391, __pivot_first(monthly_share) AS `first(monthly_share)`#382[9] AS 10#392, __pivot_first(monthly_share) AS `first(monthly_share)`#382[10] AS 11#393, __pivot_first(monthly_share) AS `first(monthly_share)`#382[11] AS 12#394, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) AS q1_change#419, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) AS q3_change#420]
+Input [8]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+
+(36) AdaptiveSparkPlan
+Output [21]: [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#383, 2#384, 3#385, 4#386, 5#387, 6#388, 7#389, 8#390, 9#391, 10#392, 11#393, 12#394, q1_change#419, q3_change#420]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Filter 'or('and('`>`('q1_change, 0), '`<`('q3_change, 0)), 'and('`<`('q1_change, 0), '`>`('q3_change, 0)))
++- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#383, 2#384, 3#385, 4#386, 5#387, 6#388, 7#389, 8#390, 9#391, 10#392, 11#393, 12#394, q1_change#419, (9#391 - 7#389) AS q3_change#420]
+   +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#383, 2#384, 3#385, 4#386, 5#387, 6#388, 7#389, 8#390, 9#391, 10#392, 11#393, 12#394, (3#385 - 1#383) AS q1_change#419]
+      +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382[0] AS 1#383, __pivot_first(monthly_share) AS `first(monthly_share)`#382[1] AS 2#384, __pivot_first(monthly_share) AS `first(monthly_share)`#382[2] AS 3#385, __pivot_first(monthly_share) AS `first(monthly_share)`#382[3] AS 4#386, __pivot_first(monthly_share) AS `first(monthly_share)`#382[4] AS 5#387, __pivot_first(monthly_share) AS `first(monthly_share)`#382[5] AS 6#388, __pivot_first(monthly_share) AS `first(monthly_share)`#382[6] AS 7#389, __pivot_first(monthly_share) AS `first(monthly_share)`#382[7] AS 8#390, __pivot_first(monthly_share) AS `first(monthly_share)`#382[8] AS 9#391, __pivot_first(monthly_share) AS `first(monthly_share)`#382[9] AS 10#392, __pivot_first(monthly_share) AS `first(monthly_share)`#382[10] AS 11#393, __pivot_first(monthly_share) AS `first(monthly_share)`#382[11] AS 12#394]
+         +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+            +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share#259, false) AS first(monthly_share)#356]
+               +- Repartition 8, false
+                  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                     +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+                        :- Join Inner, (PULocationID#234 = pickup_id#260)
+                        :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                        :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+                        :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+                        :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                        :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+                        :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+                        :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                        :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+                        :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+                        :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                        :     +- ResolvedHint (strategy=broadcast)
+                        :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+                        +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                           +- ResolvedHint (strategy=broadcast)
+                              +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, pickup_borough: string, pickup_zone: string, dropoff_borough: string, dropoff_zone: string, year: int, 1: double, 2: double, 3: double, 4: double, 5: double, 6: double, 7: double, 8: double, 9: double, 10: double, 11: double, 12: double, q1_change: double, q3_change: double
+Filter (((q1_change#419 > cast(0 as double)) AND (q3_change#420 < cast(0 as double))) OR ((q1_change#419 < cast(0 as double)) AND (q3_change#420 > cast(0 as double))))
++- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#383, 2#384, 3#385, 4#386, 5#387, 6#388, 7#389, 8#390, 9#391, 10#392, 11#393, 12#394, q1_change#419, (9#391 - 7#389) AS q3_change#420]
+   +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#383, 2#384, 3#385, 4#386, 5#387, 6#388, 7#389, 8#390, 9#391, 10#392, 11#393, 12#394, (3#385 - 1#383) AS q1_change#419]
+      +- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382[0] AS 1#383, __pivot_first(monthly_share) AS `first(monthly_share)`#382[1] AS 2#384, __pivot_first(monthly_share) AS `first(monthly_share)`#382[2] AS 3#385, __pivot_first(monthly_share) AS `first(monthly_share)`#382[3] AS 4#386, __pivot_first(monthly_share) AS `first(monthly_share)`#382[4] AS 5#387, __pivot_first(monthly_share) AS `first(monthly_share)`#382[5] AS 6#388, __pivot_first(monthly_share) AS `first(monthly_share)`#382[6] AS 7#389, __pivot_first(monthly_share) AS `first(monthly_share)`#382[7] AS 8#390, __pivot_first(monthly_share) AS `first(monthly_share)`#382[8] AS 9#391, __pivot_first(monthly_share) AS `first(monthly_share)`#382[9] AS 10#392, __pivot_first(monthly_share) AS `first(monthly_share)`#382[10] AS 11#393, __pivot_first(monthly_share) AS `first(monthly_share)`#382[11] AS 12#394]
+         +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+            +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share#259, false) AS first(monthly_share)#356]
+               +- Repartition 8, false
+                  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                     +- Join Inner, (DOLocationID#235 = dropoff_id#264)
+                        :- Join Inner, (PULocationID#234 = pickup_id#260)
+                        :  :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                        :  :  +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L]
+                        :  :     +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, month_volume#257L]
+                        :  :        +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                        :  :           +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L]
+                        :  :              +- Aggregate [PULocationID#234, DOLocationID#235, year#242, month#243], [PULocationID#234, DOLocationID#235, year#242, month#243, count(1) AS trip_volume#244L]
+                        :  :                 +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                        :  :                    +- Project [tpep_pickup_datetime#232, tpep_dropoff_datetime#233, PULocationID#234, DOLocationID#235, passenger_count#236, trip_distance#237, RatecodeID#238, payment_type#239, fare_amount#240, year(cast(tpep_pickup_datetime#232 as date)) AS year#242]
+                        :  :                       +- Relation [tpep_pickup_datetime#232,tpep_dropoff_datetime#233,PULocationID#234,DOLocationID#235,passenger_count#236,trip_distance#237,RatecodeID#238,payment_type#239,fare_amount#240] parquet
+                        :  +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                        :     +- ResolvedHint (strategy=broadcast)
+                        :        +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+                        +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                           +- ResolvedHint (strategy=broadcast)
+                              +- Relation [LocationID#267,Borough#268,Zone#269,service_zone#270] csv
+
+== Optimized Logical Plan ==
+Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382[0] AS 1#383, __pivot_first(monthly_share) AS `first(monthly_share)`#382[1] AS 2#384, __pivot_first(monthly_share) AS `first(monthly_share)`#382[2] AS 3#385, __pivot_first(monthly_share) AS `first(monthly_share)`#382[3] AS 4#386, __pivot_first(monthly_share) AS `first(monthly_share)`#382[4] AS 5#387, __pivot_first(monthly_share) AS `first(monthly_share)`#382[5] AS 6#388, __pivot_first(monthly_share) AS `first(monthly_share)`#382[6] AS 7#389, __pivot_first(monthly_share) AS `first(monthly_share)`#382[7] AS 8#390, __pivot_first(monthly_share) AS `first(monthly_share)`#382[8] AS 9#391, __pivot_first(monthly_share) AS `first(monthly_share)`#382[9] AS 10#392, __pivot_first(monthly_share) AS `first(monthly_share)`#382[10] AS 11#393, __pivot_first(monthly_share) AS `first(monthly_share)`#382[11] AS 12#394, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) AS q1_change#419, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) AS q3_change#420]
++- Filter ((((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) > 0.0)))
+   +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#382]
+      +- Aggregate [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243], [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share#259, false) AS first(monthly_share)#356]
+         +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+            +- InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+                  +- AdaptiveSparkPlan isFinalPlan=false
+                     +- Coalesce 8
+                        +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                           +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+                              :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+                              :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+                              :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                              :     :  +- Filter isnotnull(DOLocationID#235)
+                              :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                              :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+                              :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+                              :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+                              :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+                              :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+                              :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                              :     :                          +- Filter isnotnull(PULocationID#234)
+                              :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+                              :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+                              :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                              :           +- Filter isnotnull(LocationID#228)
+                              :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                              +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                                 +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                                    +- Filter isnotnull(LocationID#267)
+                                       +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382[0] AS 1#383, __pivot_first(monthly_share) AS `first(monthly_share)`#382[1] AS 2#384, __pivot_first(monthly_share) AS `first(monthly_share)`#382[2] AS 3#385, __pivot_first(monthly_share) AS `first(monthly_share)`#382[3] AS 4#386, __pivot_first(monthly_share) AS `first(monthly_share)`#382[4] AS 5#387, __pivot_first(monthly_share) AS `first(monthly_share)`#382[5] AS 6#388, __pivot_first(monthly_share) AS `first(monthly_share)`#382[6] AS 7#389, __pivot_first(monthly_share) AS `first(monthly_share)`#382[7] AS 8#390, __pivot_first(monthly_share) AS `first(monthly_share)`#382[8] AS 9#391, __pivot_first(monthly_share) AS `first(monthly_share)`#382[9] AS 10#392, __pivot_first(monthly_share) AS `first(monthly_share)`#382[10] AS 11#393, __pivot_first(monthly_share) AS `first(monthly_share)`#382[11] AS 12#394, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) AS q1_change#419, (__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) AS q3_change#420]
+   +- Filter ((((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#382[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#382[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#382[6]) > 0.0)))
+      +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242], functions=[pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, __pivot_first(monthly_share) AS `first(monthly_share)`#382])
+         +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 200), ENSURE_REQUIREMENTS, [plan_id=201]
+            +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242], functions=[partial_pivotfirst(month#243, first(monthly_share)#356, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, 1#369, 2#370, 3#371, 4#372, 5#373, 6#374, 7#375, 8#376, 9#377, 10#378, 11#379, 12#380])
+               +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243], functions=[first(monthly_share#259, false)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first(monthly_share)#356])
+                  +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=197]
+                     +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243], functions=[partial_first(monthly_share#259, false)], output=[PULocationID#234, DOLocationID#235, pickup_borough#262, pickup_zone#261, dropoff_borough#266, dropoff_zone#265, year#242, month#243, first#968, valueSet#969])
+                        +- InMemoryTableScan [PULocationID#234, DOLocationID#235, year#242, month#243, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                              +- InMemoryRelation [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266], StorageLevel(disk, memory, deserialized, 1 replicas)
+                                    +- AdaptiveSparkPlan isFinalPlan=false
+                                       +- Coalesce 8
+                                          +- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262, dropoff_zone#265, dropoff_borough#266]
+                                             +- BroadcastHashJoin [DOLocationID#235], [dropoff_id#264], Inner, BuildRight, false, false
+                                                :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, monthly_share#259, pickup_zone#261, pickup_borough#262]
+                                                :  +- BroadcastHashJoin [PULocationID#234], [pickup_id#260], Inner, BuildRight, false, false
+                                                :     :- Project [PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L, month_volume#257L, (cast(trip_volume#244L as double) / cast(month_volume#257L as double)) AS monthly_share#259]
+                                                :     :  +- Filter isnotnull(DOLocationID#235)
+                                                :     :     +- Window [sum(trip_volume#244L) windowspecdefinition(PULocationID#234, year#242, month#243, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#257L], [PULocationID#234, year#242, month#243]
+                                                :     :        +- Sort [PULocationID#234 ASC NULLS FIRST, year#242 ASC NULLS FIRST, month#243 ASC NULLS FIRST], false, 0
+                                                :     :           +- Exchange hashpartitioning(PULocationID#234, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=116]
+                                                :     :              +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, trip_volume#244L])
+                                                :     :                 +- Exchange hashpartitioning(PULocationID#234, DOLocationID#235, year#242, month#243, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+                                                :     :                    +- HashAggregate(keys=[PULocationID#234, DOLocationID#235, year#242, month#243], functions=[partial_count(1)], output=[PULocationID#234, DOLocationID#235, year#242, month#243, count#273L])
+                                                :     :                       +- Project [PULocationID#234, DOLocationID#235, year(cast(tpep_pickup_datetime#232 as date)) AS year#242, month(cast(tpep_pickup_datetime#232 as date)) AS month#243]
+                                                :     :                          +- Filter isnotnull(PULocationID#234)
+                                                :     :                             +- FileScan parquet [tpep_pickup_datetime#232,PULocationID#234,DOLocationID#235] Batched: true, DataFilters: [isnotnull(PULocationID#234)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/out/clean], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,PULocationID:int,DOLocationID:int>
+                                                :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=122]
+                                                :        +- Project [LocationID#228 AS pickup_id#260, Zone#230 AS pickup_zone#261, Borough#229 AS pickup_borough#262]
+                                                :           +- Filter isnotnull(LocationID#228)
+                                                :              +- FileScan csv [LocationID#228,Borough#229,Zone#230] Batched: false, DataFilters: [isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                                                +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=126]
+                                                   +- Project [LocationID#267 AS dropoff_id#264, Zone#269 AS dropoff_zone#265, Borough#268 AS dropoff_borough#266]
+                                                      +- Filter isnotnull(LocationID#267)
+                                                         +- FileScan csv [LocationID#267,Borough#268,Zone#269] Batched: false, DataFilters: [isnotnull(LocationID#267)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+Monthly route counts and shares:
+Top 20 routes per pickup borough:
+Routes with Q1/Q3 share reversals:
+[O2-features:explain_plan=True, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 12.53s (52 stages, 370 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+clean-features:explain_plan=True, use_cleansed=...        21.25         1           1         18                142010                 96926       6.2MB      324.5MB               0.0B                0.0B                 0.0B               0.0B
+O2-features:explain_plan=True, use_cleansed=Tru...        12.53        15          52        370                 65973                 38318      15.4MB         0.0B             52.8MB              52.8MB                 0.0B               0.0B
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection

@@ -108,6 +108,12 @@ class Features:
         default=False,
         metadata={"help": "Repartition trips by PULocationID before O4 bucketing."},
     )
+    coalesce_cache: bool = field(
+        default=False,
+        metadata={
+            "help": "O2: coalesce the cached routes to the default parallelism (with --cache-dataframe)."
+        },
+    )
     write_once: bool = field(
         default=False,
         metadata={
@@ -693,6 +699,12 @@ def run_O2(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sin
 
     # all 3 outputs are built from routes, without a cache each one rescans the trips
     if features.cache_dataframe:
+        # the cache keeps the 200 shuffle partitions of the window, AQE does not
+        # coalesce a cache read, so every output would run 200 tiny tasks
+        if features.coalesce_cache:
+            routes = routes.coalesce(
+                routes.sparkSession.sparkContext.defaultParallelism
+            )
         routes = routes.cache()
 
     # 5. Find the top 20 routes per pickup borough
