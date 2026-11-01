@@ -1,0 +1,1139 @@
+INFO:proj1:Spark UI: http://192.168.68.60:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:Target partitions for ratings: 16
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=True
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=False
+INFO:proj1:cache_dataframe=False
+INFO:proj1:Aggregating .parquet files in proj1/data
+INFO:proj1:Found ['proj1/data/yellow_tripdata_2026-01.parquet', 'proj1/data/yellow_tripdata_2026-02.parquet', 'proj1/data/yellow_tripdata_2026-03.parquet', 'proj1/data/yellow_tripdata_2026-04.parquet', 'proj1/data/yellow_tripdata_2026-05.parquet', 'proj1/data/yellow_tripdata_2026-06.parquet', 'proj1/data/yellow_tripdata_2026-07.parquet', 'proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in proj1/data
+INFO:proj1:Found ['proj1/data/taxi_zone_lookup.csv']
+== Physical Plan ==
+AdaptiveSparkPlan (29)
++- Project (28)
+   +- SortMergeJoin Inner (27)
+      :- Sort (21)
+      :  +- Exchange (20)
+      :     +- Project (19)
+      :        +- SortMergeJoin Inner (18)
+      :           :- Sort (12)
+      :           :  +- Exchange (11)
+      :           :     +- Project (10)
+      :           :        +- Window (9)
+      :           :           +- Sort (8)
+      :           :              +- Exchange (7)
+      :           :                 +- HashAggregate (6)
+      :           :                    +- Exchange (5)
+      :           :                       +- HashAggregate (4)
+      :           :                          +- Project (3)
+      :           :                             +- Filter (2)
+      :           :                                +- Scan parquet  (1)
+      :           +- Sort (17)
+      :              +- Exchange (16)
+      :                 +- Project (15)
+      :                    +- Filter (14)
+      :                       +- Scan csv  (13)
+      +- Sort (26)
+         +- Exchange (25)
+            +- Project (24)
+               +- Filter (23)
+                  +- Scan csv  (22)
+
+
+(1) Scan parquet 
+Output [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(passenger_count), IsNotNull(trip_distance), IsNotNull(RatecodeID), IsNotNull(store_and_fwd_flag), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(payment_type), IsNotNull(fare_amount), IsNotNull(extra), IsNotNull(mta_tax), IsNotNull(tip_amount), IsNotNull(tolls_amount), IsNotNull(improvement_surcharge), IsNotNull(total_amount), IsNotNull(congestion_surcharge), IsNotNull(Airport_fee), IsNotNull(cbd_congestion_fee), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(passenger_count,1), LessThanOrEqual(passenger_count,6), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,store_and_fwd_flag:string,PULocationID:int,DOLocationID:int,payment_type:bigint,fare_amount:double,extra:double,mta_tax:double,tip_amount:double,tolls_amount:double,improvement_surcharge:double,total_amount:double,congestion_surcharge:double,Airport_fee:double,cbd_congestion_fee:double>
+
+(2) Filter
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Condition : ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+
+(3) Project
+Output [3]: [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+
+(4) HashAggregate
+Input [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#154L]
+Results [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+
+(5) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Arguments: hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=55]
+
+(6) HashAggregate
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#48L]
+Results [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count(1)#48L AS trip_volume#26L]
+
+(7) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: hashpartitioning(PULocationID#7, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=58]
+
+(8) Sort
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: [PULocationID#7 ASC NULLS FIRST, pickup_month#25 ASC NULLS FIRST], false, 0
+
+(9) Window
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+
+(10) Project
+Output [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+Input [5]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+
+(11) Exchange
+Input [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51]
+Arguments: hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=64]
+
+(12) Sort
+Input [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51]
+Arguments: [PULocationID#7 ASC NULLS FIRST], false, 0
+
+(13) Scan csv 
+Output [3]: [LocationID#20, Borough#21, Zone#22]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(14) Filter
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+Condition : (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+
+(15) Project
+Output [3]: [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+
+(16) Exchange
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=65]
+
+(17) Sort
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: [pickup_id#52 ASC NULLS FIRST], false, 0
+
+(18) SortMergeJoin
+Left keys [1]: [PULocationID#7]
+Right keys [1]: [pickup_id#52]
+Join type: Inner
+Join condition: None
+
+(19) Project
+Output [8]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Input [9]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_id#52, pickup_zone#53, pickup_borough#54]
+
+(20) Exchange
+Input [8]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=72]
+
+(21) Sort
+Input [8]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Arguments: [DOLocationID#8 ASC NULLS FIRST], false, 0
+
+(22) Scan csv 
+Output [3]: [LocationID#59, Borough#60, Zone#61]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(23) Filter
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+Condition : (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+
+(24) Project
+Output [3]: [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+
+(25) Exchange
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=73]
+
+(26) Sort
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: [dropoff_id#56 ASC NULLS FIRST], false, 0
+
+(27) SortMergeJoin
+Left keys [1]: [DOLocationID#8]
+Right keys [1]: [dropoff_id#56]
+Join type: Inner
+Join condition: None
+
+(28) Project
+Output [10]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Input [11]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+
+(29) AdaptiveSparkPlan
+Output [10]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
++- Join Inner, (DOLocationID#8 = dropoff_id#56)
+   :- Join Inner, (PULocationID#7 = pickup_id#52)
+   :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+   :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+   :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+   :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+   :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+   :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+   :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+   :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+   :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+   :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+   :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+   +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+      +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, pickup_month: int, trip_volume: bigint, month_volume: bigint, monthly_share: double, pickup_zone: string, pickup_borough: string, dropoff_zone: string, dropoff_borough: string
+Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
++- Join Inner, (DOLocationID#8 = dropoff_id#56)
+   :- Join Inner, (PULocationID#7 = pickup_id#52)
+   :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+   :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+   :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+   :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+   :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+   :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+   :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+   :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+   :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+   :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+   :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+   +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+      +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Optimized Logical Plan ==
+Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
++- Join Inner, (DOLocationID#8 = dropoff_id#56)
+   :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54]
+   :  +- Join Inner, (PULocationID#7 = pickup_id#52)
+   :     :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+   :     :  +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+   :     :     +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+   :     :        +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+   :     :           +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND ((passenger_count#3L >= 1) AND (passenger_count#3L <= 6))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+   :     :              +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+   :     +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+   :        +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+   :           +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+   +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+      +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+         +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+   +- SortMergeJoin [DOLocationID#8], [dropoff_id#56], Inner
+      :- Sort [DOLocationID#8 ASC NULLS FIRST], false, 0
+      :  +- Exchange hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=72]
+      :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54]
+      :        +- SortMergeJoin [PULocationID#7], [pickup_id#52], Inner
+      :           :- Sort [PULocationID#7 ASC NULLS FIRST], false, 0
+      :           :  +- Exchange hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=64]
+      :           :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+      :           :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+      :           :           +- Sort [PULocationID#7 ASC NULLS FIRST, pickup_month#25 ASC NULLS FIRST], false, 0
+      :           :              +- Exchange hashpartitioning(PULocationID#7, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=58]
+      :           :                 +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[count(1)], output=[PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L])
+      :           :                    +- Exchange hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=55]
+      :           :                       +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[partial_count(1)], output=[PULocationID#7, DOLocationID#8, pickup_month#25, count#155L])
+      :           :                          +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+      :           :                             +- Filter ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+      :           :                                +- FileScan parquet [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] Batched: true, DataFilters: [isnotnull(VendorID#0), isnotnull(tpep_pickup_datetime#1L), isnotnull(tpep_dropoff_datetime#2L), ..., Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNul..., ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigi...
+      :           +- Sort [pickup_id#52 ASC NULLS FIRST], false, 0
+      :              +- Exchange hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=65]
+      :                 +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+      :                    +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+      :                       +- FileScan csv [LocationID#20,Borough#21,Zone#22] Batched: false, DataFilters: [(LocationID#20 >= 1), (LocationID#20 <= 263), isnotnull(LocationID#20)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+      +- Sort [dropoff_id#56 ASC NULLS FIRST], false, 0
+         +- Exchange hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=73]
+            +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+               +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+                  +- FileScan csv [LocationID#59,Borough#60,Zone#61] Batched: false, DataFilters: [(LocationID#59 >= 1), (LocationID#59 <= 263), isnotnull(LocationID#59)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan (35)
++- Filter (34)
+   +- Window (33)
+      +- WindowGroupLimit (32)
+         +- Sort (31)
+            +- Exchange (30)
+               +- WindowGroupLimit (29)
+                  +- Sort (28)
+                     +- HashAggregate (27)
+                        +- Exchange (26)
+                           +- HashAggregate (25)
+                              +- Project (24)
+                                 +- SortMergeJoin Inner (23)
+                                    :- Sort (17)
+                                    :  +- Exchange (16)
+                                    :     +- Project (15)
+                                    :        +- SortMergeJoin Inner (14)
+                                    :           :- Sort (8)
+                                    :           :  +- Exchange (7)
+                                    :           :     +- HashAggregate (6)
+                                    :           :        +- Exchange (5)
+                                    :           :           +- HashAggregate (4)
+                                    :           :              +- Project (3)
+                                    :           :                 +- Filter (2)
+                                    :           :                    +- Scan parquet  (1)
+                                    :           +- Sort (13)
+                                    :              +- Exchange (12)
+                                    :                 +- Project (11)
+                                    :                    +- Filter (10)
+                                    :                       +- Scan csv  (9)
+                                    +- Sort (22)
+                                       +- Exchange (21)
+                                          +- Project (20)
+                                             +- Filter (19)
+                                                +- Scan csv  (18)
+
+
+(1) Scan parquet 
+Output [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(passenger_count), IsNotNull(trip_distance), IsNotNull(RatecodeID), IsNotNull(store_and_fwd_flag), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(payment_type), IsNotNull(fare_amount), IsNotNull(extra), IsNotNull(mta_tax), IsNotNull(tip_amount), IsNotNull(tolls_amount), IsNotNull(improvement_surcharge), IsNotNull(total_amount), IsNotNull(congestion_surcharge), IsNotNull(Airport_fee), IsNotNull(cbd_congestion_fee), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(passenger_count,1), LessThanOrEqual(passenger_count,6), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,store_and_fwd_flag:string,PULocationID:int,DOLocationID:int,payment_type:bigint,fare_amount:double,extra:double,mta_tax:double,tip_amount:double,tolls_amount:double,improvement_surcharge:double,total_amount:double,congestion_surcharge:double,Airport_fee:double,cbd_congestion_fee:double>
+
+(2) Filter
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Condition : ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+
+(3) Project
+Output [3]: [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+
+(4) HashAggregate
+Input [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#154L]
+Results [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+
+(5) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Arguments: hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=147]
+
+(6) HashAggregate
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#48L]
+Results [3]: [PULocationID#7, DOLocationID#8, count(1)#48L AS trip_volume#26L]
+
+(7) Exchange
+Input [3]: [PULocationID#7, DOLocationID#8, trip_volume#26L]
+Arguments: hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=151]
+
+(8) Sort
+Input [3]: [PULocationID#7, DOLocationID#8, trip_volume#26L]
+Arguments: [PULocationID#7 ASC NULLS FIRST], false, 0
+
+(9) Scan csv 
+Output [3]: [LocationID#20, Borough#21, Zone#22]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(10) Filter
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+Condition : (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+
+(11) Project
+Output [3]: [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+
+(12) Exchange
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=152]
+
+(13) Sort
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: [pickup_id#52 ASC NULLS FIRST], false, 0
+
+(14) SortMergeJoin
+Left keys [1]: [PULocationID#7]
+Right keys [1]: [pickup_id#52]
+Join type: Inner
+Join condition: None
+
+(15) Project
+Output [4]: [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54]
+Input [6]: [PULocationID#7, DOLocationID#8, trip_volume#26L, pickup_id#52, pickup_zone#53, pickup_borough#54]
+
+(16) Exchange
+Input [4]: [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=159]
+
+(17) Sort
+Input [4]: [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54]
+Arguments: [DOLocationID#8 ASC NULLS FIRST], false, 0
+
+(18) Scan csv 
+Output [3]: [LocationID#59, Borough#60, Zone#61]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(19) Filter
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+Condition : (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+
+(20) Project
+Output [3]: [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+
+(21) Exchange
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=160]
+
+(22) Sort
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: [dropoff_id#56 ASC NULLS FIRST], false, 0
+
+(23) SortMergeJoin
+Left keys [1]: [DOLocationID#8]
+Right keys [1]: [dropoff_id#56]
+Join type: Inner
+Join condition: None
+
+(24) Project
+Output [5]: [trip_volume#26L, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Input [7]: [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54, dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+
+(25) HashAggregate
+Input [5]: [trip_volume#26L, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Keys [4]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57]
+Functions [1]: [partial_sum(trip_volume#26L)]
+Aggregate Attributes [1]: [sum#156L]
+Results [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum#157L]
+
+(26) Exchange
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum#157L]
+Arguments: hashpartitioning(pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 200), ENSURE_REQUIREMENTS, [plan_id=167]
+
+(27) HashAggregate
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum#157L]
+Keys [4]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57]
+Functions [1]: [sum(trip_volume#26L)]
+Aggregate Attributes [1]: [sum(trip_volume#26L)#75L]
+Results [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum(trip_volume#26L)#75L AS total_trips#64L]
+
+(28) Sort
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: [pickup_borough#54 ASC NULLS FIRST, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], false, 0
+
+(29) WindowGroupLimit
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], row_number(), 20, Partial
+
+(30) Exchange
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: hashpartitioning(pickup_borough#54, 200), ENSURE_REQUIREMENTS, [plan_id=173]
+
+(31) Sort
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: [pickup_borough#54 ASC NULLS FIRST, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], false, 0
+
+(32) WindowGroupLimit
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], row_number(), 20, Final
+
+(33) Window
+Input [5]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+Arguments: [row_number() windowspecdefinition(pickup_borough#54, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#76], [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST]
+
+(34) Filter
+Input [6]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76]
+Condition : (route_rank#76 <= 20)
+
+(35) AdaptiveSparkPlan
+Output [6]: [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Filter '`<=`('route_rank, 20)
++- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76]
+   +- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76, route_rank#76]
+      +- Window [row_number() windowspecdefinition(pickup_borough#54, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#76], [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST]
+         +- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+            +- Aggregate [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum(trip_volume#26L) AS total_trips#64L]
+               +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                  +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+                     :- Join Inner, (PULocationID#7 = pickup_id#52)
+                     :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+                     :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+                     :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+                     :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+                     :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+                     :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+                     :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                     :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+                     :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+                     :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                     :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+                     +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                        +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Analyzed Logical Plan ==
+pickup_borough: string, pickup_zone: string, dropoff_borough: string, dropoff_zone: string, total_trips: bigint, route_rank: int
+Filter (route_rank#76 <= 20)
++- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76]
+   +- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L, route_rank#76, route_rank#76]
+      +- Window [row_number() windowspecdefinition(pickup_borough#54, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#76], [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST]
+         +- Project [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L]
+            +- Aggregate [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum(trip_volume#26L) AS total_trips#64L]
+               +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                  +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+                     :- Join Inner, (PULocationID#7 = pickup_id#52)
+                     :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+                     :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+                     :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+                     :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+                     :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+                     :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+                     :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                     :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+                     :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+                     :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                     :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+                     +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                        +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Optimized Logical Plan ==
+Filter (route_rank#76 <= 20)
++- Window [row_number() windowspecdefinition(pickup_borough#54, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#76], [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST]
+   +- WindowGroupLimit [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], row_number(), 20
+      +- Aggregate [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum(trip_volume#26L) AS total_trips#64L]
+         +- Project [trip_volume#26L, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+            +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+               :- Project [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54]
+               :  +- Join Inner, (PULocationID#7 = pickup_id#52)
+               :     :- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, count(1) AS trip_volume#26L]
+               :     :  +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+               :     :     +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND ((passenger_count#3L >= 1) AND (passenger_count#3L <= 6))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+               :     :        +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+               :     +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+               :        +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+               :           +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+               +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                  +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+                     +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Filter (route_rank#76 <= 20)
+   +- Window [row_number() windowspecdefinition(pickup_borough#54, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#76], [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST]
+      +- WindowGroupLimit [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], row_number(), 20, Final
+         +- Sort [pickup_borough#54 ASC NULLS FIRST, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], false, 0
+            +- Exchange hashpartitioning(pickup_borough#54, 200), ENSURE_REQUIREMENTS, [plan_id=173]
+               +- WindowGroupLimit [pickup_borough#54], [total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], row_number(), 20, Partial
+                  +- Sort [pickup_borough#54 ASC NULLS FIRST, total_trips#64L DESC NULLS LAST, pickup_zone#53 ASC NULLS FIRST, dropoff_zone#57 ASC NULLS FIRST], false, 0
+                     +- HashAggregate(keys=[pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], functions=[sum(trip_volume#26L)], output=[pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, total_trips#64L])
+                        +- Exchange hashpartitioning(pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 200), ENSURE_REQUIREMENTS, [plan_id=167]
+                           +- HashAggregate(keys=[pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], functions=[partial_sum(trip_volume#26L)], output=[pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, sum#157L])
+                              +- Project [trip_volume#26L, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                                 +- SortMergeJoin [DOLocationID#8], [dropoff_id#56], Inner
+                                    :- Sort [DOLocationID#8 ASC NULLS FIRST], false, 0
+                                    :  +- Exchange hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=159]
+                                    :     +- Project [DOLocationID#8, trip_volume#26L, pickup_zone#53, pickup_borough#54]
+                                    :        +- SortMergeJoin [PULocationID#7], [pickup_id#52], Inner
+                                    :           :- Sort [PULocationID#7 ASC NULLS FIRST], false, 0
+                                    :           :  +- Exchange hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=151]
+                                    :           :     +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[count(1)], output=[PULocationID#7, DOLocationID#8, trip_volume#26L])
+                                    :           :        +- Exchange hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=147]
+                                    :           :           +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[partial_count(1)], output=[PULocationID#7, DOLocationID#8, pickup_month#25, count#155L])
+                                    :           :              +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                                    :           :                 +- Filter ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+                                    :           :                    +- FileScan parquet [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] Batched: true, DataFilters: [isnotnull(VendorID#0), isnotnull(tpep_pickup_datetime#1L), isnotnull(tpep_dropoff_datetime#2L), ..., Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNul..., ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigi...
+                                    :           +- Sort [pickup_id#52 ASC NULLS FIRST], false, 0
+                                    :              +- Exchange hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=152]
+                                    :                 +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                                    :                    +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+                                    :                       +- FileScan csv [LocationID#20,Borough#21,Zone#22] Batched: false, DataFilters: [(LocationID#20 >= 1), (LocationID#20 <= 263), isnotnull(LocationID#20)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                                    +- Sort [dropoff_id#56 ASC NULLS FIRST], false, 0
+                                       +- Exchange hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=160]
+                                          +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                                             +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+                                                +- FileScan csv [LocationID#59,Borough#60,Zone#61] Batched: false, DataFilters: [(LocationID#59 >= 1), (LocationID#59 <= 263), isnotnull(LocationID#59)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+== Physical Plan ==
+AdaptiveSparkPlan (35)
++- Project (34)
+   +- Filter (33)
+      +- HashAggregate (32)
+         +- HashAggregate (31)
+            +- HashAggregate (30)
+               +- HashAggregate (29)
+                  +- Project (28)
+                     +- SortMergeJoin Inner (27)
+                        :- Sort (21)
+                        :  +- Exchange (20)
+                        :     +- Project (19)
+                        :        +- SortMergeJoin Inner (18)
+                        :           :- Sort (12)
+                        :           :  +- Exchange (11)
+                        :           :     +- Project (10)
+                        :           :        +- Window (9)
+                        :           :           +- Sort (8)
+                        :           :              +- Exchange (7)
+                        :           :                 +- HashAggregate (6)
+                        :           :                    +- Exchange (5)
+                        :           :                       +- HashAggregate (4)
+                        :           :                          +- Project (3)
+                        :           :                             +- Filter (2)
+                        :           :                                +- Scan parquet  (1)
+                        :           +- Sort (17)
+                        :              +- Exchange (16)
+                        :                 +- Project (15)
+                        :                    +- Filter (14)
+                        :                       +- Scan csv  (13)
+                        +- Sort (26)
+                           +- Exchange (25)
+                              +- Project (24)
+                                 +- Filter (23)
+                                    +- Scan csv  (22)
+
+
+(1) Scan parquet 
+Output [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(passenger_count), IsNotNull(trip_distance), IsNotNull(RatecodeID), IsNotNull(store_and_fwd_flag), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(payment_type), IsNotNull(fare_amount), IsNotNull(extra), IsNotNull(mta_tax), IsNotNull(tip_amount), IsNotNull(tolls_amount), IsNotNull(improvement_surcharge), IsNotNull(total_amount), IsNotNull(congestion_surcharge), IsNotNull(Airport_fee), IsNotNull(cbd_congestion_fee), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(passenger_count,1), LessThanOrEqual(passenger_count,6), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,store_and_fwd_flag:string,PULocationID:int,DOLocationID:int,payment_type:bigint,fare_amount:double,extra:double,mta_tax:double,tip_amount:double,tolls_amount:double,improvement_surcharge:double,total_amount:double,congestion_surcharge:double,Airport_fee:double,cbd_congestion_fee:double>
+
+(2) Filter
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Condition : ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+
+(3) Project
+Output [3]: [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+
+(4) HashAggregate
+Input [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [partial_count(1)]
+Aggregate Attributes [1]: [count#154L]
+Results [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+
+(5) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Arguments: hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=255]
+
+(6) HashAggregate
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count#155L]
+Keys [3]: [PULocationID#7, DOLocationID#8, pickup_month#25]
+Functions [1]: [count(1)]
+Aggregate Attributes [1]: [count(1)#48L]
+Results [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, count(1)#48L AS trip_volume#26L]
+
+(7) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: hashpartitioning(PULocationID#7, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=258]
+
+(8) Sort
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: [PULocationID#7 ASC NULLS FIRST, pickup_month#25 ASC NULLS FIRST], false, 0
+
+(9) Window
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+Arguments: [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+
+(10) Project
+Output [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+Input [5]: [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+
+(11) Exchange
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51]
+Arguments: hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=264]
+
+(12) Sort
+Input [4]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51]
+Arguments: [PULocationID#7 ASC NULLS FIRST], false, 0
+
+(13) Scan csv 
+Output [3]: [LocationID#20, Borough#21, Zone#22]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(14) Filter
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+Condition : (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+
+(15) Project
+Output [3]: [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+
+(16) Exchange
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=265]
+
+(17) Sort
+Input [3]: [pickup_id#52, pickup_zone#53, pickup_borough#54]
+Arguments: [pickup_id#52 ASC NULLS FIRST], false, 0
+
+(18) SortMergeJoin
+Left keys [1]: [PULocationID#7]
+Right keys [1]: [pickup_id#52]
+Join type: Inner
+Join condition: None
+
+(19) Project
+Output [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Input [7]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_id#52, pickup_zone#53, pickup_borough#54]
+
+(20) Exchange
+Input [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Arguments: hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=272]
+
+(21) Sort
+Input [6]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54]
+Arguments: [DOLocationID#8 ASC NULLS FIRST], false, 0
+
+(22) Scan csv 
+Output [3]: [LocationID#59, Borough#60, Zone#61]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(23) Filter
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+Condition : (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+
+(24) Project
+Output [3]: [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+Input [3]: [LocationID#59, Borough#60, Zone#61]
+
+(25) Exchange
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=273]
+
+(26) Sort
+Input [3]: [dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+Arguments: [dropoff_id#56 ASC NULLS FIRST], false, 0
+
+(27) SortMergeJoin
+Left keys [1]: [DOLocationID#8]
+Right keys [1]: [dropoff_id#56]
+Join type: Inner
+Join condition: None
+
+(28) Project
+Output [8]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Input [9]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_id#56, dropoff_zone#57, dropoff_borough#58]
+
+(29) HashAggregate
+Input [8]: [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+Keys [7]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25]
+Functions [1]: [partial_first(monthly_share#51, false)]
+Aggregate Attributes [2]: [first#158, valueSet#159]
+Results [9]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first#160, valueSet#161]
+
+(30) HashAggregate
+Input [9]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first#160, valueSet#161]
+Keys [7]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25]
+Functions [1]: [first(monthly_share#51, false)]
+Aggregate Attributes [1]: [first(monthly_share#51)()#88]
+Results [8]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share#51)()#88 AS first(monthly_share)#89]
+
+(31) HashAggregate
+Input [8]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share)#89]
+Keys [6]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57]
+Functions [1]: [partial_pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)]
+Aggregate Attributes [12]: [1#90, 2#91, 3#92, 4#93, 5#94, 6#95, 7#96, 8#97, 9#98, 10#99, 11#100, 12#101]
+Results [18]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#102, 2#103, 3#104, 4#105, 5#106, 6#107, 7#108, 8#109, 9#110, 10#111, 11#112, 12#113]
+
+(32) HashAggregate
+Input [18]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#102, 2#103, 3#104, 4#105, 5#106, 6#107, 7#108, 8#109, 9#110, 10#111, 11#112, 12#113]
+Keys [6]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57]
+Functions [1]: [pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)]
+Aggregate Attributes [1]: [pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)#114]
+Results [7]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)#114 AS __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+
+(33) Filter
+Input [7]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+Condition : ((((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) > 0.0)))
+
+(34) Project
+Output [20]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115[0] AS 1#116, __pivot_first(monthly_share) AS `first(monthly_share)`#115[1] AS 2#117, __pivot_first(monthly_share) AS `first(monthly_share)`#115[2] AS 3#118, __pivot_first(monthly_share) AS `first(monthly_share)`#115[3] AS 4#119, __pivot_first(monthly_share) AS `first(monthly_share)`#115[4] AS 5#120, __pivot_first(monthly_share) AS `first(monthly_share)`#115[5] AS 6#121, __pivot_first(monthly_share) AS `first(monthly_share)`#115[6] AS 7#122, __pivot_first(monthly_share) AS `first(monthly_share)`#115[7] AS 8#123, __pivot_first(monthly_share) AS `first(monthly_share)`#115[8] AS 9#124, __pivot_first(monthly_share) AS `first(monthly_share)`#115[9] AS 10#125, __pivot_first(monthly_share) AS `first(monthly_share)`#115[10] AS 11#126, __pivot_first(monthly_share) AS `first(monthly_share)`#115[11] AS 12#127, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) AS q1_change#152, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) AS q3_change#153]
+Input [7]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+
+(35) AdaptiveSparkPlan
+Output [20]: [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#116, 2#117, 3#118, 4#119, 5#120, 6#121, 7#122, 8#123, 9#124, 10#125, 11#126, 12#127, q1_change#152, q3_change#153]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Filter 'or('and('`>`('q1_change, 0), '`<`('q3_change, 0)), 'and('`<`('q1_change, 0), '`>`('q3_change, 0)))
++- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#116, 2#117, 3#118, 4#119, 5#120, 6#121, 7#122, 8#123, 9#124, 10#125, 11#126, 12#127, q1_change#152, (9#124 - 7#122) AS q3_change#153]
+   +- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#116, 2#117, 3#118, 4#119, 5#120, 6#121, 7#122, 8#123, 9#124, 10#125, 11#126, 12#127, (3#118 - 1#116) AS q1_change#152]
+      +- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115[0] AS 1#116, __pivot_first(monthly_share) AS `first(monthly_share)`#115[1] AS 2#117, __pivot_first(monthly_share) AS `first(monthly_share)`#115[2] AS 3#118, __pivot_first(monthly_share) AS `first(monthly_share)`#115[3] AS 4#119, __pivot_first(monthly_share) AS `first(monthly_share)`#115[4] AS 5#120, __pivot_first(monthly_share) AS `first(monthly_share)`#115[5] AS 6#121, __pivot_first(monthly_share) AS `first(monthly_share)`#115[6] AS 7#122, __pivot_first(monthly_share) AS `first(monthly_share)`#115[7] AS 8#123, __pivot_first(monthly_share) AS `first(monthly_share)`#115[8] AS 9#124, __pivot_first(monthly_share) AS `first(monthly_share)`#115[9] AS 10#125, __pivot_first(monthly_share) AS `first(monthly_share)`#115[10] AS 11#126, __pivot_first(monthly_share) AS `first(monthly_share)`#115[11] AS 12#127]
+         +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+            +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share#51, false) AS first(monthly_share)#89]
+               +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                  +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+                     :- Join Inner, (PULocationID#7 = pickup_id#52)
+                     :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+                     :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+                     :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+                     :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+                     :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+                     :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+                     :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                     :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+                     :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+                     :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                     :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+                     +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                        +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, pickup_borough: string, pickup_zone: string, dropoff_borough: string, dropoff_zone: string, 1: double, 2: double, 3: double, 4: double, 5: double, 6: double, 7: double, 8: double, 9: double, 10: double, 11: double, 12: double, q1_change: double, q3_change: double
+Filter (((q1_change#152 > cast(0 as double)) AND (q3_change#153 < cast(0 as double))) OR ((q1_change#152 < cast(0 as double)) AND (q3_change#153 > cast(0 as double))))
++- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#116, 2#117, 3#118, 4#119, 5#120, 6#121, 7#122, 8#123, 9#124, 10#125, 11#126, 12#127, q1_change#152, (9#124 - 7#122) AS q3_change#153]
+   +- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#116, 2#117, 3#118, 4#119, 5#120, 6#121, 7#122, 8#123, 9#124, 10#125, 11#126, 12#127, (3#118 - 1#116) AS q1_change#152]
+      +- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115[0] AS 1#116, __pivot_first(monthly_share) AS `first(monthly_share)`#115[1] AS 2#117, __pivot_first(monthly_share) AS `first(monthly_share)`#115[2] AS 3#118, __pivot_first(monthly_share) AS `first(monthly_share)`#115[3] AS 4#119, __pivot_first(monthly_share) AS `first(monthly_share)`#115[4] AS 5#120, __pivot_first(monthly_share) AS `first(monthly_share)`#115[5] AS 6#121, __pivot_first(monthly_share) AS `first(monthly_share)`#115[6] AS 7#122, __pivot_first(monthly_share) AS `first(monthly_share)`#115[7] AS 8#123, __pivot_first(monthly_share) AS `first(monthly_share)`#115[8] AS 9#124, __pivot_first(monthly_share) AS `first(monthly_share)`#115[9] AS 10#125, __pivot_first(monthly_share) AS `first(monthly_share)`#115[10] AS 11#126, __pivot_first(monthly_share) AS `first(monthly_share)`#115[11] AS 12#127]
+         +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+            +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share#51, false) AS first(monthly_share)#89]
+               +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                  +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+                     :- Join Inner, (PULocationID#7 = pickup_id#52)
+                     :  :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+                     :  :  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L]
+                     :  :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L, month_volume#49L, month_volume#49L]
+                     :  :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+                     :  :           +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L]
+                     :  :              +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+                     :  :                 +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                     :  :                    +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > cast(0 as double))) AND (trip_distance#4 > cast(0 as double))) AND ((passenger_count#3L >= cast(1 as bigint)) AND (passenger_count#3L <= cast(6 as bigint)))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+                     :  :                       +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+                     :  +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                     :     +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+                     +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                        +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Optimized Logical Plan ==
+Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115[0] AS 1#116, __pivot_first(monthly_share) AS `first(monthly_share)`#115[1] AS 2#117, __pivot_first(monthly_share) AS `first(monthly_share)`#115[2] AS 3#118, __pivot_first(monthly_share) AS `first(monthly_share)`#115[3] AS 4#119, __pivot_first(monthly_share) AS `first(monthly_share)`#115[4] AS 5#120, __pivot_first(monthly_share) AS `first(monthly_share)`#115[5] AS 6#121, __pivot_first(monthly_share) AS `first(monthly_share)`#115[6] AS 7#122, __pivot_first(monthly_share) AS `first(monthly_share)`#115[7] AS 8#123, __pivot_first(monthly_share) AS `first(monthly_share)`#115[8] AS 9#124, __pivot_first(monthly_share) AS `first(monthly_share)`#115[9] AS 10#125, __pivot_first(monthly_share) AS `first(monthly_share)`#115[10] AS 11#126, __pivot_first(monthly_share) AS `first(monthly_share)`#115[11] AS 12#127, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) AS q1_change#152, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) AS q3_change#153]
++- Filter ((((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) > 0.0)))
+   +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0) AS __pivot_first(monthly_share) AS `first(monthly_share)`#115]
+      +- Aggregate [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share#51, false) AS first(monthly_share)#89]
+         +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+            +- Join Inner, (DOLocationID#8 = dropoff_id#56)
+               :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54]
+               :  +- Join Inner, (PULocationID#7 = pickup_id#52)
+               :     :- Project [PULocationID#7, DOLocationID#8, pickup_month#25, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+               :     :  +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+               :     :     +- Aggregate [PULocationID#7, DOLocationID#8, pickup_month#25], [PULocationID#7, DOLocationID#8, pickup_month#25, count(1) AS trip_volume#26L]
+               :     :        +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+               :     :           +- Filter (((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND ((passenger_count#3L >= 1) AND (passenger_count#3L <= 6))) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND ((PULocationID#7 >= 1) AND (PULocationID#7 <= 263))) AND ((DOLocationID#8 >= 1) AND (DOLocationID#8 <= 263)))
+               :     :              +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+               :     +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+               :        +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+               :           +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+               +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                  +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+                     +- Relation [LocationID#59,Borough#60,Zone#61,service_zone#62] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115[0] AS 1#116, __pivot_first(monthly_share) AS `first(monthly_share)`#115[1] AS 2#117, __pivot_first(monthly_share) AS `first(monthly_share)`#115[2] AS 3#118, __pivot_first(monthly_share) AS `first(monthly_share)`#115[3] AS 4#119, __pivot_first(monthly_share) AS `first(monthly_share)`#115[4] AS 5#120, __pivot_first(monthly_share) AS `first(monthly_share)`#115[5] AS 6#121, __pivot_first(monthly_share) AS `first(monthly_share)`#115[6] AS 7#122, __pivot_first(monthly_share) AS `first(monthly_share)`#115[7] AS 8#123, __pivot_first(monthly_share) AS `first(monthly_share)`#115[8] AS 9#124, __pivot_first(monthly_share) AS `first(monthly_share)`#115[9] AS 10#125, __pivot_first(monthly_share) AS `first(monthly_share)`#115[10] AS 11#126, __pivot_first(monthly_share) AS `first(monthly_share)`#115[11] AS 12#127, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) AS q1_change#152, (__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) AS q3_change#153]
+   +- Filter ((((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) > 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) < 0.0)) OR (((__pivot_first(monthly_share) AS `first(monthly_share)`#115[2] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[0]) < 0.0) AND ((__pivot_first(monthly_share) AS `first(monthly_share)`#115[8] - __pivot_first(monthly_share) AS `first(monthly_share)`#115[6]) > 0.0)))
+      +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], functions=[pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)], output=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, __pivot_first(monthly_share) AS `first(monthly_share)`#115])
+         +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57], functions=[partial_pivotfirst(pickup_month#25, first(monthly_share)#89, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0)], output=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, 1#102, 2#103, 3#104, 4#105, 5#106, 6#107, 7#108, 8#109, 9#110, 10#111, 11#112, 12#113])
+            +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25], functions=[first(monthly_share#51, false)], output=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first(monthly_share)#89])
+               +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25], functions=[partial_first(monthly_share#51, false)], output=[PULocationID#7, DOLocationID#8, pickup_borough#54, pickup_zone#53, dropoff_borough#58, dropoff_zone#57, pickup_month#25, first#160, valueSet#161])
+                  +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54, dropoff_zone#57, dropoff_borough#58]
+                     +- SortMergeJoin [DOLocationID#8], [dropoff_id#56], Inner
+                        :- Sort [DOLocationID#8 ASC NULLS FIRST], false, 0
+                        :  +- Exchange hashpartitioning(DOLocationID#8, 200), ENSURE_REQUIREMENTS, [plan_id=272]
+                        :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, monthly_share#51, pickup_zone#53, pickup_borough#54]
+                        :        +- SortMergeJoin [PULocationID#7], [pickup_id#52], Inner
+                        :           :- Sort [PULocationID#7 ASC NULLS FIRST], false, 0
+                        :           :  +- Exchange hashpartitioning(PULocationID#7, 200), ENSURE_REQUIREMENTS, [plan_id=264]
+                        :           :     +- Project [PULocationID#7, DOLocationID#8, pickup_month#25, (cast(trip_volume#26L as double) / cast(month_volume#49L as double)) AS monthly_share#51]
+                        :           :        +- Window [sum(trip_volume#26L) windowspecdefinition(PULocationID#7, pickup_month#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS month_volume#49L], [PULocationID#7, pickup_month#25]
+                        :           :           +- Sort [PULocationID#7 ASC NULLS FIRST, pickup_month#25 ASC NULLS FIRST], false, 0
+                        :           :              +- Exchange hashpartitioning(PULocationID#7, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=258]
+                        :           :                 +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[count(1)], output=[PULocationID#7, DOLocationID#8, pickup_month#25, trip_volume#26L])
+                        :           :                    +- Exchange hashpartitioning(PULocationID#7, DOLocationID#8, pickup_month#25, 200), ENSURE_REQUIREMENTS, [plan_id=255]
+                        :           :                       +- HashAggregate(keys=[PULocationID#7, DOLocationID#8, pickup_month#25], functions=[partial_count(1)], output=[PULocationID#7, DOLocationID#8, pickup_month#25, count#155L])
+                        :           :                          +- Project [PULocationID#7, DOLocationID#8, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#25]
+                        :           :                             +- Filter ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+                        :           :                                +- FileScan parquet [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] Batched: true, DataFilters: [isnotnull(VendorID#0), isnotnull(tpep_pickup_datetime#1L), isnotnull(tpep_dropoff_datetime#2L), ..., Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNul..., ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigi...
+                        :           +- Sort [pickup_id#52 ASC NULLS FIRST], false, 0
+                        :              +- Exchange hashpartitioning(pickup_id#52, 200), ENSURE_REQUIREMENTS, [plan_id=265]
+                        :                 +- Project [LocationID#20 AS pickup_id#52, Zone#22 AS pickup_zone#53, Borough#21 AS pickup_borough#54]
+                        :                    +- Filter (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+                        :                       +- FileScan csv [LocationID#20,Borough#21,Zone#22] Batched: false, DataFilters: [(LocationID#20 >= 1), (LocationID#20 <= 263), isnotnull(LocationID#20)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                        +- Sort [dropoff_id#56 ASC NULLS FIRST], false, 0
+                           +- Exchange hashpartitioning(dropoff_id#56, 200), ENSURE_REQUIREMENTS, [plan_id=273]
+                              +- Project [LocationID#59 AS dropoff_id#56, Zone#61 AS dropoff_zone#57, Borough#60 AS dropoff_borough#58]
+                                 +- Filter (((LocationID#59 >= 1) AND (LocationID#59 <= 263)) AND isnotnull(LocationID#59))
+                                    +- FileScan csv [LocationID#59,Borough#60,Zone#61] Batched: false, DataFilters: [(LocationID#59 >= 1), (LocationID#59 <= 263), isnotnull(LocationID#59)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+Monthly route counts and shares:
++------------+------------+------------+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+|PULocationID|DOLocationID|pickup_month|trip_volume|month_volume|monthly_share      |pickup_zone   |pickup_borough|dropoff_zone                 |dropoff_borough|
++------------+------------+------------+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+|1           |1           |1           |102        |110         |0.9272727272727272 |Newark Airport|EWR           |Newark Airport               |EWR            |
+|1           |211         |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |SoHo                         |Manhattan      |
+|1           |232         |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Two Bridges/Seward Park      |Manhattan      |
+|1           |48          |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Clinton East                 |Manhattan      |
+|1           |163         |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Midtown North                |Manhattan      |
+|1           |164         |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Midtown South                |Manhattan      |
+|1           |50          |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Clinton West                 |Manhattan      |
+|1           |87          |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |Financial District North     |Manhattan      |
+|1           |261         |1           |1          |110         |0.00909090909090909|Newark Airport|EWR           |World Trade Center           |Manhattan      |
+|1           |1           |2           |81         |91          |0.8901098901098901 |Newark Airport|EWR           |Newark Airport               |EWR            |
+|1           |148         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lower East Side              |Manhattan      |
+|1           |233         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |UN/Turtle Bay South          |Manhattan      |
+|1           |4           |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Alphabet City                |Manhattan      |
+|1           |140         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lenox Hill East              |Manhattan      |
+|1           |142         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lincoln Square East          |Manhattan      |
+|1           |163         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Midtown North                |Manhattan      |
+|1           |239         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Upper West Side South        |Manhattan      |
+|1           |79          |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |East Village                 |Manhattan      |
+|1           |138         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |LaGuardia Airport            |Queens         |
+|1           |158         |2           |1          |91          |0.01098901098901099|Newark Airport|EWR           |Meatpacking/West Village West|Manhattan      |
++------------+------------+------------+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+only showing top 20 rows
+Top 20 routes per pickup borough:
++--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+|pickup_borough|pickup_zone                      |dropoff_borough|dropoff_zone                |total_trips|route_rank|
++--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+|Bronx         |West Concourse                   |Manhattan      |Central Harlem North        |469        |1         |
+|Bronx         |Melrose South                    |Manhattan      |Central Harlem North        |408        |2         |
+|Bronx         |Mott Haven/Port Morris           |Manhattan      |Central Harlem North        |384        |3         |
+|Bronx         |East Concourse/Concourse Village |Manhattan      |Central Harlem              |361        |4         |
+|Bronx         |East Concourse/Concourse Village |Manhattan      |Central Harlem North        |359        |5         |
+|Bronx         |University Heights/Morris Heights|Manhattan      |Central Harlem North        |344        |6         |
+|Bronx         |Mott Haven/Port Morris           |Manhattan      |East Harlem North           |333        |7         |
+|Bronx         |Soundview/Castle Hill            |Manhattan      |Central Harlem North        |293        |8         |
+|Bronx         |Co-Op City                       |Manhattan      |Central Harlem North        |291        |9         |
+|Bronx         |Highbridge                       |Manhattan      |Central Harlem North        |255        |10        |
+|Bronx         |Mott Haven/Port Morris           |Manhattan      |Central Harlem              |249        |11        |
+|Bronx         |East Concourse/Concourse Village |Manhattan      |East Harlem South           |247        |12        |
+|Bronx         |Williamsbridge/Olinville         |Manhattan      |Central Harlem North        |244        |13        |
+|Bronx         |Mott Haven/Port Morris           |Manhattan      |East Harlem South           |235        |14        |
+|Bronx         |Morrisania/Melrose               |Manhattan      |East Harlem South           |230        |15        |
+|Bronx         |Parkchester                      |Manhattan      |Central Harlem North        |230        |16        |
+|Bronx         |East Tremont                     |Manhattan      |Central Harlem North        |223        |17        |
+|Bronx         |Co-Op City                       |Manhattan      |Lenox Hill East             |214        |18        |
+|Bronx         |Co-Op City                       |Manhattan      |Central Harlem              |209        |19        |
+|Bronx         |Melrose South                    |Manhattan      |East Harlem South           |201        |20        |
+|Brooklyn      |East New York                    |Brooklyn       |East New York               |1015       |1         |
+|Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Greenpoint                  |819        |2         |
+|Brooklyn      |Crown Heights North              |Brooklyn       |Crown Heights North         |811        |3         |
+|Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Williamsburg (South Side)   |741        |4         |
+|Brooklyn      |Park Slope                       |Brooklyn       |Park Slope                  |674        |5         |
+|Brooklyn      |Brooklyn Heights                 |Brooklyn       |Brooklyn Heights            |641        |6         |
+|Brooklyn      |Crown Heights North              |Brooklyn       |East New York               |612        |7         |
+|Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Williamsburg (North Side)   |602        |8         |
+|Brooklyn      |Fort Greene                      |Brooklyn       |Fort Greene                 |596        |9         |
+|Brooklyn      |East New York                    |Brooklyn       |Crown Heights North         |554        |10        |
+|Brooklyn      |Fort Greene                      |Brooklyn       |Clinton Hill                |502        |11        |
+|Brooklyn      |East New York                    |Brooklyn       |Prospect-Lefferts Gardens   |499        |12        |
+|Brooklyn      |Boerum Hill                      |Brooklyn       |Brooklyn Heights            |488        |13        |
+|Brooklyn      |Canarsie                         |Brooklyn       |Canarsie                    |488        |14        |
+|Brooklyn      |Greenpoint                       |Brooklyn       |Greenpoint                  |484        |15        |
+|Brooklyn      |Prospect-Lefferts Gardens        |Brooklyn       |Crown Heights North         |482        |16        |
+|Brooklyn      |Brownsville                      |Brooklyn       |East New York               |477        |17        |
+|Brooklyn      |Downtown Brooklyn/MetroTech      |Brooklyn       |DUMBO/Vinegar Hill          |476        |18        |
+|Brooklyn      |Prospect-Lefferts Gardens        |Brooklyn       |East New York               |469        |19        |
+|Brooklyn      |Williamsburg (South Side)        |Brooklyn       |Williamsburg (South Side)   |465        |20        |
+|EWR           |Newark Airport                   |EWR            |Newark Airport              |767        |1         |
+|EWR           |Newark Airport                   |Manhattan      |Midtown North               |4          |2         |
+|EWR           |Newark Airport                   |Manhattan      |TriBeCa/Civic Center        |4          |3         |
+|EWR           |Newark Airport                   |Manhattan      |East Village                |3          |4         |
+|EWR           |Newark Airport                   |Manhattan      |Lincoln Square East         |3          |5         |
+|EWR           |Newark Airport                   |Staten Island  |Arrochar/Fort Wadsworth     |2          |6         |
+|EWR           |Newark Airport                   |Manhattan      |Battery Park City           |2          |7         |
+|EWR           |Newark Airport                   |Manhattan      |Clinton East                |2          |8         |
+|EWR           |Newark Airport                   |Manhattan      |Financial District North    |2          |9         |
+|EWR           |Newark Airport                   |Queens         |JFK Airport                 |2          |10        |
+|EWR           |Newark Airport                   |Queens         |LaGuardia Airport           |2          |11        |
+|EWR           |Newark Airport                   |Manhattan      |Midtown Center              |2          |12        |
+|EWR           |Newark Airport                   |Manhattan      |Midtown South               |2          |13        |
+|EWR           |Newark Airport                   |Manhattan      |Penn Station/Madison Sq West|2          |14        |
+|EWR           |Newark Airport                   |Manhattan      |SoHo                        |2          |15        |
+|EWR           |Newark Airport                   |Manhattan      |UN/Turtle Bay South         |2          |16        |
+|EWR           |Newark Airport                   |Manhattan      |Upper West Side North       |2          |17        |
+|EWR           |Newark Airport                   |Manhattan      |Alphabet City               |1          |18        |
+|EWR           |Newark Airport                   |Brooklyn       |Clinton Hill                |1          |19        |
+|EWR           |Newark Airport                   |Manhattan      |Clinton West                |1          |20        |
+|Manhattan     |Upper East Side South            |Manhattan      |Upper East Side North       |173410     |1         |
+|Manhattan     |Upper East Side North            |Manhattan      |Upper East Side South       |143860     |2         |
+|Manhattan     |Upper East Side South            |Manhattan      |Upper East Side South       |116463     |3         |
+|Manhattan     |Upper East Side North            |Manhattan      |Upper East Side North       |108426     |4         |
+|Manhattan     |Midtown Center                   |Manhattan      |Upper East Side South       |80181      |5         |
+|Manhattan     |Upper East Side South            |Manhattan      |Midtown Center              |72984      |6         |
+|Manhattan     |Midtown Center                   |Manhattan      |Upper East Side North       |64193      |7         |
+|Manhattan     |Upper East Side South            |Manhattan      |Midtown East                |60886      |8         |
+|Manhattan     |Lincoln Square East              |Manhattan      |Upper West Side South       |60013      |9         |
+|Manhattan     |Upper West Side South            |Manhattan      |Upper West Side North       |57548      |10        |
+|Manhattan     |Upper West Side South            |Manhattan      |Lincoln Square East         |56550      |11        |
+|Manhattan     |Lenox Hill West                  |Manhattan      |Upper East Side North       |54455      |12        |
+|Manhattan     |Upper East Side North            |Manhattan      |Midtown Center              |53549      |13        |
+|Manhattan     |Upper East Side South            |Manhattan      |Lenox Hill West             |53465      |14        |
+|Manhattan     |Midtown East                     |Manhattan      |Upper East Side South       |51558      |15        |
+|Manhattan     |Upper East Side North            |Manhattan      |Lenox Hill West             |50518      |16        |
+|Manhattan     |Penn Station/Madison Sq West     |Manhattan      |Times Sq/Theatre District   |49779      |17        |
+|Manhattan     |Upper West Side North            |Manhattan      |Upper West Side South       |49085      |18        |
+|Manhattan     |Upper East Side South            |Manhattan      |Lincoln Square East         |47262      |19        |
+|Manhattan     |Lenox Hill West                  |Manhattan      |Upper East Side South       |46454      |20        |
+|Queens        |JFK Airport                      |Manhattan      |Times Sq/Theatre District   |44758      |1         |
+|Queens        |LaGuardia Airport                |Manhattan      |Times Sq/Theatre District   |40273      |2         |
+|Queens        |JFK Airport                      |Queens         |JFK Airport                 |32321      |3         |
+|Queens        |JFK Airport                      |Queens         |Flushing Meadows-Corona Park|29725      |4         |
+|Queens        |LaGuardia Airport                |Manhattan      |Midtown Center              |26777      |5         |
+|Queens        |JFK Airport                      |Manhattan      |Midtown South               |22878      |6         |
+|Queens        |JFK Airport                      |Manhattan      |Clinton East                |21450      |7         |
+|Queens        |LaGuardia Airport                |Manhattan      |Midtown South               |20790      |8         |
+|Queens        |LaGuardia Airport                |Manhattan      |Midtown East                |19944      |9         |
+|Queens        |JFK Airport                      |Manhattan      |Midtown Center              |19912      |10        |
+|Queens        |JFK Airport                      |Manhattan      |Midtown North               |18814      |11        |
+|Queens        |LaGuardia Airport                |Manhattan      |Midtown North               |18428      |12        |
+|Queens        |LaGuardia Airport                |Manhattan      |Upper East Side North       |18162      |13        |
+|Queens        |JFK Airport                      |Queens         |Baisley Park                |18114      |14        |
+|Queens        |LaGuardia Airport                |Manhattan      |Murray Hill                 |17577      |15        |
+|Queens        |JFK Airport                      |Manhattan      |Murray Hill                 |17400      |16        |
+|Queens        |JFK Airport                      |Queens         |South Ozone Park            |16467      |17        |
+|Queens        |LaGuardia Airport                |Manhattan      |Upper West Side South       |15997      |18        |
+|Queens        |JFK Airport                      |Queens         |LaGuardia Airport           |15467      |19        |
+|Queens        |JFK Airport                      |Manhattan      |Midtown East                |15200      |20        |
++--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+only showing top 100 rows
+Routes with Q1/Q3 share reversals:
++------------+------------+------------------------------+------------------------------+--------------+---------------+---------------------+---------------------+---------------------+---------------------+----------------------+----------------------+
+|PULocationID|DOLocationID|pickup_zone                   |dropoff_zone                  |pickup_borough|dropoff_borough|1                    |3                    |7                    |9                    |q1_change             |q3_change             |
++------------+------------+------------------------------+------------------------------+--------------+---------------+---------------------+---------------------+---------------------+---------------------+----------------------+----------------------+
+|132         |44          |JFK Airport                   |Charleston/Tottenville        |Queens        |Staten Island  |5.225323410195352E-5 |2.867589074485626E-5 |3.635094657864891E-5 |0.0034482758620689655|-2.3577343357097262E-5|0.0034119249154903166 |
+|132         |53          |JFK Airport                   |College Point                 |Queens        |Queens         |8.957697274620605E-4 |7.025593232489784E-4 |7.488294995201675E-4 |0.0034482758620689655|-1.9321040421308203E-4|0.0026994463625487977 |
+|93          |65          |Flushing Meadows-Corona Park  |Downtown Brooklyn/MetroTech   |Queens        |Brooklyn       |0.0033003300330033004|0.0022935779816513763|0.006279434850863423 |0.0111731843575419   |-0.001006752051351924 |0.004893749506678477  |
+|132         |65          |JFK Airport                   |Downtown Brooklyn/MetroTech   |Queens        |Brooklyn       |0.0039413868008330655|0.004258369775611155 |0.004442085671910897 |0.0034482758620689655|3.1698297477808935E-4 |-9.938098098419314E-4 |
+|137         |65          |Kips Bay                      |Downtown Brooklyn/MetroTech   |Manhattan     |Brooklyn       |0.0016375545851528383|0.0011574074074074073|0.0012724163982663326|0.047619047619047616 |-4.80147177745431E-4  |0.04634663122078128   |
+|145         |65          |Long Island City/Hunters Point|Downtown Brooklyn/MetroTech   |Queens        |Brooklyn       |6.97350069735007E-4  |5.293806246691371E-4 |5.488474204171241E-4 |0.25                 |-1.679694450658698E-4 |0.24945115257958286   |
+|132         |76          |JFK Airport                   |East New York                 |Queens        |Brooklyn       |0.006457006785455685 |0.005935909384185247 |0.007226568179835403 |0.013793103448275862 |-5.210974012704386E-4 |0.006566535268440459  |
+|132         |81          |JFK Airport                   |Eastchester                   |Queens        |Bronx          |3.807021341713757E-4 |3.0109685282099074E-4|6.252362811527613E-4 |0.0034482758620689655|-7.960528135038495E-5 |0.0028230395809162043 |
+|186         |85          |Penn Station/Madison Sq West  |Erasmus                       |Manhattan     |Brooklyn       |1.708324880684184E-4 |1.322401481089659E-4 |1.2951174073741993E-4|0.006802721088435374 |-3.8592339959452515E-5|0.006673209347697954  |
+|93          |93          |Flushing Meadows-Corona Park  |Flushing Meadows-Corona Park  |Queens        |Queens         |0.066006600660066    |0.07110091743119266  |0.05337519623233909  |0.01675977653631285  |0.005094316771126664  |-0.03661541969602625  |
+|132         |93          |JFK Airport                   |Flushing Meadows-Corona Park  |Queens        |Queens         |0.026186335032807567 |0.030955624059072335 |0.03102916799953471  |0.02413793103448276  |0.004769289026264768  |-0.00689123696505195  |
+|132         |132         |JFK Airport                   |JFK Airport                   |Queens        |Queens         |0.028059986712749042 |0.02853251129113198  |0.03198883298921104  |0.027586206896551724 |4.7252457838293724E-4 |-0.0044026260926593175|
+|138         |133         |LaGuardia Airport             |Kensington                    |Queens        |Brooklyn       |8.951535629633365E-4 |7.860503736507058E-4 |0.0010035602494564049|0.005847953216374269 |-1.0910318931263072E-4|0.004844392966917864  |
+|4           |137         |Alphabet City                 |Kips Bay                      |Manhattan     |Manhattan      |0.036813042334998686 |0.03274974253347065  |0.03194103194103194  |0.16666666666666666  |-0.004063299801528038 |0.1347256347256347    |
+|158         |137         |Meatpacking/West Village West |Kips Bay                      |Manhattan     |Manhattan      |0.009873617693522907 |0.009419743782969104 |0.008716875871687587 |0.07142857142857142  |-4.5387391055380297E-4|0.06271169555688384   |
+|161         |137         |Midtown Center                |Kips Bay                      |Manhattan     |Manhattan      |0.010342240335589925 |0.009620929536545662 |0.009925439714504205 |0.010752688172043012 |-7.213107990442624E-4 |8.272484575388064E-4  |
+|162         |137         |Midtown East                  |Kips Bay                      |Manhattan     |Manhattan      |0.02661168172119095  |0.02527966344774835  |0.025468694729395117 |0.03076923076923077  |-0.0013320182734425992|0.005300536039835654  |
+|170         |137         |Murray Hill                   |Kips Bay                      |Manhattan     |Manhattan      |0.026233921627280884 |0.02271198265766327  |0.02281766230945691  |0.07462686567164178  |-0.003521938969617614 |0.05180920336218488   |
+|186         |137         |Penn Station/Madison Sq West  |Kips Bay                      |Manhattan     |Manhattan      |0.03135843859105905  |0.029036158234782936 |0.027615888101856004 |0.04081632653061224  |-0.0023222803562761157|0.013200438428756237  |
+|263         |137         |Yorkville West                |Kips Bay                      |Manhattan     |Manhattan      |0.011629525078027156 |0.011381752122492863 |0.01201540554876502  |0.0625               |-2.477729555342926E-4 |0.05048459445123498   |
+|93          |140         |Flushing Meadows-Corona Park  |Lenox Hill East               |Queens        |Manhattan      |0.009900990099009901 |0.009174311926605505 |0.007849293563579277 |0.0111731843575419   |-7.26678172404396E-4  |0.0033238907939626226 |
+|132         |140         |JFK Airport                   |Lenox Hill East               |Queens        |Manhattan      |0.0067182729559654535|0.0070255932324897845|0.005670747666269229 |0.0034482758620689655|3.07320276524331E-4   |-0.002222471804200264 |
+|164         |140         |Midtown South                 |Lenox Hill East               |Manhattan     |Manhattan      |0.013122981673077318 |0.012762549840676665 |0.011834757202559266 |0.030303030303030304 |-3.604318324006532E-4 |0.018468273100471038  |
+|230         |140         |Times Sq/Theatre District     |Lenox Hill East               |Manhattan     |Manhattan      |0.012280998935243441 |0.011637814808822736 |0.009939685243300628 |0.013888888888888888 |-6.431841264207053E-4 |0.00394920364558826   |
+|236         |140         |Upper East Side North         |Lenox Hill East               |Manhattan     |Manhattan      |0.038637798309545085 |0.03760166474834402  |0.04238508746294827  |0.058823529411764705 |-0.0010361335612010664|0.016438441948816433  |
+|262         |140         |Yorkville East                |Lenox Hill East               |Manhattan     |Manhattan      |0.09677607756103258  |0.09274479426515768  |0.09580345984345195  |0.16666666666666666  |-0.0040312832958749045|0.0708632068232147    |
+|68          |140         |East Chelsea                  |Lenox Hill East               |Manhattan     |Manhattan      |0.009148630051294883 |0.008320665653252261 |0.008705729387489754 |0.029411764705882353 |-8.279643980426219E-4 |0.020706035318392598  |
+|186         |140         |Penn Station/Madison Sq West  |Lenox Hill East               |Manhattan     |Manhattan      |0.01652804322061948  |0.016558355688215513 |0.016876376062245336 |0.013605442176870748 |3.0312467596032427E-5 |-0.003270933885374588 |
+|234         |140         |Union Sq                      |Lenox Hill East               |Manhattan     |Manhattan      |0.009805099252229797 |0.009129756666624399 |0.009475549567229537 |0.018867924528301886 |-6.753425856053982E-4 |0.009392374961072349  |
+|263         |140         |Yorkville West                |Lenox Hill East               |Manhattan     |Manhattan      |0.05977774685406437  |0.058799540281021766 |0.05860104702382325  |0.0625               |-9.782065730426018E-4 |0.0038989529761767477 |
+|142         |146         |Lincoln Square East           |Long Island City/Queens Plaza |Manhattan     |Queens         |3.1196200995967603E-4|2.7062134661182076E-4|4.124880765165382E-4 |0.02631578947368421  |-4.134066334785528E-5 |0.02590330139716767   |
+|148         |148         |Lower East Side               |Lower East Side               |Manhattan     |Manhattan      |0.03566049437405865  |0.029657926723389478 |0.031731969556638345 |0.03571428571428571  |-0.006002567650669175 |0.003982316157647367  |
+|230         |148         |Times Sq/Theatre District     |Lower East Side               |Manhattan     |Manhattan      |0.005880360081308682 |0.005543871002534649 |0.006883115368013346 |0.013888888888888888 |-3.36489078774033E-4  |0.007005773520875542  |
+|114         |148         |Greenwich Village South       |Lower East Side               |Manhattan     |Manhattan      |0.03262082064578371  |0.032293623950895654 |0.03355226470041514  |0.045454545454545456 |-3.2719669488805864E-4|0.011902280754130315  |
+|138         |148         |LaGuardia Airport             |Lower East Side               |Queens        |Manhattan      |0.008648948509758435 |0.009177968447273734 |0.009175407995029987 |0.005847953216374269 |5.290199375152984E-4  |-0.0033274547786557186|
+|144         |148         |Little Italy/NoLiTa           |Lower East Side               |Manhattan     |Manhattan      |0.038249176240092615 |0.034505640345056404 |0.03571428571428571  |0.045454545454545456 |-0.003743535895036211 |0.009740259740259744  |
+|132         |155         |JFK Airport                   |Marine Park/Mill Basin        |Queens        |Brooklyn       |0.004471383889581452 |0.0037780486056348127|0.003431529357024457 |0.0034482758620689655|-6.93335283946639E-4  |1.6746505044508593E-5 |
+|74          |159         |East Harlem North             |Melrose South                 |Manhattan     |Bronx          |0.00807914262159934  |0.0056739551619153054|0.0034482758620689655|0.25                 |-0.0024051874596840352|0.24655172413793103   |
+|92          |192         |Flushing                      |Queensboro Hill               |Queens        |Queens         |0.0069124423963133645|0.0019305019305019305|0.047058823529411764 |1.0                  |-0.0049819404658114335|0.9529411764705882    |
+|132         |206         |JFK Airport                   |Saint George/New Brighton     |Queens        |Staten Island  |1.7915394549241208E-4|1.7205534446913757E-4|2.32646058103353E-4  |0.0034482758620689655|-7.098601023274503E-6 |0.0032156298039656126 |
+|93          |209         |Flushing Meadows-Corona Park  |Seaport                       |Queens        |Manhattan      |0.006600660066006601 |0.0045871559633027525|0.007849293563579277 |0.0111731843575419   |-0.002013504102703848 |0.0033238907939626226 |
+|246         |209         |West Chelsea/Hudson Yards     |Seaport                       |Manhattan     |Manhattan      |0.002358896233137578 |0.0020881574594773405|0.002616873917834094 |0.1                  |-2.707387736602374E-4 |0.09738312608216591   |
+|138         |209         |LaGuardia Airport             |Seaport                       |Queens        |Manhattan      |0.0036814766251449895|0.0036534735676722946|0.0037872452271152423|0.005847953216374269 |-2.8003057472694975E-5|0.0020607079892590264 |
+|132         |210         |JFK Airport                   |Sheepshead Bay                |Queens        |Brooklyn       |0.0014257668162104462|0.0011542046024804646|0.0014031465379358479|0.0034482758620689655|-2.7156221372998156E-4|0.0020451293241331176 |
+|4           |211         |Alphabet City                 |SoHo                          |Manhattan     |Manhattan      |0.014462266631606626 |0.012770339855818744 |0.01365001365001365  |0.16666666666666666  |-0.0016919267757878817|0.15301665301665301   |
+|162         |211         |Midtown East                  |SoHo                          |Manhattan     |Manhattan      |0.00590387953432321  |0.005803614112247825 |0.0073243305104142824|0.03076923076923077  |-1.0026542207538462E-4|0.023444900258816487  |
+|234         |211         |Union Sq                      |SoHo                          |Manhattan     |Manhattan      |0.016742244511847203 |0.018994965953615765 |0.021147903516351547 |0.018867924528301886 |0.002252721441768562  |-0.0022799789880496614|
+|263         |211         |Yorkville West                |SoHo                          |Manhattan     |Manhattan      |0.0018289167644076894|0.001575649723797872 |0.001614353912502018 |0.0625               |-2.532670406098173E-4 |0.06088564608749798   |
+|132         |222         |JFK Airport                   |Starrett City                 |Queens        |Brooklyn       |0.0012988661048199876|0.0011613735751666787|0.0017084944891964987|0.006896551724137931 |-1.3749252965330897E-4|0.005188057234941432  |
+|132         |223         |JFK Airport                   |Steinway                      |Queens        |Queens         |0.004247441457715937 |0.0040361316223385185|0.004005874312967109 |0.006896551724137931 |-2.1130983537741808E-4|0.0028906774111708217 |
+|138         |223         |LaGuardia Airport             |Steinway                      |Queens        |Queens         |0.006341721720712089 |0.006155549404926654 |0.006152780100833911 |0.029239766081871343 |-1.861723157854352E-4 |0.023086985981037433  |
+|132         |224         |JFK Airport                   |Stuy Town/Peter Cooper Village|Queens        |Manhattan      |0.003844345080358009 |0.0034482758620689655|0.002864454590397534 |0.010344827586206896 |-3.960692182890437E-4 |0.007480372995809363  |
+|114         |224         |Greenwich Village South       |Stuy Town/Peter Cooper Village|Manhattan     |Manhattan      |0.005547348427748801 |0.005511712388826256 |0.005204783443831712 |0.022727272727272728 |-3.563603892254522E-5 |0.017522489283441016  |
+|138         |224         |LaGuardia Airport             |Stuy Town/Peter Cooper Village|Queens        |Manhattan      |0.004185788491603207 |0.004007749792416275 |0.004062029581133067 |0.011695906432748537 |-1.7803869918693246E-4|0.00763387685161547   |
+|144         |224         |Little Italy/NoLiTa           |Stuy Town/Peter Cooper Village|Manhattan     |Manhattan      |0.005521417757591949 |0.004386935043869351 |0.00457269000315358  |0.045454545454545456 |-0.0011344827137225984|0.04088185545139188   |
+|186         |224         |Penn Station/Madison Sq West  |Stuy Town/Peter Cooper Village|Manhattan     |Manhattan      |0.006523665638112728 |0.006593115955718442 |0.007103220857367724 |0.006802721088435374 |6.945031760571384E-5  |-3.0049976893235016E-4|
+|234         |224         |Union Sq                      |Stuy Town/Peter Cooper Village|Manhattan     |Manhattan      |0.008979248626084867 |0.008229461217554494 |0.0077620421493534075|0.03773584905660377  |-7.497874085303727E-4 |0.029973806907250364  |
+|93          |230         |Flushing Meadows-Corona Park  |Times Sq/Theatre District     |Queens        |Manhattan      |0.0231023102310231   |0.027522935779816515 |0.0282574568288854   |0.01675977653631285  |0.004420625548793414  |-0.011497680292572553 |
+|132         |230         |JFK Airport                   |Times Sq/Theatre District     |Queens        |Manhattan      |0.03612191425990759  |0.04019642985160227  |0.04625294442667287  |0.02413793103448276  |0.00407451559169468   |-0.02211501339219011  |
+|164         |230         |Midtown South                 |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.04724684781043668  |0.0395889291136284   |0.0500573246051999   |0.06060606060606061  |-0.007657918696808277 |0.01054873600086071   |
+|232         |230         |Two Bridges/Seward Park       |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.012103951584193664 |0.00864472950362521  |0.022915974759216206 |0.2                  |-0.0034592220805684543|0.17708402524078382   |
+|68          |230         |East Chelsea                  |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.05134179907418992  |0.046083686694935594 |0.05034059752960796  |0.058823529411764705 |-0.005258112379254325 |0.008482931882156743  |
+|82          |230         |Elmhurst                      |Times Sq/Theatre District     |Queens        |Manhattan      |0.021660649819494584 |0.017218543046357615 |0.0398406374501992   |1.0                  |-0.004442106773136969 |0.9601593625498008    |
+|87          |230         |Financial District North      |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.018180123065448445 |0.017597723528530777 |0.027164799785364544 |0.2222222222222222   |-5.823995369176674E-4 |0.19505742243685767   |
+|88          |230         |Financial District South      |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.026562748528710038 |0.02616980221900627  |0.03917050691244239  |0.25                 |-3.9294630970376776E-4|0.2108294930875576    |
+|107         |230         |Gramercy                      |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.01424525510419749  |0.012978872460454998 |0.01586687306501548  |0.03225806451612903  |-0.0012663826437424915|0.016391191451113552  |
+|161         |230         |Midtown Center                |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.0362021042579677   |0.033249874081157434 |0.03566307672699465  |0.053763440860215055 |-0.002952230176810268 |0.018100364133220408  |
+|170         |230         |Murray Hill                   |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.03262040083757104  |0.030511050756235517 |0.030866962576861993 |0.04477611940298507  |-0.0021093500813355245|0.013909156826123079  |
+|234         |230         |Union Sq                      |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.029925823598306256 |0.02836564675449831  |0.03141430266106238  |0.05660377358490566  |-0.001560176843807947 |0.025189470923843285  |
+|249         |230         |West Village                  |Times Sq/Theatre District     |Manhattan     |Manhattan      |0.01662731803781504  |0.017264210282384878 |0.020744344628115002 |0.015873015873015872 |6.368922445698366E-4  |-0.00487132875509913  |
+|132         |232         |JFK Airport                   |Two Bridges/Seward Park       |Queens        |Manhattan      |0.0040832170076812255|0.004509283819628647 |0.0036132840899177013|0.0034482758620689655|4.2606681194742174E-4 |-1.6500822784873588E-4|
+|148         |232         |Lower East Side               |Two Bridges/Seward Park       |Manhattan     |Manhattan      |0.02166208912908656  |0.01791977773919083  |0.018402931582974267 |0.03571428571428571  |-0.0037423113898957285|0.017311354131311445  |
+|164         |232         |Midtown South                 |Two Bridges/Seward Park       |Manhattan     |Manhattan      |0.004298907789456363 |0.004104035635041124 |0.004585968415991716 |0.015151515151515152 |-1.9487215441523972E-4|0.010565546735523436  |
+|68          |232         |East Chelsea                  |Two Bridges/Seward Park       |Manhattan     |Manhattan      |0.0037376454397597897|0.0031202496199695976|0.003815822945815314 |0.014705882352941176 |-6.173958197901921E-4 |0.010890059407125861  |
+|79          |232         |East Village                  |Two Bridges/Seward Park       |Manhattan     |Manhattan      |0.017598343685300208 |0.015781340243198102 |0.01399304368805163  |0.030303030303030304 |-0.001817003442102106 |0.016309986614978674  |
+|186         |232         |Penn Station/Madison Sq West  |Two Bridges/Seward Park       |Manhattan     |Manhattan      |0.004516383903308812 |0.004505610760569766 |0.004921446148021957 |0.006802721088435374 |-1.077314273904579E-5 |0.001881274940413417  |
+|132         |233         |JFK Airport                   |UN/Turtle Bay South           |Queens        |Manhattan      |0.008532206654076125 |0.009857337443544341 |0.009073196266030767 |0.0034482758620689655|0.0013251307894682155 |-0.005624920403961802 |
+|211         |233         |SoHo                          |UN/Turtle Bay South           |Manhattan     |Manhattan      |0.010677020140742538 |0.010111609272154917 |0.009243942784859394 |0.07142857142857142  |-5.654108685876208E-4 |0.062184628643712034  |
+|138         |233         |LaGuardia Airport             |UN/Turtle Bay South           |Queens        |Manhattan      |0.014713298703918503 |0.01566565181289787  |0.014432152158849252 |0.005847953216374269 |9.523531089793667E-4  |-0.008584198942474983 |
+|186         |233         |Penn Station/Madison Sq West  |UN/Turtle Bay South           |Manhattan     |Manhattan      |0.021012396032415465 |0.022244682056901048 |0.02061229166044014  |0.013605442176870748 |0.0012322860244855828 |-0.007006849483569394 |
+|234         |233         |Union Sq                      |UN/Turtle Bay South           |Manhattan     |Manhattan      |0.016441935193249047 |0.015875632425852427 |0.016212416338366457 |0.018867924528301886 |-5.663027673966196E-4 |0.0026555081899354294 |
+|237         |233         |Upper East Side South         |UN/Turtle Bay South           |Manhattan     |Manhattan      |0.010396462676030171 |0.010163069575913853 |0.012280832156454664 |0.023255813953488372 |-2.3339310011631816E-4|0.010974981797033708  |
+|43          |236         |Central Park                  |Upper East Side North         |Manhattan     |Manhattan      |0.07137964104671873  |0.06960685483870968  |0.055076172339919065 |0.16666666666666666  |-0.0017727862080090528|0.11159049432674759   |
+|140         |236         |Lenox Hill East               |Upper East Side North         |Manhattan     |Manhattan      |0.09734802417817792  |0.09570262278220622  |0.08992266183546646  |0.16666666666666666  |-0.0016454013959717045|0.0767440048312002    |
+|142         |236         |Lincoln Square East           |Upper East Side North         |Manhattan     |Manhattan      |0.0644721487249997   |0.062481056505737174 |0.049395447162855446 |0.07894736842105263  |-0.0019910922192625316|0.02955192125819718   |
+|163         |236         |Midtown North                 |Upper East Side North         |Manhattan     |Manhattan      |0.06889766606822262  |0.06567382519754908  |0.05937854514263579  |0.0975609756097561   |-0.003223840870673539 |0.03818243046712031   |
+|164         |236         |Midtown South                 |Upper East Side North         |Manhattan     |Manhattan      |0.026801324639529382 |0.026275837907275487 |0.022689448574281592 |0.030303030303030304 |-5.25486732253895E-4  |0.007613581728748712  |
+|262         |236         |Yorkville East                |Upper East Side North         |Manhattan     |Manhattan      |0.14764630300198575  |0.1460494183756532   |0.11399065973820956  |0.16666666666666666  |-0.001596884626332562 |0.0526760069284571    |
+|114         |236         |Greenwich Village South       |Upper East Side North         |Manhattan     |Manhattan      |0.0145316409900811   |0.014330452210948265 |0.011648801040956688 |0.045454545454545456 |-2.011887791328361E-4 |0.033805744413588766  |
+|141         |236         |Lenox Hill West               |Upper East Side North         |Manhattan     |Manhattan      |0.11527417995693018  |0.10797620422779254  |0.09526905908403922  |0.1                  |-0.007297975729137637 |0.004730940915960782  |
+|144         |236         |Little Italy/NoLiTa           |Upper East Side North         |Manhattan     |Manhattan      |0.012645827767388013 |0.012607830126078301 |0.011707663197729423 |0.045454545454545456 |-3.7997641309711616E-5|0.03374688225681603   |
+|170         |236         |Murray Hill                   |Upper East Side North         |Manhattan     |Manhattan      |0.030272210589291054 |0.030249420676251464 |0.02769067882884717  |0.029850746268656716 |-2.2789913039590604E-5|0.0021600674398095446 |
+|229         |236         |Sutton Place/Turtle Bay North |Upper East Side North         |Manhattan     |Manhattan      |0.056449375866851594 |0.05592964413973229  |0.0470643494598403   |0.047619047619047616 |-5.197317271193047E-4 |5.546981592073133E-4  |
+|263         |236         |Yorkville West                |Upper East Side North         |Manhattan     |Manhattan      |0.12221935073454863  |0.11379898416935454  |0.10179654528262724  |0.1875               |-0.008420366565194098 |0.08570345471737276   |
+|132         |243         |JFK Airport                   |Washington Heights North      |Queens        |Manhattan      |0.003217306271134567 |0.003025306473582336 |0.003264315002762672 |0.0034482758620689655|-1.9199979755223128E-4|1.839608593062936E-4  |
+|232         |243         |Two Bridges/Seward Park       |Washington Heights North      |Manhattan     |Manhattan      |0.002847988608045568 |0.0013943112102621305|3.3211557622052476E-4|0.2                  |-0.0014536773977834375|0.19966788442377947   |
+|143         |243         |Lincoln Square West           |Washington Heights North      |Manhattan     |Manhattan      |0.0027219113866626342|0.0025184797540393797|0.0033331926922914646|0.16666666666666666  |-2.0343163262325457E-4|0.1633334739743752    |
+|238         |243         |Upper West Side North         |Washington Heights North      |Manhattan     |Manhattan      |0.0038722757222503803|0.0032430014537592725|0.003964695332043234 |0.07692307692307693  |-6.292742684911078E-4 |0.0729583815910337    |
+|132         |246         |JFK Airport                   |West Chelsea/Hudson Yards     |Queens        |Manhattan      |0.005598560796637878 |0.004939422180801492 |0.00498734987059063  |0.006896551724137931 |-6.591386158363863E-4 |0.0019092018535473007 |
+|138         |246         |LaGuardia Airport             |West Chelsea/Hudson Yards     |Queens        |Manhattan      |0.006719955620555751 |0.005878771104345419 |0.006535088767293493 |0.011695906432748537 |-8.411845162103323E-4 |0.005160817665455044  |
++------------+------------+------------------------------+------------------------------+--------------+---------------+---------------------+---------------------+---------------------+---------------------+----------------------+----------------------+
+only showing top 100 rows
+[O2-features:explain_plan=True, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False] wall time: 28.82s (62 stages, 225 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+O2-features:explain_plan=True, use_cleansed=Tru...        28.82        19          62        225                149671                102079      22.8MB         0.0B             34.3MB              37.5MB                 0.0B               0.0B
+INFO:proj1:Done
+Keeping WebUI Up, Hit Enter to Exit!INFO:py4j.clientserver:Closing down clientserver connection

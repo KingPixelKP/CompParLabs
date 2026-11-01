@@ -1,0 +1,246 @@
+INFO:proj1:Spark UI: http://10.70.114.218:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:Target partitions for ratings: 16
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=True
+INFO:proj1:use_cleansed=False
+INFO:proj1:prune_column=True
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=False
+INFO:proj1:string_to_id=False
+INFO:proj1:Aggregating .parquet files in proj1/data
+INFO:proj1:Found ['proj1/data/yellow_tripdata_2026-01.parquet', 'proj1/data/yellow_tripdata_2026-02.parquet', 'proj1/data/yellow_tripdata_2026-03.parquet', 'proj1/data/yellow_tripdata_2026-04.parquet', 'proj1/data/yellow_tripdata_2026-05.parquet', 'proj1/data/yellow_tripdata_2026-06.parquet', 'proj1/data/yellow_tripdata_2026-07.parquet', 'proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in proj1/data
+INFO:proj1:Found ['proj1/data/taxi_zone_lookup.csv']
+== Physical Plan ==
+AdaptiveSparkPlan (18)
++- HashAggregate (17)
+   +- Exchange (16)
+      +- HashAggregate (15)
+         +- Project (14)
+            +- Project (13)
+               +- Window (12)
+                  +- Project (11)
+                     +- Window (10)
+                        +- Project (9)
+                           +- Window (8)
+                              +- Project (7)
+                                 +- Window (6)
+                                    +- Sort (5)
+                                       +- Project (4)
+                                          +- Exchange (3)
+                                             +- Project (2)
+                                                +- Scan parquet  (1)
+
+
+(1) Scan parquet 
+Output [6]: [tpep_pickup_datetime#1L, passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+ReadSchema: struct<tpep_pickup_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,PULocationID:int,fare_amount:double>
+
+(2) Project
+Output [7]: [passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#25, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS month#26]
+Input [6]: [tpep_pickup_datetime#1L, passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10]
+
+(3) Exchange
+Input [7]: [passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10, hour_of_day#25, month#26]
+Arguments: hashpartitioning(PULocationID#7, 200), REPARTITION_BY_COL, [plan_id=43]
+
+(4) Project
+Output [7]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+Input [7]: [passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10, hour_of_day#25, month#26]
+
+(5) Sort
+Input [7]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+Arguments: [PULocationID#7 ASC NULLS FIRST, hour_of_day#25 ASC NULLS FIRST], false, 0
+
+(6) Window
+Input [7]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+Arguments: [count(1) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS trip_count#27L], [PULocationID#7, hour_of_day#25]
+
+(7) Project
+Output [9]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, CASE WHEN RatecodeID#5L IN (2,3) THEN 1 ELSE 0 END AS _w0#31]
+Input [8]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L]
+
+(8) Window
+Input [9]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, _w0#31]
+Arguments: [sum(_w0#31) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS airport_trips#29L], [PULocationID#7, hour_of_day#25]
+
+(9) Project
+Output [9]: [PULocationID#7, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, CASE WHEN (RatecodeID#5L = 5) THEN 1 ELSE 0 END AS _w0#34]
+Input [10]: [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, _w0#31, airport_trips#29L]
+
+(10) Window
+Input [9]: [PULocationID#7, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, _w0#34]
+Arguments: [sum(_w0#34) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS negotiated_rate_trips#32L], [PULocationID#7, hour_of_day#25]
+
+(11) Project
+Output [9]: [PULocationID#7, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, CASE WHEN (passenger_count#3L >= 4) THEN 1 ELSE 0 END AS _w0#37]
+Input [10]: [PULocationID#7, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, _w0#34, negotiated_rate_trips#32L]
+
+(12) Window
+Input [9]: [PULocationID#7, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, _w0#37]
+Arguments: [sum(_w0#37) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS group_trips#35L], [PULocationID#7, hour_of_day#25]
+
+(13) Project
+Output [6]: [month#26, fare_amount#10, trip_distance#4, (cast(airport_trips#29L as double) / cast(trip_count#27L as double)) AS airport_trip_share#38, (cast(negotiated_rate_trips#32L as double) / cast(trip_count#27L as double)) AS negotiated_rate_share#39, (cast(group_trips#35L as double) / cast(trip_count#27L as double)) AS group_trip_share#40]
+Input [10]: [PULocationID#7, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, _w0#37, group_trips#35L]
+
+(14) Project
+Output [6]: [month#26, fare_amount#10, trip_distance#4, CASE WHEN (airport_trip_share#38 < 0.1) THEN 0 WHEN (airport_trip_share#38 < 0.4) THEN 1 WHEN (airport_trip_share#38 < 0.7) THEN 2 ELSE 3 END AS airport_zone_type#41, CASE WHEN (negotiated_rate_share#39 < 0.1) THEN 0 WHEN (negotiated_rate_share#39 < 0.4) THEN 1 WHEN (negotiated_rate_share#39 < 0.7) THEN 2 ELSE 3 END AS negotiated_rate_zone_type#42, CASE WHEN (group_trip_share#40 < 0.1) THEN 0 WHEN (group_trip_share#40 < 0.4) THEN 1 WHEN (group_trip_share#40 < 0.7) THEN 2 ELSE 3 END AS group_trips_zone_type#43]
+Input [6]: [month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40]
+
+(15) HashAggregate
+Input [6]: [month#26, fare_amount#10, trip_distance#4, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43]
+Keys [4]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43]
+Functions [4]: [partial_avg(fare_amount#10), partial_stddev(fare_amount#10), partial_avg(trip_distance#4), partial_stddev(trip_distance#4)]
+Aggregate Attributes [10]: [sum#94, count#95L, n#59, avg#60, m2#61, sum#96, count#97L, n#69, avg#70, m2#71]
+Results [14]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, sum#98, count#99L, n#64, avg#65, m2#66, sum#100, count#101L, n#74, avg#75, m2#76]
+
+(16) Exchange
+Input [14]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, sum#98, count#99L, n#64, avg#65, m2#66, sum#100, count#101L, n#74, avg#75, m2#76]
+Arguments: hashpartitioning(month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, 200), ENSURE_REQUIREMENTS, [plan_id=69]
+
+(17) HashAggregate
+Input [14]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, sum#98, count#99L, n#64, avg#65, m2#66, sum#100, count#101L, n#74, avg#75, m2#76]
+Keys [4]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43]
+Functions [4]: [avg(fare_amount#10), stddev(fare_amount#10), avg(trip_distance#4), stddev(trip_distance#4)]
+Aggregate Attributes [4]: [avg(fare_amount#10)#58, stddev(fare_amount#10)#67, avg(trip_distance#4)#68, stddev(trip_distance#4)#77]
+Results [8]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, avg(fare_amount#10)#58 AS mean_fare#44, stddev(fare_amount#10)#67 AS stddev_fare#45, avg(trip_distance#4)#68 AS mean_distance#46, stddev(trip_distance#4)#77 AS stddev_distance#47]
+
+(18) AdaptiveSparkPlan
+Output [8]: [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, mean_fare#44, stddev_fare#45, mean_distance#46, stddev_distance#47]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Aggregate ['month, 'airport_zone_type, 'negotiated_rate_zone_type, 'group_trips_zone_type], ['month, 'airport_zone_type, 'negotiated_rate_zone_type, 'group_trips_zone_type, 'avg('fare_amount) AS mean_fare#44, 'stddev('fare_amount) AS stddev_fare#45, 'avg('trip_distance) AS mean_distance#46, 'stddev('trip_distance) AS stddev_distance#47]
++- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, airport_zone_type#41, negotiated_rate_zone_type#42, CASE WHEN (group_trip_share#40 < 0.1) THEN 0 WHEN (group_trip_share#40 < 0.4) THEN 1 WHEN (group_trip_share#40 < 0.7) THEN 2 ELSE 3 END AS group_trips_zone_type#43]
+   +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, airport_zone_type#41, CASE WHEN (negotiated_rate_share#39 < 0.1) THEN 0 WHEN (negotiated_rate_share#39 < 0.4) THEN 1 WHEN (negotiated_rate_share#39 < 0.7) THEN 2 ELSE 3 END AS negotiated_rate_zone_type#42]
+      +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, CASE WHEN (airport_trip_share#38 < 0.1) THEN 0 WHEN (airport_trip_share#38 < 0.4) THEN 1 WHEN (airport_trip_share#38 < 0.7) THEN 2 ELSE 3 END AS airport_zone_type#41]
+         +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40]
+            +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, airport_trip_share#38, negotiated_rate_share#39, (cast(group_trips#35L as double) / cast(trip_count#27L as double)) AS group_trip_share#40]
+               +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, airport_trip_share#38, (cast(negotiated_rate_trips#32L as double) / cast(trip_count#27L as double)) AS negotiated_rate_share#39]
+                  +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, (cast(airport_trips#29L as double) / cast(trip_count#27L as double)) AS airport_trip_share#38]
+                     +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L]
+                        +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, _w0#37, group_trips#35L, group_trips#35L]
+                           +- Window [sum(_w0#37) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS group_trips#35L], [PULocationID#7, hour_of_day#25]
+                              +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, CASE WHEN (passenger_count#3L >= cast(4 as bigint)) THEN 1 ELSE 0 END AS _w0#37]
+                                 +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L]
+                                    +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, _w0#34, negotiated_rate_trips#32L, negotiated_rate_trips#32L]
+                                       +- Window [sum(_w0#34) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS negotiated_rate_trips#32L], [PULocationID#7, hour_of_day#25]
+                                          +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, CASE WHEN (RatecodeID#5L = cast(5 as bigint)) THEN 1 ELSE 0 END AS _w0#34]
+                                             +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L]
+                                                +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, _w0#31, airport_trips#29L, airport_trips#29L]
+                                                   +- Window [sum(_w0#31) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS airport_trips#29L], [PULocationID#7, hour_of_day#25]
+                                                      +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, CASE WHEN cast(RatecodeID#5L as bigint) IN (cast(2 as bigint),cast(3 as bigint)) THEN 1 ELSE 0 END AS _w0#31]
+                                                         +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L]
+                                                            +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, trip_count#27L]
+                                                               +- Window [count(1) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS trip_count#27L], [PULocationID#7, hour_of_day#25]
+                                                                  +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                                                                     +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                                                                        +- RepartitionByExpression [PULocationID#7]
+                                                                           +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, hour_of_day#25, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS month#26]
+                                                                              +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#25]
+                                                                                 +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+
+== Analyzed Logical Plan ==
+month: int, airport_zone_type: int, negotiated_rate_zone_type: int, group_trips_zone_type: int, mean_fare: double, stddev_fare: double, mean_distance: double, stddev_distance: double
+Aggregate [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43], [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, avg(fare_amount#10) AS mean_fare#44, stddev(fare_amount#10) AS stddev_fare#45, avg(trip_distance#4) AS mean_distance#46, stddev(trip_distance#4) AS stddev_distance#47]
++- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, airport_zone_type#41, negotiated_rate_zone_type#42, CASE WHEN (group_trip_share#40 < 0.1) THEN 0 WHEN (group_trip_share#40 < 0.4) THEN 1 WHEN (group_trip_share#40 < 0.7) THEN 2 ELSE 3 END AS group_trips_zone_type#43]
+   +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, airport_zone_type#41, CASE WHEN (negotiated_rate_share#39 < 0.1) THEN 0 WHEN (negotiated_rate_share#39 < 0.4) THEN 1 WHEN (negotiated_rate_share#39 < 0.7) THEN 2 ELSE 3 END AS negotiated_rate_zone_type#42]
+      +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40, CASE WHEN (airport_trip_share#38 < 0.1) THEN 0 WHEN (airport_trip_share#38 < 0.4) THEN 1 WHEN (airport_trip_share#38 < 0.7) THEN 2 ELSE 3 END AS airport_zone_type#41]
+         +- Project [PULocationID#7, month#26, fare_amount#10, trip_distance#4, airport_trip_share#38, negotiated_rate_share#39, group_trip_share#40]
+            +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, airport_trip_share#38, negotiated_rate_share#39, (cast(group_trips#35L as double) / cast(trip_count#27L as double)) AS group_trip_share#40]
+               +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, airport_trip_share#38, (cast(negotiated_rate_trips#32L as double) / cast(trip_count#27L as double)) AS negotiated_rate_share#39]
+                  +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L, (cast(airport_trips#29L as double) / cast(trip_count#27L as double)) AS airport_trip_share#38]
+                     +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, group_trips#35L]
+                        +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, _w0#37, group_trips#35L, group_trips#35L]
+                           +- Window [sum(_w0#37) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS group_trips#35L], [PULocationID#7, hour_of_day#25]
+                              +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, CASE WHEN (passenger_count#3L >= cast(4 as bigint)) THEN 1 ELSE 0 END AS _w0#37]
+                                 +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L]
+                                    +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, _w0#34, negotiated_rate_trips#32L, negotiated_rate_trips#32L]
+                                       +- Window [sum(_w0#34) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS negotiated_rate_trips#32L], [PULocationID#7, hour_of_day#25]
+                                          +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, CASE WHEN (RatecodeID#5L = cast(5 as bigint)) THEN 1 ELSE 0 END AS _w0#34]
+                                             +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L]
+                                                +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, _w0#31, airport_trips#29L, airport_trips#29L]
+                                                   +- Window [sum(_w0#31) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS airport_trips#29L], [PULocationID#7, hour_of_day#25]
+                                                      +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, CASE WHEN cast(RatecodeID#5L as bigint) IN (cast(2 as bigint),cast(3 as bigint)) THEN 1 ELSE 0 END AS _w0#31]
+                                                         +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L]
+                                                            +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, trip_count#27L]
+                                                               +- Window [count(1) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS trip_count#27L], [PULocationID#7, hour_of_day#25]
+                                                                  +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                                                                     +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                                                                        +- RepartitionByExpression [PULocationID#7]
+                                                                           +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, hour_of_day#25, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS month#26]
+                                                                              +- Project [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#25]
+                                                                                 +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+
+== Optimized Logical Plan ==
+Aggregate [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43], [month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, avg(fare_amount#10) AS mean_fare#44, stddev(fare_amount#10) AS stddev_fare#45, avg(trip_distance#4) AS mean_distance#46, stddev(trip_distance#4) AS stddev_distance#47]
++- Project [month#26, fare_amount#10, trip_distance#4, CASE WHEN (airport_trip_share#38 < 0.1) THEN 0 WHEN (airport_trip_share#38 < 0.4) THEN 1 WHEN (airport_trip_share#38 < 0.7) THEN 2 ELSE 3 END AS airport_zone_type#41, CASE WHEN (negotiated_rate_share#39 < 0.1) THEN 0 WHEN (negotiated_rate_share#39 < 0.4) THEN 1 WHEN (negotiated_rate_share#39 < 0.7) THEN 2 ELSE 3 END AS negotiated_rate_zone_type#42, CASE WHEN (group_trip_share#40 < 0.1) THEN 0 WHEN (group_trip_share#40 < 0.4) THEN 1 WHEN (group_trip_share#40 < 0.7) THEN 2 ELSE 3 END AS group_trips_zone_type#43]
+   +- Project [month#26, fare_amount#10, trip_distance#4, (cast(airport_trips#29L as double) / cast(trip_count#27L as double)) AS airport_trip_share#38, (cast(negotiated_rate_trips#32L as double) / cast(trip_count#27L as double)) AS negotiated_rate_share#39, (cast(group_trips#35L as double) / cast(trip_count#27L as double)) AS group_trip_share#40]
+      +- Window [sum(_w0#37) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS group_trips#35L], [PULocationID#7, hour_of_day#25]
+         +- Project [PULocationID#7, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, CASE WHEN (passenger_count#3L >= 4) THEN 1 ELSE 0 END AS _w0#37]
+            +- Window [sum(_w0#34) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS negotiated_rate_trips#32L], [PULocationID#7, hour_of_day#25]
+               +- Project [PULocationID#7, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, CASE WHEN (RatecodeID#5L = 5) THEN 1 ELSE 0 END AS _w0#34]
+                  +- Window [sum(_w0#31) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS airport_trips#29L], [PULocationID#7, hour_of_day#25]
+                     +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, CASE WHEN RatecodeID#5L IN (2,3) THEN 1 ELSE 0 END AS _w0#31]
+                        +- Window [count(1) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS trip_count#27L], [PULocationID#7, hour_of_day#25]
+                           +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                              +- RepartitionByExpression [PULocationID#7]
+                                 +- Project [passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#25, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS month#26]
+                                    +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43], functions=[avg(fare_amount#10), stddev(fare_amount#10), avg(trip_distance#4), stddev(trip_distance#4)], output=[month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, mean_fare#44, stddev_fare#45, mean_distance#46, stddev_distance#47])
+   +- Exchange hashpartitioning(month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, 200), ENSURE_REQUIREMENTS, [plan_id=69]
+      +- HashAggregate(keys=[month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43], functions=[partial_avg(fare_amount#10), partial_stddev(fare_amount#10), partial_avg(trip_distance#4), partial_stddev(trip_distance#4)], output=[month#26, airport_zone_type#41, negotiated_rate_zone_type#42, group_trips_zone_type#43, sum#98, count#99L, n#64, avg#65, m2#66, sum#100, count#101L, n#74, avg#75, m2#76])
+         +- Project [month#26, fare_amount#10, trip_distance#4, CASE WHEN (airport_trip_share#38 < 0.1) THEN 0 WHEN (airport_trip_share#38 < 0.4) THEN 1 WHEN (airport_trip_share#38 < 0.7) THEN 2 ELSE 3 END AS airport_zone_type#41, CASE WHEN (negotiated_rate_share#39 < 0.1) THEN 0 WHEN (negotiated_rate_share#39 < 0.4) THEN 1 WHEN (negotiated_rate_share#39 < 0.7) THEN 2 ELSE 3 END AS negotiated_rate_zone_type#42, CASE WHEN (group_trip_share#40 < 0.1) THEN 0 WHEN (group_trip_share#40 < 0.4) THEN 1 WHEN (group_trip_share#40 < 0.7) THEN 2 ELSE 3 END AS group_trips_zone_type#43]
+            +- Project [month#26, fare_amount#10, trip_distance#4, (cast(airport_trips#29L as double) / cast(trip_count#27L as double)) AS airport_trip_share#38, (cast(negotiated_rate_trips#32L as double) / cast(trip_count#27L as double)) AS negotiated_rate_share#39, (cast(group_trips#35L as double) / cast(trip_count#27L as double)) AS group_trip_share#40]
+               +- Window [sum(_w0#37) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS group_trips#35L], [PULocationID#7, hour_of_day#25]
+                  +- Project [PULocationID#7, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, negotiated_rate_trips#32L, CASE WHEN (passenger_count#3L >= 4) THEN 1 ELSE 0 END AS _w0#37]
+                     +- Window [sum(_w0#34) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS negotiated_rate_trips#32L], [PULocationID#7, hour_of_day#25]
+                        +- Project [PULocationID#7, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, airport_trips#29L, CASE WHEN (RatecodeID#5L = 5) THEN 1 ELSE 0 END AS _w0#34]
+                           +- Window [sum(_w0#31) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS airport_trips#29L], [PULocationID#7, hour_of_day#25]
+                              +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4, trip_count#27L, CASE WHEN RatecodeID#5L IN (2,3) THEN 1 ELSE 0 END AS _w0#31]
+                                 +- Window [count(1) windowspecdefinition(PULocationID#7, hour_of_day#25, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS trip_count#27L], [PULocationID#7, hour_of_day#25]
+                                    +- Sort [PULocationID#7 ASC NULLS FIRST, hour_of_day#25 ASC NULLS FIRST], false, 0
+                                       +- Project [PULocationID#7, RatecodeID#5L, passenger_count#3L, month#26, hour_of_day#25, fare_amount#10, trip_distance#4]
+                                          +- Exchange hashpartitioning(PULocationID#7, 200), REPARTITION_BY_COL, [plan_id=43]
+                                             +- Project [passenger_count#3L, trip_distance#4, RatecodeID#5L, PULocationID#7, fare_amount#10, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#25, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS month#26]
+                                                +- FileScan parquet [tpep_pickup_datetime#1L,passenger_count#3L,trip_distance#4,RatecodeID#5L,PULocationID#7,fare_amount#10] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<tpep_pickup_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,...
+
++-----+-----------------+-------------------------+---------------------+------------------+------------------+------------------+------------------+
+|month|airport_zone_type|negotiated_rate_zone_type|group_trips_zone_type|mean_fare         |stddev_fare       |mean_distance     |stddev_distance   |
++-----+-----------------+-------------------------+---------------------+------------------+------------------+------------------+------------------+
+|2    |1                |1                        |0                    |49.705291304347824|39.93540227536881 |8.656204347826089 |7.689742651486334 |
+|6    |0                |2                        |1                    |80.35233576642331 |40.52615730584955 |2.93950729927007  |6.707468587876549 |
+|5    |1                |1                        |0                    |51.97952142030104 |43.36790532947868 |9.211605557699734 |6.5126221706021985|
+|5    |0                |3                        |0                    |80.13719999999999 |81.39540087124026 |4.4661            |8.092114118015756 |
+|4    |0                |0                        |0                    |19.281015387359222|14.785621652279684|4.683840522320571 |481.0034017375675 |
+|7    |1                |1                        |0                    |56.1734422457432  |54.362528876794315|9.188306488725267 |13.421059410964968|
+|1    |0                |1                        |1                    |42.183170731707314|30.433648648646386|6.248780487804877 |5.08270861740973  |
+|1    |1                |0                        |0                    |49.22136749943006 |37.26664180097931 |12.986626454483218|7.171380722707434 |
+|6    |0                |1                        |0                    |40.90538834951455 |34.06491890620411 |13.457352111085997|1133.2473194096526|
+|7    |1                |0                        |0                    |52.748552640849965|36.50148203741383 |13.041707099410614|7.541139250359045 |
+|1    |1                |1                        |1                    |64.01445945945945 |90.54638169880067 |9.945405405405404 |6.978414701864835 |
+|5    |0                |1                        |0                    |38.86442485808191 |31.85488788432453 |5.676318238081004 |5.051491291238743 |
+|4    |1                |0                        |0                    |53.43952011029561 |35.03022337051103 |13.279234032399243|7.1496887005278404|
+|8    |1                |1                        |1                    |75.28214285714286 |54.53135616768158 |12.495285714285718|9.558949326993258 |
+|5    |0                |0                        |0                    |19.8089141244192  |15.967743602296776|4.643621561319872 |514.6258761829467 |
+|2    |0                |1                        |1                    |47.64784615384615 |34.82468204683944 |6.930461538461539 |6.0143202626027366|
+|6    |1                |0                        |0                    |54.22767763483473 |35.21003763050902 |13.413931964374084|7.510148762285013 |
+|2    |0                |2                        |0                    |53.602723577235764|41.43501962596865 |5.020821138211387 |6.497426195730032 |
+|7    |0                |2                        |0                    |69.62696289905091 |46.16074167078632 |3.4473425366695367|5.58595143022567  |
+|3    |0                |1                        |1                    |61.38013698630137 |105.39064085177412|5.616164383561644 |5.069294995399313 |
++-----+-----------------+-------------------------+---------------------+------------------+------------------+------------------+------------------+
+only showing top 20 rows
+[O4-features:explain_plan=True, use_cleansed=False, prune_column=True, broadcast_join=True, cache_dataframe=False, string_to_id=False] wall time: 40.44s (6 stages, 43 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+O4-features:explain_plan=True, use_cleansed=Fal...        40.44         3           6         43                274665                225644     102.7KB         0.0B            407.0MB             407.0MB                1.6GB            294.3MB
+INFO:proj1:Done
+Keeping WebUI Up, Hit Enter to Exit!INFO:py4j.clientserver:Closing down clientserver connection

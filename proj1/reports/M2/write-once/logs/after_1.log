@@ -1,0 +1,196 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+26/10/31 13:21:39 WARN Utils: Your hostname, dingusmachine, resolves to a loopback address: 127.0.1.1; using 192.168.1.72 instead (on interface wlan0)
+26/10/31 13:21:39 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/10/31 13:21:39 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+INFO:proj1:Spark UI: http://dingusmachine.lan:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=True
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=True
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:write_once=True
+INFO:proj1:max_partition_mb=128
+INFO:proj1:Aggregating .parquet files in proj1/data
+INFO:proj1:Found ['proj1/data/yellow_tripdata_2026-01.parquet', 'proj1/data/yellow_tripdata_2026-02.parquet', 'proj1/data/yellow_tripdata_2026-03.parquet', 'proj1/data/yellow_tripdata_2026-04.parquet', 'proj1/data/yellow_tripdata_2026-05.parquet', 'proj1/data/yellow_tripdata_2026-06.parquet', 'proj1/data/yellow_tripdata_2026-07.parquet', 'proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in proj1/data
+INFO:proj1:Found ['proj1/data/taxi_zone_lookup.csv']
+== Physical Plan ==
+AdaptiveSparkPlan (16)
++- HashAggregate (15)
+   +- Exchange (14)
+      +- HashAggregate (13)
+         +- Project (12)
+            +- BroadcastHashJoin Inner BuildRight (11)
+               :- Union (7)
+               :  :- Project (3)
+               :  :  +- Filter (2)
+               :  :     +- Scan parquet  (1)
+               :  +- Project (6)
+               :     +- Filter (5)
+               :        +- Scan parquet  (4)
+               +- BroadcastExchange (10)
+                  +- Filter (9)
+                     +- Scan csv  (8)
+
+
+(1) Scan parquet 
+Output [7]: [tpep_pickup_datetime#164, tpep_dropoff_datetime#165, passenger_count#166L, trip_distance#167, PULocationID#170, DOLocationID#171, fare_amount#173]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 4 entries]
+PushedFilters: [IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(trip_distance), IsNotNull(fare_amount), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,tpep_dropoff_datetime:timestamp_ntz,passenger_count:bigint,trip_distance:double,PULocationID:int,DOLocationID:int,fare_amount:double>
+
+(2) Filter
+Input [7]: [tpep_pickup_datetime#164, tpep_dropoff_datetime#165, passenger_count#166L, trip_distance#167, PULocationID#170, DOLocationID#171, fare_amount#173]
+Condition : ((((((((((((((((isnotnull(passenger_count#166L) AND isnotnull(tpep_pickup_datetime#164)) AND isnotnull(tpep_dropoff_datetime#165)) AND isnotnull(PULocationID#170)) AND isnotnull(DOLocationID#171)) AND isnotnull(try_cast(passenger_count#166L as int))) AND isnotnull(trip_distance#167)) AND isnotnull(fare_amount#173)) AND (fare_amount#173 > 0.0)) AND (trip_distance#167 > 0.0)) AND (try_cast(passenger_count#166L as int) >= 1)) AND (try_cast(passenger_count#166L as int) <= 6)) AND (tpep_dropoff_datetime#165 > tpep_pickup_datetime#164)) AND (PULocationID#170 >= 1)) AND (PULocationID#170 <= 263)) AND (DOLocationID#171 >= 1)) AND (DOLocationID#171 <= 263))
+
+(3) Project
+Output [5]: [tpep_pickup_datetime#164 AS tpep_pickup_datetime#183, tpep_dropoff_datetime#165 AS tpep_dropoff_datetime#184, PULocationID#170 AS PULocationID#185, trip_distance#167 AS trip_distance#188, fare_amount#173 AS fare_amount#191]
+Input [7]: [tpep_pickup_datetime#164, tpep_dropoff_datetime#165, passenger_count#166L, trip_distance#167, PULocationID#170, DOLocationID#171, fare_amount#173]
+
+(4) Scan parquet 
+Output [7]: [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, passenger_count#198L, trip_distance#199, PULocationID#202, DOLocationID#203, fare_amount#205]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-06.parquet, ... 2 entries]
+PushedFilters: [IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(trip_distance), IsNotNull(fare_amount), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,tpep_dropoff_datetime:timestamp_ntz,passenger_count:bigint,trip_distance:double,PULocationID:int,DOLocationID:int,fare_amount:double>
+
+(5) Filter
+Input [7]: [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, passenger_count#198L, trip_distance#199, PULocationID#202, DOLocationID#203, fare_amount#205]
+Condition : ((((((((((((((((isnotnull(passenger_count#198L) AND isnotnull(tpep_pickup_datetime#196)) AND isnotnull(tpep_dropoff_datetime#197)) AND isnotnull(PULocationID#202)) AND isnotnull(DOLocationID#203)) AND isnotnull(try_cast(passenger_count#198L as int))) AND isnotnull(trip_distance#199)) AND isnotnull(fare_amount#205)) AND (fare_amount#205 > 0.0)) AND (trip_distance#199 > 0.0)) AND (try_cast(passenger_count#198L as int) >= 1)) AND (try_cast(passenger_count#198L as int) <= 6)) AND (tpep_dropoff_datetime#197 > tpep_pickup_datetime#196)) AND (PULocationID#202 >= 1)) AND (PULocationID#202 <= 263)) AND (DOLocationID#203 >= 1)) AND (DOLocationID#203 <= 263))
+
+(6) Project
+Output [5]: [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, PULocationID#202, trip_distance#199, fare_amount#205]
+Input [7]: [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, passenger_count#198L, trip_distance#199, PULocationID#202, DOLocationID#203, fare_amount#205]
+
+(7) Union
+
+(8) Scan csv 
+Output [2]: [LocationID#228, Borough#229]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string>
+
+(9) Filter
+Input [2]: [LocationID#228, Borough#229]
+Condition : (((LocationID#228 >= 1) AND (LocationID#228 <= 263)) AND isnotnull(LocationID#228))
+
+(10) BroadcastExchange
+Input [2]: [LocationID#228, Borough#229]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=47]
+
+(11) BroadcastHashJoin
+Left keys [1]: [PULocationID#185]
+Right keys [1]: [LocationID#228]
+Join type: Inner
+Join condition: None
+
+(12) Project
+Output [6]: [trip_distance#188, fare_amount#191, Borough#229, dayofweek(cast(tpep_pickup_datetime#183 as date)) AS day_of_week#233, hour(tpep_pickup_datetime#183, Some(UTC)) AS hour_of_day#234, (cast(timestampdiff(SECOND, cast(tpep_pickup_datetime#183 as timestamp), cast(tpep_dropoff_datetime#184 as timestamp), Some(UTC)) as double) / 60.0) AS trip_duration_minutes#235]
+Input [7]: [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, trip_distance#188, fare_amount#191, LocationID#228, Borough#229]
+
+(13) HashAggregate
+Input [6]: [trip_distance#188, fare_amount#191, Borough#229, day_of_week#233, hour_of_day#234, trip_duration_minutes#235]
+Keys [3]: [Borough#229, day_of_week#233, hour_of_day#234]
+Functions [4]: [partial_count(1), partial_avg(fare_amount#191), partial_avg(trip_duration_minutes#235), partial_avg(trip_distance#188)]
+Aggregate Attributes [7]: [count#262L, sum#263, count#264L, sum#265, count#266L, sum#267, count#268L]
+Results [10]: [Borough#229, day_of_week#233, hour_of_day#234, count#269L, sum#270, count#271L, sum#272, count#273L, sum#274, count#275L]
+
+(14) Exchange
+Input [10]: [Borough#229, day_of_week#233, hour_of_day#234, count#269L, sum#270, count#271L, sum#272, count#273L, sum#274, count#275L]
+Arguments: hashpartitioning(Borough#229, day_of_week#233, hour_of_day#234, 200), ENSURE_REQUIREMENTS, [plan_id=52]
+
+(15) HashAggregate
+Input [10]: [Borough#229, day_of_week#233, hour_of_day#234, count#269L, sum#270, count#271L, sum#272, count#273L, sum#274, count#275L]
+Keys [3]: [Borough#229, day_of_week#233, hour_of_day#234]
+Functions [4]: [count(1), avg(fare_amount#191), avg(trip_duration_minutes#235), avg(trip_distance#188)]
+Aggregate Attributes [4]: [count(1)#258L, avg(fare_amount#191)#259, avg(trip_duration_minutes#235)#260, avg(trip_distance#188)#261]
+Results [7]: [Borough#229, day_of_week#233, hour_of_day#234, count(1)#258L AS total_trip_count#236L, avg(fare_amount#191)#259 AS mean_fare_amount#237, avg(trip_duration_minutes#235)#260 AS mean_trip_duration_minutes#238, avg(trip_distance#188)#261 AS mean_trip_distance#239]
+
+(16) AdaptiveSparkPlan
+Output [7]: [Borough#229, day_of_week#233, hour_of_day#234, total_trip_count#236L, mean_fare_amount#237, mean_trip_duration_minutes#238, mean_trip_distance#239]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Aggregate ['Borough, 'day_of_week, 'hour_of_day], ['Borough, 'day_of_week, 'hour_of_day, 'count(*) AS total_trip_count#236, 'avg('fare_amount) AS mean_fare_amount#237, 'avg('trip_duration_minutes) AS mean_trip_duration_minutes#238, 'avg('trip_distance) AS mean_trip_distance#239]
++- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, day_of_week#233, hour_of_day#234, (cast(timestampdiff(SECOND, cast(tpep_pickup_datetime#183 as timestamp), cast(tpep_dropoff_datetime#184 as timestamp), Some(UTC)) as double) / cast(60 as double)) AS trip_duration_minutes#235]
+   +- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, day_of_week#233, hour(tpep_pickup_datetime#183, Some(UTC)) AS hour_of_day#234]
+      +- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, dayofweek(cast(tpep_pickup_datetime#183 as date)) AS day_of_week#233]
+         +- Join Inner, (PULocationID#185 = LocationID#228)
+            :- Filter (((((((((((isnotnull(tpep_pickup_datetime#183) AND isnotnull(tpep_dropoff_datetime#184)) AND isnotnull(PULocationID#185)) AND isnotnull(DOLocationID#186)) AND isnotnull(passenger_count#187)) AND isnotnull(trip_distance#188)) AND isnotnull(fare_amount#191)) AND (fare_amount#191 > cast(0 as double))) AND (trip_distance#188 > cast(0 as double))) AND ((passenger_count#187 >= 1) AND (passenger_count#187 <= 6))) AND (tpep_dropoff_datetime#184 > tpep_pickup_datetime#183)) AND (((PULocationID#185 >= 1) AND (PULocationID#185 <= 263)) AND ((DOLocationID#186 >= 1) AND (DOLocationID#186 <= 263))))
+            :  +- Union false, false
+            :     :- Project [try_cast(tpep_pickup_datetime#164 as timestamp_ntz) AS tpep_pickup_datetime#183, try_cast(tpep_dropoff_datetime#165 as timestamp_ntz) AS tpep_dropoff_datetime#184, try_cast(PULocationID#170 as int) AS PULocationID#185, try_cast(DOLocationID#171 as int) AS DOLocationID#186, try_cast(passenger_count#166L as int) AS passenger_count#187, try_cast(trip_distance#167 as double) AS trip_distance#188, try_cast(RatecodeID#168L as int) AS RatecodeID#189, try_cast(payment_type#172L as int) AS payment_type#190, try_cast(fare_amount#173 as double) AS fare_amount#191, try_cast(tip_amount#176 as double) AS tip_amount#192, try_cast(total_amount#179 as double) AS total_amount#193]
+            :     :  +- Relation [VendorID#163,tpep_pickup_datetime#164,tpep_dropoff_datetime#165,passenger_count#166L,trip_distance#167,RatecodeID#168L,store_and_fwd_flag#169,PULocationID#170,DOLocationID#171,payment_type#172L,fare_amount#173,extra#174,mta_tax#175,tip_amount#176,tolls_amount#177,improvement_surcharge#178,total_amount#179,congestion_surcharge#180,Airport_fee#181,cbd_congestion_fee#182] parquet
+            :     +- Project [tpep_pickup_datetime#216, tpep_dropoff_datetime#217, PULocationID#218, DOLocationID#219, passenger_count#220, trip_distance#221, RatecodeID#222, payment_type#223, fare_amount#224, tip_amount#225, total_amount#226]
+            :        +- Project [try_cast(tpep_pickup_datetime#196 as timestamp_ntz) AS tpep_pickup_datetime#216, try_cast(tpep_dropoff_datetime#197 as timestamp_ntz) AS tpep_dropoff_datetime#217, try_cast(PULocationID#202 as int) AS PULocationID#218, try_cast(DOLocationID#203 as int) AS DOLocationID#219, try_cast(passenger_count#198L as int) AS passenger_count#220, try_cast(trip_distance#199 as double) AS trip_distance#221, try_cast(RatecodeID#200L as int) AS RatecodeID#222, try_cast(payment_type#204L as int) AS payment_type#223, try_cast(fare_amount#205 as double) AS fare_amount#224, try_cast(tip_amount#208 as double) AS tip_amount#225, try_cast(total_amount#211 as double) AS total_amount#226]
+            :           +- Relation [VendorID#195,tpep_pickup_datetime#196,tpep_dropoff_datetime#197,passenger_count#198L,trip_distance#199,RatecodeID#200L,store_and_fwd_flag#201,PULocationID#202,DOLocationID#203,payment_type#204L,fare_amount#205,extra#206,mta_tax#207,tip_amount#208,tolls_amount#209,improvement_surcharge#210,total_amount#211,congestion_surcharge#212,Airport_fee#213,cbd_congestion_fee#214,request_source#215] parquet
+            +- ResolvedHint (strategy=broadcast)
+               +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+
+== Analyzed Logical Plan ==
+Borough: string, day_of_week: int, hour_of_day: int, total_trip_count: bigint, mean_fare_amount: double, mean_trip_duration_minutes: double, mean_trip_distance: double
+Aggregate [Borough#229, day_of_week#233, hour_of_day#234], [Borough#229, day_of_week#233, hour_of_day#234, count(1) AS total_trip_count#236L, avg(fare_amount#191) AS mean_fare_amount#237, avg(trip_duration_minutes#235) AS mean_trip_duration_minutes#238, avg(trip_distance#188) AS mean_trip_distance#239]
++- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, day_of_week#233, hour_of_day#234, (cast(timestampdiff(SECOND, cast(tpep_pickup_datetime#183 as timestamp), cast(tpep_dropoff_datetime#184 as timestamp), Some(UTC)) as double) / cast(60 as double)) AS trip_duration_minutes#235]
+   +- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, day_of_week#233, hour(tpep_pickup_datetime#183, Some(UTC)) AS hour_of_day#234]
+      +- Project [tpep_pickup_datetime#183, tpep_dropoff_datetime#184, PULocationID#185, DOLocationID#186, passenger_count#187, trip_distance#188, RatecodeID#189, payment_type#190, fare_amount#191, tip_amount#192, total_amount#193, LocationID#228, Borough#229, Zone#230, service_zone#231, dayofweek(cast(tpep_pickup_datetime#183 as date)) AS day_of_week#233]
+         +- Join Inner, (PULocationID#185 = LocationID#228)
+            :- Filter (((((((((((isnotnull(tpep_pickup_datetime#183) AND isnotnull(tpep_dropoff_datetime#184)) AND isnotnull(PULocationID#185)) AND isnotnull(DOLocationID#186)) AND isnotnull(passenger_count#187)) AND isnotnull(trip_distance#188)) AND isnotnull(fare_amount#191)) AND (fare_amount#191 > cast(0 as double))) AND (trip_distance#188 > cast(0 as double))) AND ((passenger_count#187 >= 1) AND (passenger_count#187 <= 6))) AND (tpep_dropoff_datetime#184 > tpep_pickup_datetime#183)) AND (((PULocationID#185 >= 1) AND (PULocationID#185 <= 263)) AND ((DOLocationID#186 >= 1) AND (DOLocationID#186 <= 263))))
+            :  +- Union false, false
+            :     :- Project [try_cast(tpep_pickup_datetime#164 as timestamp_ntz) AS tpep_pickup_datetime#183, try_cast(tpep_dropoff_datetime#165 as timestamp_ntz) AS tpep_dropoff_datetime#184, try_cast(PULocationID#170 as int) AS PULocationID#185, try_cast(DOLocationID#171 as int) AS DOLocationID#186, try_cast(passenger_count#166L as int) AS passenger_count#187, try_cast(trip_distance#167 as double) AS trip_distance#188, try_cast(RatecodeID#168L as int) AS RatecodeID#189, try_cast(payment_type#172L as int) AS payment_type#190, try_cast(fare_amount#173 as double) AS fare_amount#191, try_cast(tip_amount#176 as double) AS tip_amount#192, try_cast(total_amount#179 as double) AS total_amount#193]
+            :     :  +- Relation [VendorID#163,tpep_pickup_datetime#164,tpep_dropoff_datetime#165,passenger_count#166L,trip_distance#167,RatecodeID#168L,store_and_fwd_flag#169,PULocationID#170,DOLocationID#171,payment_type#172L,fare_amount#173,extra#174,mta_tax#175,tip_amount#176,tolls_amount#177,improvement_surcharge#178,total_amount#179,congestion_surcharge#180,Airport_fee#181,cbd_congestion_fee#182] parquet
+            :     +- Project [tpep_pickup_datetime#216, tpep_dropoff_datetime#217, PULocationID#218, DOLocationID#219, passenger_count#220, trip_distance#221, RatecodeID#222, payment_type#223, fare_amount#224, tip_amount#225, total_amount#226]
+            :        +- Project [try_cast(tpep_pickup_datetime#196 as timestamp_ntz) AS tpep_pickup_datetime#216, try_cast(tpep_dropoff_datetime#197 as timestamp_ntz) AS tpep_dropoff_datetime#217, try_cast(PULocationID#202 as int) AS PULocationID#218, try_cast(DOLocationID#203 as int) AS DOLocationID#219, try_cast(passenger_count#198L as int) AS passenger_count#220, try_cast(trip_distance#199 as double) AS trip_distance#221, try_cast(RatecodeID#200L as int) AS RatecodeID#222, try_cast(payment_type#204L as int) AS payment_type#223, try_cast(fare_amount#205 as double) AS fare_amount#224, try_cast(tip_amount#208 as double) AS tip_amount#225, try_cast(total_amount#211 as double) AS total_amount#226]
+            :           +- Relation [VendorID#195,tpep_pickup_datetime#196,tpep_dropoff_datetime#197,passenger_count#198L,trip_distance#199,RatecodeID#200L,store_and_fwd_flag#201,PULocationID#202,DOLocationID#203,payment_type#204L,fare_amount#205,extra#206,mta_tax#207,tip_amount#208,tolls_amount#209,improvement_surcharge#210,total_amount#211,congestion_surcharge#212,Airport_fee#213,cbd_congestion_fee#214,request_source#215] parquet
+            +- ResolvedHint (strategy=broadcast)
+               +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+
+== Optimized Logical Plan ==
+Aggregate [Borough#229, day_of_week#233, hour_of_day#234], [Borough#229, day_of_week#233, hour_of_day#234, count(1) AS total_trip_count#236L, avg(fare_amount#191) AS mean_fare_amount#237, avg(trip_duration_minutes#235) AS mean_trip_duration_minutes#238, avg(trip_distance#188) AS mean_trip_distance#239]
++- Project [trip_distance#188, fare_amount#191, Borough#229, dayofweek(cast(tpep_pickup_datetime#183 as date)) AS day_of_week#233, hour(tpep_pickup_datetime#183, Some(UTC)) AS hour_of_day#234, (cast(timestampdiff(SECOND, cast(tpep_pickup_datetime#183 as timestamp), cast(tpep_dropoff_datetime#184 as timestamp), Some(UTC)) as double) / 60.0) AS trip_duration_minutes#235]
+   +- Join Inner, (PULocationID#185 = LocationID#228), rightHint=(strategy=broadcast)
+      :- Union false, false
+      :  :- Project [tpep_pickup_datetime#164 AS tpep_pickup_datetime#183, tpep_dropoff_datetime#165 AS tpep_dropoff_datetime#184, PULocationID#170 AS PULocationID#185, trip_distance#167 AS trip_distance#188, fare_amount#173 AS fare_amount#191]
+      :  :  +- Filter (isnotnull(passenger_count#166L) AND (((((((((((((((isnotnull(tpep_pickup_datetime#164) AND isnotnull(tpep_dropoff_datetime#165)) AND isnotnull(PULocationID#170)) AND isnotnull(DOLocationID#171)) AND isnotnull(try_cast(passenger_count#166L as int))) AND isnotnull(trip_distance#167)) AND isnotnull(fare_amount#173)) AND (fare_amount#173 > 0.0)) AND (trip_distance#167 > 0.0)) AND (try_cast(passenger_count#166L as int) >= 1)) AND (try_cast(passenger_count#166L as int) <= 6)) AND (tpep_dropoff_datetime#165 > tpep_pickup_datetime#164)) AND (PULocationID#170 >= 1)) AND (PULocationID#170 <= 263)) AND (DOLocationID#171 >= 1)) AND (DOLocationID#171 <= 263)))
+      :  :     +- Relation [VendorID#163,tpep_pickup_datetime#164,tpep_dropoff_datetime#165,passenger_count#166L,trip_distance#167,RatecodeID#168L,store_and_fwd_flag#169,PULocationID#170,DOLocationID#171,payment_type#172L,fare_amount#173,extra#174,mta_tax#175,tip_amount#176,tolls_amount#177,improvement_surcharge#178,total_amount#179,congestion_surcharge#180,Airport_fee#181,cbd_congestion_fee#182] parquet
+      :  +- Project [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, PULocationID#202, trip_distance#199, fare_amount#205]
+      :     +- Filter (isnotnull(passenger_count#198L) AND (((((((((((((((isnotnull(tpep_pickup_datetime#196) AND isnotnull(tpep_dropoff_datetime#197)) AND isnotnull(PULocationID#202)) AND isnotnull(DOLocationID#203)) AND isnotnull(try_cast(passenger_count#198L as int))) AND isnotnull(trip_distance#199)) AND isnotnull(fare_amount#205)) AND (fare_amount#205 > 0.0)) AND (trip_distance#199 > 0.0)) AND (try_cast(passenger_count#198L as int) >= 1)) AND (try_cast(passenger_count#198L as int) <= 6)) AND (tpep_dropoff_datetime#197 > tpep_pickup_datetime#196)) AND (PULocationID#202 >= 1)) AND (PULocationID#202 <= 263)) AND (DOLocationID#203 >= 1)) AND (DOLocationID#203 <= 263)))
+      :        +- Relation [VendorID#195,tpep_pickup_datetime#196,tpep_dropoff_datetime#197,passenger_count#198L,trip_distance#199,RatecodeID#200L,store_and_fwd_flag#201,PULocationID#202,DOLocationID#203,payment_type#204L,fare_amount#205,extra#206,mta_tax#207,tip_amount#208,tolls_amount#209,improvement_surcharge#210,total_amount#211,congestion_surcharge#212,Airport_fee#213,cbd_congestion_fee#214,request_source#215] parquet
+      +- Project [LocationID#228, Borough#229]
+         +- Filter (((LocationID#228 >= 1) AND (LocationID#228 <= 263)) AND isnotnull(LocationID#228))
+            +- Relation [LocationID#228,Borough#229,Zone#230,service_zone#231] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[Borough#229, day_of_week#233, hour_of_day#234], functions=[count(1), avg(fare_amount#191), avg(trip_duration_minutes#235), avg(trip_distance#188)], output=[Borough#229, day_of_week#233, hour_of_day#234, total_trip_count#236L, mean_fare_amount#237, mean_trip_duration_minutes#238, mean_trip_distance#239])
+   +- Exchange hashpartitioning(Borough#229, day_of_week#233, hour_of_day#234, 200), ENSURE_REQUIREMENTS, [plan_id=52]
+      +- HashAggregate(keys=[Borough#229, day_of_week#233, hour_of_day#234], functions=[partial_count(1), partial_avg(fare_amount#191), partial_avg(trip_duration_minutes#235), partial_avg(trip_distance#188)], output=[Borough#229, day_of_week#233, hour_of_day#234, count#269L, sum#270, count#271L, sum#272, count#273L, sum#274, count#275L])
+         +- Project [trip_distance#188, fare_amount#191, Borough#229, dayofweek(cast(tpep_pickup_datetime#183 as date)) AS day_of_week#233, hour(tpep_pickup_datetime#183, Some(UTC)) AS hour_of_day#234, (cast(timestampdiff(SECOND, cast(tpep_pickup_datetime#183 as timestamp), cast(tpep_dropoff_datetime#184 as timestamp), Some(UTC)) as double) / 60.0) AS trip_duration_minutes#235]
+            +- BroadcastHashJoin [PULocationID#185], [LocationID#228], Inner, BuildRight, false, false
+               :- Union
+               :  :- Project [tpep_pickup_datetime#164 AS tpep_pickup_datetime#183, tpep_dropoff_datetime#165 AS tpep_dropoff_datetime#184, PULocationID#170 AS PULocationID#185, trip_distance#167 AS trip_distance#188, fare_amount#173 AS fare_amount#191]
+               :  :  +- Filter ((((((((((((((((isnotnull(passenger_count#166L) AND isnotnull(tpep_pickup_datetime#164)) AND isnotnull(tpep_dropoff_datetime#165)) AND isnotnull(PULocationID#170)) AND isnotnull(DOLocationID#171)) AND isnotnull(try_cast(passenger_count#166L as int))) AND isnotnull(trip_distance#167)) AND isnotnull(fare_amount#173)) AND (fare_amount#173 > 0.0)) AND (trip_distance#167 > 0.0)) AND (try_cast(passenger_count#166L as int) >= 1)) AND (try_cast(passenger_count#166L as int) <= 6)) AND (tpep_dropoff_datetime#165 > tpep_pickup_datetime#164)) AND (PULocationID#170 >= 1)) AND (PULocationID#170 <= 263)) AND (DOLocationID#171 >= 1)) AND (DOLocationID#171 <= 263))
+               :  :     +- FileScan parquet [tpep_pickup_datetime#164,tpep_dropoff_datetime#165,passenger_count#166L,trip_distance#167,PULocationID#170,DOLocationID#171,fare_amount#173] Batched: true, DataFilters: [isnotnull(passenger_count#166L), isnotnull(tpep_pickup_datetime#164), isnotnull(tpep_dropoff_dat..., Format: Parquet, Location: InMemoryFileIndex(5 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), I..., ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,tpep_dropoff_datetime:timestamp_ntz,passenger_count:big...
+               :  +- Project [tpep_pickup_datetime#196, tpep_dropoff_datetime#197, PULocationID#202, trip_distance#199, fare_amount#205]
+               :     +- Filter ((((((((((((((((isnotnull(passenger_count#198L) AND isnotnull(tpep_pickup_datetime#196)) AND isnotnull(tpep_dropoff_datetime#197)) AND isnotnull(PULocationID#202)) AND isnotnull(DOLocationID#203)) AND isnotnull(try_cast(passenger_count#198L as int))) AND isnotnull(trip_distance#199)) AND isnotnull(fare_amount#205)) AND (fare_amount#205 > 0.0)) AND (trip_distance#199 > 0.0)) AND (try_cast(passenger_count#198L as int) >= 1)) AND (try_cast(passenger_count#198L as int) <= 6)) AND (tpep_dropoff_datetime#197 > tpep_pickup_datetime#196)) AND (PULocationID#202 >= 1)) AND (PULocationID#202 <= 263)) AND (DOLocationID#203 >= 1)) AND (DOLocationID#203 <= 263))
+               :        +- FileScan parquet [tpep_pickup_datetime#196,tpep_dropoff_datetime#197,passenger_count#198L,trip_distance#199,PULocationID#202,DOLocationID#203,fare_amount#205] Batched: true, DataFilters: [isnotnull(passenger_count#198L), isnotnull(tpep_pickup_datetime#196), isnotnull(tpep_dropoff_dat..., Format: Parquet, Location: InMemoryFileIndex(3 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), I..., ReadSchema: struct<tpep_pickup_datetime:timestamp_ntz,tpep_dropoff_datetime:timestamp_ntz,passenger_count:big...
+               +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=47]
+                  +- Filter (((LocationID#228 >= 1) AND (LocationID#228 <= 263)) AND isnotnull(LocationID#228))
+                     +- FileScan csv [LocationID#228,Borough#229] Batched: false, DataFilters: [(LocationID#228 >= 1), (LocationID#228 <= 263), isnotnull(LocationID#228)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string>
+
+[M2-features:explain_plan=True, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, max_partition_mb=128] wall time: 15.31s (6 stages, 45 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+M2-features:explain_plan=True, use_cleansed=Tru...        15.31         5           6         45                 85527                 61444       6.2MB       37.8KB            784.8KB             784.8KB                 0.0B               0.0B
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection

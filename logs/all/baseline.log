@@ -1,0 +1,299 @@
+INFO:proj1:Spark UI: http://dingusmachine.lan:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=False
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=False
+INFO:proj1:cache_dataframe=False
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:Aggregating .parquet files in proj1/data
+INFO:proj1:Found ['proj1/data/yellow_tripdata_2026-01.parquet', 'proj1/data/yellow_tripdata_2026-02.parquet', 'proj1/data/yellow_tripdata_2026-03.parquet', 'proj1/data/yellow_tripdata_2026-04.parquet', 'proj1/data/yellow_tripdata_2026-05.parquet', 'proj1/data/yellow_tripdata_2026-06.parquet', 'proj1/data/yellow_tripdata_2026-07.parquet', 'proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in proj1/data
+INFO:proj1:Found ['proj1/data/taxi_zone_lookup.csv']
++----+--------+----------+---------+-------------+-----------------------+-----------------+---------------------+-------+
+|year|records |null_field|fare_le_0|distance_le_0|passengers_out_of_range|dropoff_le_pickup|location_out_of_range|removed|
++----+--------+----------+---------+-------------+-----------------------+-----------------+---------------------+-------+
+|2001|1       |0         |0        |0            |0                      |0                |0                    |0      |
+|2008|4       |0         |0        |0            |0                      |0                |1                    |1      |
+|2009|6       |0         |0        |0            |0                      |0                |0                    |0      |
+|2025|6       |0         |1        |0            |0                      |0                |2                    |2      |
+|2026|29703338|7716688   |179750   |952231       |91387                  |371683           |201483               |8751249|
++----+--------+----------+---------+-------------+-----------------------+-----------------+---------------------+-------+
+
+[M1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 9.64s (3 stages, 37 tasks) - see profiler.report() / profiler.compare(...)
++-------------+-----------+-----------+----------------+------------------+--------------------------+------------------+
+|Borough      |day_of_week|hour_of_day|total_trip_count|mean_fare_amount  |mean_trip_duration_minutes|mean_trip_distance|
++-------------+-----------+-----------+----------------+------------------+--------------------------+------------------+
+|Staten Island|4          |18         |2               |91.35             |72.83333333333333         |23.59             |
+|Staten Island|1          |8          |1               |80.0              |2.8                       |1.74              |
+|Manhattan    |1          |15         |134811          |15.897224187937171|14.74673567686119         |2.4202375177099773|
+|Bronx        |1          |10         |761             |36.493915900131405|41.02558037669732         |9.799500657030224 |
+|Staten Island|7          |14         |7               |39.805714285714295|36.67380952380952         |12.378571428571428|
+|Bronx        |4          |2          |17              |19.917647058823526|13.326470588235296        |4.451176470588236 |
+|Staten Island|1          |10         |4               |41.6275           |153.41666666666669        |20.3975           |
+|Brooklyn     |4          |3          |176             |37.85482954545455 |43.42291666666667         |10.066988636363636|
+|Queens       |5          |18         |17750           |53.76649408450697 |40.1564497652583          |12.189429859154949|
+|Bronx        |7          |3          |49              |35.690816326530616|22.737414965986403        |6.962448979591837 |
+|Manhattan    |2          |16         |156538          |15.569919316715414|15.753553130869168        |2.258401985460395 |
+|Manhattan    |3          |11         |142474          |17.01877774190379 |17.59655913827554         |2.1671031907576133|
+|Manhattan    |6          |21         |163442          |15.139938082010719|14.493689504533688        |2.2305384172978764|
+|Queens       |6          |11         |12257           |52.31239781349426 |41.25651464469283         |11.464330586603596|
+|Bronx        |1          |9          |944             |35.612002118644064|39.44133121468928         |9.427552966101695 |
+|Manhattan    |3          |7          |85955           |14.303871793380255|12.746089038838164        |2.3121920772497244|
+|Brooklyn     |1          |5          |617             |32.36881685575366 |27.351755807671534        |7.241912479740679 |
+|Bronx        |2          |18         |348             |37.561120689655176|45.890660919540224        |9.169741379310345 |
+|Bronx        |4          |15         |897             |35.31483835005574 |55.35772946859903         |8.9231884057971   |
+|Bronx        |5          |20         |332             |34.593132530120485|38.077158634538144        |8.724849397590361 |
++-------------+-----------+-----------+----------------+------------------+--------------------------+------------------+
+only showing top 20 rows
+[M2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 41.94s (18 stages, 152 tasks) - see profiler.report() / profiler.compare(...)
++-------+------------+-----------------------+----+-----+-----------+------------------+------------------+------------------+------------------+-----------+-----------+-----------------+-------------------+---------------------+-------------------------+---------------------+--------------+
+|Borough|PULocationID|Zone                   |year|month|trip_volume|mean_fare         |stddev_fare       |mean_distance     |stddev_distance   |month_index|volume_rank|rolling_3m_volume|rolling_mean_volume|rolling_stddev_volume|borough_rolling_3m_volume|rolling_3m_trip_share|volume_anomaly|
++-------+------------+-----------------------+----+-----+-----------+------------------+------------------+------------------+------------------+-----------+-----------+-----------------+-------------------+---------------------+-------------------------+---------------------+--------------+
+|Bronx  |3           |Allerton/Pelham Gardens|2026|1    |274        |43.425547445255475|11.575925689119284|12.633394160583936|5.457050197898436 |24313      |32         |274              |NULL               |NULL                 |18293                    |0.014978407040944624 |NULL          |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|2    |217        |41.283870967741926|10.84370306017956 |11.353917050691237|4.60830177330308  |24314      |34         |491              |274.0              |NULL                 |34590                    |0.014194854004047413 |NULL          |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|3    |309        |42.99805825242719 |9.902311620937514 |12.363495145631068|4.701343350866441 |24315      |32         |800              |245.5              |40.30508652763321    |56467                    |0.014167566897479944 |true          |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|4    |308        |41.32532467532468 |11.565454917608983|11.3775974025974  |5.520219104747855 |24316      |34         |834              |263.0              |65.05382386916237    |61723                    |0.01351198094713478  |false         |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|5    |285        |40.271964912280694|11.692288312587923|11.238912280701754|6.283791681557225 |24317      |32         |902              |308.5              |0.7071067811865476   |68080                    |0.013249118683901292 |true          |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|6    |4          |25.4              |27.104858113137823|5.3975            |7.845467375072905 |24318      |23         |597              |296.5              |16.263455967290593   |47247                    |0.012635722903041463 |true          |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|7    |23         |18.325652173913046|18.040397805049277|5.671739130434784 |6.208349694472258 |24319      |18         |312              |144.5              |198.69700551341987   |25609                    |0.012183216837830451 |false         |
+|Bronx  |3           |Allerton/Pelham Gardens|2026|8    |16         |19.024375         |17.46697683010238 |11.648125         |17.740439385295204|24320      |26         |43               |13.5               |13.435028842544403   |5076                     |0.00847123719464145  |false         |
+|Bronx  |18          |Bedford Park           |2026|1    |565        |41.271150442477875|11.99123200304002 |11.706884955752209|5.858917268223735 |24313      |12         |565              |NULL               |NULL                 |18293                    |0.030886131307057346 |NULL          |
+|Bronx  |18          |Bedford Park           |2026|2    |453        |40.932913907284764|12.58727930650292 |11.249139072847687|5.920281430959714 |24314      |15         |1018             |565.0              |NULL                 |34590                    |0.029430471234460825 |NULL          |
+|Bronx  |18          |Bedford Park           |2026|3    |622        |40.80048231511254 |11.812777945698164|11.329581993569136|5.61066190740094  |24315      |12         |1640             |509.0              |79.19595949289332    |56467                    |0.029043512139833885 |false         |
+|Bronx  |18          |Bedford Park           |2026|4    |693        |40.082395382395376|11.923437430112395|11.066161616161613|5.818582399646198 |24316      |13         |1768             |537.5              |119.50104602052653   |61723                    |0.028644103494645433 |false         |
+|Bronx  |18          |Bedford Park           |2026|5    |661        |39.226777609682294|12.280773100004769|10.62081694402421 |6.3278324785858375|24317      |13         |1976             |657.5              |50.204581464244875   |68080                    |0.029024676850763806 |false         |
+|Bronx  |18          |Bedford Park           |2026|6    |25         |19.140000000000004|15.660459763365825|3.7751999999999994|4.456368214888292 |24318      |7          |1379             |677.0              |22.627416997969522   |47247                    |0.02918703833047601  |true          |
+|Bronx  |18          |Bedford Park           |2026|7    |39         |18.92205128205128 |13.615052076651509|4.590769230769232 |6.513366170145569 |24319      |9          |725              |343.0              |449.7199128346442    |25609                    |0.028310359639189348 |false         |
+|Bronx  |18          |Bedford Park           |2026|8    |36         |18.42583333333333 |16.354856923862098|3.6288888888888895|4.341249180183562 |24320      |14         |100              |32.0               |9.899494936611665    |5076                     |0.019700551615445233 |false         |
+|Bronx  |20          |Belmont                |2026|1    |258        |38.79496124031008 |12.181721244912982|10.524767441860472|5.4521716788583605|24313      |34         |258              |NULL               |NULL                 |18293                    |0.014103755534904061 |NULL          |
+|Bronx  |20          |Belmont                |2026|2    |204        |37.51225490196079 |12.052140288378823|10.174068627450987|6.207319024595044 |24314      |35         |462              |258.0              |NULL                 |34590                    |0.013356461405030355 |NULL          |
+|Bronx  |20          |Belmont                |2026|3    |306        |39.33986928104576 |12.651136616437853|10.64712418300653 |5.478315784409323 |24315      |33         |768              |231.0              |38.18376618407357    |56467                    |0.013600864221580746 |true          |
+|Bronx  |20          |Belmont                |2026|4    |328        |37.55823170731708 |12.309748228568068|10.154786585365851|5.875334796904907 |24316      |32         |838              |255.0              |72.12489168102785    |61723                    |0.013576786611149815 |false         |
++-------+------------+-----------------------+----+-----+-----------+------------------+------------------+------------------+------------------+-----------+-----------+-----------------+-------------------+---------------------+-------------------------+---------------------+--------------+
+only showing top 20 rows
+[M3-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 18.82s (9 stages, 76 tasks) - see profiler.report() / profiler.compare(...)
++-------------+------------+---------------------+-------------+---------------------+-------------+--------------------------+
+|Borough      |payment_type|weekday_anomaly_rate |weekday_trips|weekend_anomaly_rate |weekend_trips|weekend_minus_weekday_rate|
++-------------+------------+---------------------+-------------+---------------------+-------------+--------------------------+
+|Bronx        |1           |0.012553942722636328 |86679        |0.011340695879349246 |16857        |-0.001213246843287082     |
+|Bronx        |2           |0.048106060606060604 |2643         |0.04828150572831424  |1226         |1.7544512225363407E-4     |
+|Bronx        |3           |0.13043478260869565  |92           |0.021739130434782608 |46           |-0.10869565217391304      |
+|Bronx        |4           |0.14482758620689656  |145          |0.1206896551724138   |58           |-0.024137931034482765     |
+|Brooklyn     |1           |0.009637024881729319 |239503       |0.012304637554716526 |66482        |0.0026676126729872074     |
+|Brooklyn     |2           |0.019119185769999048 |10518        |0.015923038646541716 |6031         |-0.003196147123457331     |
+|Brooklyn     |3           |0.058823529411764705 |357          |0.0625               |192          |0.003676470588235295      |
+|Brooklyn     |4           |0.05605786618444846  |553          |0.037940379403794036 |369          |-0.018117486780654425     |
+|EWR          |1           |0.005952380952380952 |505          |0.017605633802816902 |284          |0.01165325285043595       |
+|EWR          |2           |0.0                  |19           |0.0                  |13           |0.0                       |
+|EWR          |3           |0.0                  |3            |0.0                  |1            |0.0                       |
+|Manhattan    |1           |4.8370771611945984E-4|12023795     |6.77671058610369E-4  |4218866      |1.9396334249090913E-4     |
+|Manhattan    |2           |0.0032255974195220644|1527779      |0.0037041767786435047|571518       |4.785793591214403E-4      |
+|Manhattan    |3           |0.011171171171171172 |33300        |0.010851871947911014 |12901        |-3.192992232601572E-4     |
+|Manhattan    |4           |0.01445424593474333  |65863        |0.01458446990361884  |27496        |1.3022396887550983E-4     |
+|Queens       |1           |0.006315240391879151 |1184771      |0.007948720942451167 |428262       |0.0016334805505720156     |
+|Queens       |2           |0.003700865944805054 |276697       |0.003655216456036569 |119016       |-4.5649488768484923E-5    |
+|Queens       |3           |0.012615326680474487 |5311         |0.009318293281020108 |2039         |-0.003297033399454379     |
+|Queens       |4           |0.010179445350734095 |15325        |0.008244994110718492 |5943         |-0.001934451240015603     |
+|Staten Island|1           |0.007518796992481203 |191          |0.0                  |76           |-0.007518796992481203     |
+|Staten Island|2           |0.012195121951219513 |259          |0.010101010101010102 |109          |-0.0020941118502094107    |
+|Staten Island|3           |0.0                  |3            |0.0                  |3            |0.0                       |
+|Staten Island|4           |NULL                 |2            |NULL                 |2            |NULL                      |
++-------------+------------+---------------------+-------------+---------------------+-------------+--------------------------+
+
+[O1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 27.72s (14 stages, 106 tasks) - see profiler.report() / profiler.compare(...)
+Monthly route counts and shares:
++------------+------------+----+-----+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+|PULocationID|DOLocationID|year|month|trip_volume|month_volume|monthly_share      |pickup_zone   |pickup_borough|dropoff_zone                 |dropoff_borough|
++------------+------------+----+-----+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+|1           |1           |2026|1    |102        |110         |0.9272727272727272 |Newark Airport|EWR           |Newark Airport               |EWR            |
+|1           |48          |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Clinton East                 |Manhattan      |
+|1           |163         |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Midtown North                |Manhattan      |
+|1           |164         |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Midtown South                |Manhattan      |
+|1           |211         |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |SoHo                         |Manhattan      |
+|1           |232         |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Two Bridges/Seward Park      |Manhattan      |
+|1           |50          |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Clinton West                 |Manhattan      |
+|1           |87          |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |Financial District North     |Manhattan      |
+|1           |261         |2026|1    |1          |110         |0.00909090909090909|Newark Airport|EWR           |World Trade Center           |Manhattan      |
+|1           |1           |2026|2    |81         |91          |0.8901098901098901 |Newark Airport|EWR           |Newark Airport               |EWR            |
+|1           |140         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lenox Hill East              |Manhattan      |
+|1           |142         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lincoln Square East          |Manhattan      |
+|1           |163         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Midtown North                |Manhattan      |
+|1           |148         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Lower East Side              |Manhattan      |
+|1           |233         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |UN/Turtle Bay South          |Manhattan      |
+|1           |239         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Upper West Side South        |Manhattan      |
+|1           |4           |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Alphabet City                |Manhattan      |
+|1           |79          |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |East Village                 |Manhattan      |
+|1           |138         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |LaGuardia Airport            |Queens         |
+|1           |158         |2026|2    |1          |91          |0.01098901098901099|Newark Airport|EWR           |Meatpacking/West Village West|Manhattan      |
++------------+------------+----+-----+-----------+------------+-------------------+--------------+--------------+-----------------------------+---------------+
+only showing top 20 rows
+Top 20 routes per pickup borough:
++------------+------------+--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+|PULocationID|DOLocationID|pickup_borough|pickup_zone                      |dropoff_borough|dropoff_zone                |total_trips|route_rank|
++------------+------------+--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+|247         |42          |Bronx         |West Concourse                   |Manhattan      |Central Harlem North        |469        |1         |
+|159         |42          |Bronx         |Melrose South                    |Manhattan      |Central Harlem North        |408        |2         |
+|168         |42          |Bronx         |Mott Haven/Port Morris           |Manhattan      |Central Harlem North        |384        |3         |
+|69          |41          |Bronx         |East Concourse/Concourse Village |Manhattan      |Central Harlem              |361        |4         |
+|69          |42          |Bronx         |East Concourse/Concourse Village |Manhattan      |Central Harlem North        |359        |5         |
+|235         |42          |Bronx         |University Heights/Morris Heights|Manhattan      |Central Harlem North        |344        |6         |
+|168         |74          |Bronx         |Mott Haven/Port Morris           |Manhattan      |East Harlem North           |333        |7         |
+|213         |42          |Bronx         |Soundview/Castle Hill            |Manhattan      |Central Harlem North        |293        |8         |
+|51          |42          |Bronx         |Co-Op City                       |Manhattan      |Central Harlem North        |291        |9         |
+|119         |42          |Bronx         |Highbridge                       |Manhattan      |Central Harlem North        |255        |10        |
+|168         |41          |Bronx         |Mott Haven/Port Morris           |Manhattan      |Central Harlem              |249        |11        |
+|69          |75          |Bronx         |East Concourse/Concourse Village |Manhattan      |East Harlem South           |247        |12        |
+|254         |42          |Bronx         |Williamsbridge/Olinville         |Manhattan      |Central Harlem North        |244        |13        |
+|168         |75          |Bronx         |Mott Haven/Port Morris           |Manhattan      |East Harlem South           |235        |14        |
+|167         |75          |Bronx         |Morrisania/Melrose               |Manhattan      |East Harlem South           |230        |15        |
+|182         |42          |Bronx         |Parkchester                      |Manhattan      |Central Harlem North        |230        |16        |
+|78          |42          |Bronx         |East Tremont                     |Manhattan      |Central Harlem North        |223        |17        |
+|51          |140         |Bronx         |Co-Op City                       |Manhattan      |Lenox Hill East             |214        |18        |
+|51          |41          |Bronx         |Co-Op City                       |Manhattan      |Central Harlem              |209        |19        |
+|159         |75          |Bronx         |Melrose South                    |Manhattan      |East Harlem South           |201        |20        |
+|76          |76          |Brooklyn      |East New York                    |Brooklyn       |East New York               |1015       |1         |
+|255         |112         |Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Greenpoint                  |819        |2         |
+|61          |61          |Brooklyn      |Crown Heights North              |Brooklyn       |Crown Heights North         |811        |3         |
+|255         |256         |Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Williamsburg (South Side)   |741        |4         |
+|181         |181         |Brooklyn      |Park Slope                       |Brooklyn       |Park Slope                  |674        |5         |
+|33          |33          |Brooklyn      |Brooklyn Heights                 |Brooklyn       |Brooklyn Heights            |641        |6         |
+|61          |76          |Brooklyn      |Crown Heights North              |Brooklyn       |East New York               |612        |7         |
+|255         |255         |Brooklyn      |Williamsburg (North Side)        |Brooklyn       |Williamsburg (North Side)   |602        |8         |
+|97          |97          |Brooklyn      |Fort Greene                      |Brooklyn       |Fort Greene                 |596        |9         |
+|76          |61          |Brooklyn      |East New York                    |Brooklyn       |Crown Heights North         |554        |10        |
+|97          |49          |Brooklyn      |Fort Greene                      |Brooklyn       |Clinton Hill                |502        |11        |
+|76          |188         |Brooklyn      |East New York                    |Brooklyn       |Prospect-Lefferts Gardens   |499        |12        |
+|25          |33          |Brooklyn      |Boerum Hill                      |Brooklyn       |Brooklyn Heights            |488        |13        |
+|39          |39          |Brooklyn      |Canarsie                         |Brooklyn       |Canarsie                    |488        |14        |
+|112         |112         |Brooklyn      |Greenpoint                       |Brooklyn       |Greenpoint                  |484        |15        |
+|188         |61          |Brooklyn      |Prospect-Lefferts Gardens        |Brooklyn       |Crown Heights North         |482        |16        |
+|35          |76          |Brooklyn      |Brownsville                      |Brooklyn       |East New York               |477        |17        |
+|65          |66          |Brooklyn      |Downtown Brooklyn/MetroTech      |Brooklyn       |DUMBO/Vinegar Hill          |476        |18        |
+|188         |76          |Brooklyn      |Prospect-Lefferts Gardens        |Brooklyn       |East New York               |469        |19        |
+|256         |256         |Brooklyn      |Williamsburg (South Side)        |Brooklyn       |Williamsburg (South Side)   |465        |20        |
+|1           |1           |EWR           |Newark Airport                   |EWR            |Newark Airport              |767        |1         |
+|1           |163         |EWR           |Newark Airport                   |Manhattan      |Midtown North               |4          |2         |
+|1           |231         |EWR           |Newark Airport                   |Manhattan      |TriBeCa/Civic Center        |4          |3         |
+|1           |79          |EWR           |Newark Airport                   |Manhattan      |East Village                |3          |4         |
+|1           |142         |EWR           |Newark Airport                   |Manhattan      |Lincoln Square East         |3          |5         |
+|1           |6           |EWR           |Newark Airport                   |Staten Island  |Arrochar/Fort Wadsworth     |2          |6         |
+|1           |13          |EWR           |Newark Airport                   |Manhattan      |Battery Park City           |2          |7         |
+|1           |48          |EWR           |Newark Airport                   |Manhattan      |Clinton East                |2          |8         |
+|1           |87          |EWR           |Newark Airport                   |Manhattan      |Financial District North    |2          |9         |
+|1           |132         |EWR           |Newark Airport                   |Queens         |JFK Airport                 |2          |10        |
+|1           |138         |EWR           |Newark Airport                   |Queens         |LaGuardia Airport           |2          |11        |
+|1           |161         |EWR           |Newark Airport                   |Manhattan      |Midtown Center              |2          |12        |
+|1           |164         |EWR           |Newark Airport                   |Manhattan      |Midtown South               |2          |13        |
+|1           |186         |EWR           |Newark Airport                   |Manhattan      |Penn Station/Madison Sq West|2          |14        |
+|1           |211         |EWR           |Newark Airport                   |Manhattan      |SoHo                        |2          |15        |
+|1           |233         |EWR           |Newark Airport                   |Manhattan      |UN/Turtle Bay South         |2          |16        |
+|1           |238         |EWR           |Newark Airport                   |Manhattan      |Upper West Side North       |2          |17        |
+|1           |4           |EWR           |Newark Airport                   |Manhattan      |Alphabet City               |1          |18        |
+|1           |49          |EWR           |Newark Airport                   |Brooklyn       |Clinton Hill                |1          |19        |
+|1           |50          |EWR           |Newark Airport                   |Manhattan      |Clinton West                |1          |20        |
+|237         |236         |Manhattan     |Upper East Side South            |Manhattan      |Upper East Side North       |173410     |1         |
+|236         |237         |Manhattan     |Upper East Side North            |Manhattan      |Upper East Side South       |143860     |2         |
+|237         |237         |Manhattan     |Upper East Side South            |Manhattan      |Upper East Side South       |116463     |3         |
+|236         |236         |Manhattan     |Upper East Side North            |Manhattan      |Upper East Side North       |108426     |4         |
+|161         |237         |Manhattan     |Midtown Center                   |Manhattan      |Upper East Side South       |80181      |5         |
+|237         |161         |Manhattan     |Upper East Side South            |Manhattan      |Midtown Center              |72984      |6         |
+|161         |236         |Manhattan     |Midtown Center                   |Manhattan      |Upper East Side North       |64193      |7         |
+|237         |162         |Manhattan     |Upper East Side South            |Manhattan      |Midtown East                |60886      |8         |
+|142         |239         |Manhattan     |Lincoln Square East              |Manhattan      |Upper West Side South       |60013      |9         |
+|239         |238         |Manhattan     |Upper West Side South            |Manhattan      |Upper West Side North       |57548      |10        |
+|239         |142         |Manhattan     |Upper West Side South            |Manhattan      |Lincoln Square East         |56550      |11        |
+|141         |236         |Manhattan     |Lenox Hill West                  |Manhattan      |Upper East Side North       |54455      |12        |
+|236         |161         |Manhattan     |Upper East Side North            |Manhattan      |Midtown Center              |53549      |13        |
+|237         |141         |Manhattan     |Upper East Side South            |Manhattan      |Lenox Hill West             |53465      |14        |
+|162         |237         |Manhattan     |Midtown East                     |Manhattan      |Upper East Side South       |51558      |15        |
+|236         |141         |Manhattan     |Upper East Side North            |Manhattan      |Lenox Hill West             |50518      |16        |
+|186         |230         |Manhattan     |Penn Station/Madison Sq West     |Manhattan      |Times Sq/Theatre District   |49779      |17        |
+|238         |239         |Manhattan     |Upper West Side North            |Manhattan      |Upper West Side South       |49085      |18        |
+|237         |142         |Manhattan     |Upper East Side South            |Manhattan      |Lincoln Square East         |47262      |19        |
+|141         |237         |Manhattan     |Lenox Hill West                  |Manhattan      |Upper East Side South       |46454      |20        |
+|132         |230         |Queens        |JFK Airport                      |Manhattan      |Times Sq/Theatre District   |44758      |1         |
+|138         |230         |Queens        |LaGuardia Airport                |Manhattan      |Times Sq/Theatre District   |40273      |2         |
+|132         |132         |Queens        |JFK Airport                      |Queens         |JFK Airport                 |32321      |3         |
+|132         |93          |Queens        |JFK Airport                      |Queens         |Flushing Meadows-Corona Park|29725      |4         |
+|138         |161         |Queens        |LaGuardia Airport                |Manhattan      |Midtown Center              |26777      |5         |
+|132         |164         |Queens        |JFK Airport                      |Manhattan      |Midtown South               |22878      |6         |
+|132         |48          |Queens        |JFK Airport                      |Manhattan      |Clinton East                |21450      |7         |
+|138         |164         |Queens        |LaGuardia Airport                |Manhattan      |Midtown South               |20790      |8         |
+|138         |162         |Queens        |LaGuardia Airport                |Manhattan      |Midtown East                |19944      |9         |
+|132         |161         |Queens        |JFK Airport                      |Manhattan      |Midtown Center              |19912      |10        |
+|132         |163         |Queens        |JFK Airport                      |Manhattan      |Midtown North               |18814      |11        |
+|138         |163         |Queens        |LaGuardia Airport                |Manhattan      |Midtown North               |18428      |12        |
+|138         |236         |Queens        |LaGuardia Airport                |Manhattan      |Upper East Side North       |18162      |13        |
+|132         |10          |Queens        |JFK Airport                      |Queens         |Baisley Park                |18114      |14        |
+|138         |170         |Queens        |LaGuardia Airport                |Manhattan      |Murray Hill                 |17577      |15        |
+|132         |170         |Queens        |JFK Airport                      |Manhattan      |Murray Hill                 |17400      |16        |
+|132         |216         |Queens        |JFK Airport                      |Queens         |South Ozone Park            |16467      |17        |
+|138         |239         |Queens        |LaGuardia Airport                |Manhattan      |Upper West Side South       |15997      |18        |
+|132         |138         |Queens        |JFK Airport                      |Queens         |LaGuardia Airport           |15467      |19        |
+|132         |162         |Queens        |JFK Airport                      |Manhattan      |Midtown East                |15200      |20        |
++------------+------------+--------------+---------------------------------+---------------+----------------------------+-----------+----------+
+only showing top 100 rows
+Routes with Q1/Q3 share reversals:
++------------+------------+-----------+------------+--------------+---------------+----+---+---+---+---+---------+---------+
+|PULocationID|DOLocationID|pickup_zone|dropoff_zone|pickup_borough|dropoff_borough|year|1  |3  |7  |9  |q1_change|q3_change|
++------------+------------+-----------+------------+--------------+---------------+----+---+---+---+---+---------+---------+
++------------+------------+-----------+------------+--------------+---------------+----+---+---+---+---+---------+---------+
+
+[O2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 15.87s (61 stages, 410 tasks) - see profiler.report() / profiler.compare(...)
++-----------+----+-----+-------+------------------+------------------+------------------+------------------+
+|zone_type  |year|month|trips  |mean_fare         |stddev_fare       |mean_distance     |stddev_distance   |
++-----------+----+-----+-------+------------------+------------------+------------------+------------------+
+|commercial |2001|1    |1      |38.0              |NULL              |8.06              |NULL              |
+|commercial |2009|1    |1      |79.3              |NULL              |13.01             |NULL              |
+|commercial |2026|1    |172828 |35.244111428703555|21.13229775421449 |7.888758997384679 |253.41149519026325|
+|commercial |2026|2    |152696 |35.52456593492948 |20.69106882707574 |7.146963181746737 |9.351828485775107 |
+|commercial |2026|3    |200077 |35.388746082758054|20.88414313461264 |7.172625239282869 |8.435614655140032 |
+|commercial |2026|4    |204730 |35.90663366384987 |20.932491005664268|7.212144776046478 |4.807102725998726 |
+|commercial |2026|5    |219071 |36.984809901812554|21.285191386646613|7.17719483637726  |4.821768344286127 |
+|commercial |2026|6    |189037 |36.828192893454656|22.48140901256226 |6.9207334013976105|4.750767671164126 |
+|commercial |2026|7    |177346 |35.31090884485688 |21.753810363625025|6.797729071983562 |4.760457962469745 |
+|commercial |2026|8    |174135 |34.758404628592736|21.3056922637344  |6.825111149395575 |4.635574027483159 |
+|mixed      |2008|12   |3      |39.06666666666667 |38.62865948144374 |6.699999999999999 |8.833600624886772 |
+|mixed      |2009|1    |5      |12.38             |6.272718708821559 |1.7259999999999998|1.007834311779471 |
+|mixed      |2025|12   |3      |12.800000000000002|2.100000000000001 |1.37              |0.8296384754819415|
+|mixed      |2026|1    |2180554|15.345410391120504|11.288154602344424|2.3727080870274406|6.314427185082661 |
+|mixed      |2026|2    |1988428|15.786223167245595|11.367599428787857|2.391959371925971 |24.631326802817753|
+|mixed      |2026|3    |2530148|15.701757952498596|11.48252973744357 |2.4727986623707667|3.9503374615479707|
+|mixed      |2026|4    |2561406|16.11706453018335 |11.460070951740837|2.5230696344117365|42.56481480833928 |
+|mixed      |2026|5    |2644610|16.429146921473663|11.762415285996209|2.4671003739681905|4.524059349482095 |
+|mixed      |2026|6    |2368189|15.623095242820197|11.15180211064941 |2.2065230013314054|4.726374491427482 |
+|mixed      |2026|7    |2124789|15.377485096166955|11.060164563808794|2.2369300669384344|6.871514174254886 |
+|mixed      |2026|8    |1985325|15.164929646279377|10.700110129273918|2.2616102602848627|2.476833171352754 |
+|residential|2026|1    |157    |28.41592356687898 |13.506714899587385|5.425668789808918 |3.617547737513127 |
+|residential|2026|2    |139    |28.028273381294966|13.370238902186179|5.0829496402877705|3.4047110271805656|
+|residential|2026|3    |226    |23.43141592920354 |12.421130194936664|4.310398230088495 |3.719064914828453 |
+|residential|2026|4    |267    |25.177715355805248|11.378508284297022|4.815131086142323 |3.460223421885986 |
+|residential|2026|5    |282    |25.951063829787234|12.71345361335107 |4.734184397163121 |3.3359153440935114|
+|residential|2026|6    |252    |25.29246031746032 |12.261336842845395|4.548095238095238 |3.249579124274015 |
+|residential|2026|7    |364    |25.97846153846155 |12.594430482134378|4.551181318681319 |2.990924008451776 |
+|residential|2026|8    |351    |24.431652421652416|12.406913400150906|4.286638176638177 |2.848898751171072 |
+|transit    |2025|12   |1      |167.2             |NULL              |40.14             |NULL              |
+|transit    |2026|1    |135063 |59.39375180471358 |20.972906465600186|14.7610036797643  |5.851149235393344 |
+|transit    |2026|2    |111539 |59.8724319744667  |20.96350785223105 |14.798991473834269|5.8994583440033255|
+|transit    |2026|3    |141405 |60.04140334500216 |20.745568321813963|14.857167709769849|5.811013605692165 |
+|transit    |2026|4    |137044 |59.535311578763185|21.09627253332759 |14.756168164968933|12.313522790692918|
+|transit    |2026|5    |137788 |60.17763723981804 |21.22635151999165 |14.758872906203704|14.832776742740824|
+|transit    |2026|6    |136316 |60.050437952991885|21.281086297107105|14.676964406232603|5.954295714805411 |
+|transit    |2026|7    |137910 |58.49174309332199 |21.854332615448378|14.346853527662992|5.979638365158405 |
+|transit    |2026|8    |139617 |58.134630883059124|22.008087108850916|14.244909645673527|6.1060271582766665|
++-----------+----+-----+-------+------------------+------------------+------------------+------------------+
+
+[O4-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=False, cache_dataframe=False, string_to_id=False, repartition_pickup=False] wall time: 20.69s (9 stages, 127 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+M1-features:explain_plan=False, use_cleansed=Tr...         9.64         2           3         37                 60307                 41123     219.7KB         0.0B              2.5KB               2.5KB                 0.0B               0.0B
+M2-features:explain_plan=False, use_cleansed=Tr...        41.94         8          18        152                286910                230739      12.5MB       37.7KB            953.8MB             953.8MB                1.7GB            783.7MB
+M3-features:explain_plan=False, use_cleansed=Tr...        18.82         4           9         76                126300                106321       6.2MB         0.0B            318.5MB             318.5MB              768.0MB            261.3MB
+O1-features:explain_plan=False, use_cleansed=Tr...        27.72         5          14        106                193882                159697       6.2MB         0.0B            363.2MB             363.2MB                2.6GB            528.3MB
+O2-features:explain_plan=False, use_cleansed=Tr...        15.87        19          61        410                 79496                 69597      18.7MB         0.0B             41.5MB              41.5MB                 0.0B               0.0B
+O4-features:explain_plan=False, use_cleansed=Tr...        20.69         4           9        127                151530                126206      12.4MB         0.0B            222.3MB             222.3MB              704.0MB            106.8MB
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection

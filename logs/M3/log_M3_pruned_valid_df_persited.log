@@ -1,0 +1,293 @@
+== Physical Plan ==
+AdaptiveSparkPlan (44)
++- Project (43)
+   +- Window (42)
+      +- Project (41)
+         +- Window (40)
+            +- Sort (39)
+               +- Exchange (38)
+                  +- Project (37)
+                     +- SortMergeJoin LeftOuter (36)
+                        :- Sort (22)
+                        :  +- Exchange (21)
+                        :     +- Window (20)
+                        :        +- Sort (19)
+                        :           +- Exchange (18)
+                        :              +- Window (17)
+                        :                 +- Sort (16)
+                        :                    +- Exchange (15)
+                        :                       +- InMemoryTableScan (1)
+                        :                             +- InMemoryRelation (2)
+                        :                                   +- AdaptiveSparkPlan (14)
+                        :                                      +- HashAggregate (13)
+                        :                                         +- Exchange (12)
+                        :                                            +- HashAggregate (11)
+                        :                                               +- Project (10)
+                        :                                                  +- BroadcastHashJoin Inner BuildRight (9)
+                        :                                                     :- Project (5)
+                        :                                                     :  +- Filter (4)
+                        :                                                     :     +- Scan parquet  (3)
+                        :                                                     +- BroadcastExchange (8)
+                        :                                                        +- Filter (7)
+                        :                                                           +- Scan csv  (6)
+                        +- Sort (35)
+                           +- Exchange (34)
+                              +- Project (33)
+                                 +- Filter (32)
+                                    +- Window (31)
+                                       +- Sort (30)
+                                          +- Exchange (29)
+                                             +- HashAggregate (28)
+                                                +- Exchange (27)
+                                                   +- HashAggregate (26)
+                                                      +- Filter (25)
+                                                         +- InMemoryTableScan (23)
+                                                               +- InMemoryRelation (24)
+                                                                     +- AdaptiveSparkPlan (14)
+                                                                        +- HashAggregate (13)
+                                                                           +- Exchange (12)
+                                                                              +- HashAggregate (11)
+                                                                                 +- Project (10)
+                                                                                    +- BroadcastHashJoin Inner BuildRight (9)
+                                                                                       :- Project (5)
+                                                                                       :  +- Filter (4)
+                                                                                       :     +- Scan parquet  (3)
+                                                                                       +- BroadcastExchange (8)
+                                                                                          +- Filter (7)
+                                                                                             +- Scan csv  (6)
+
+
+(1) InMemoryTableScan
+Output [8]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+Arguments: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+
+(2) InMemoryRelation
+Arguments: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31], StorageLevel(disk, memory, 1 replicas)
+
+(3) Scan parquet 
+Output [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+PushedFilters: [IsNotNull(VendorID), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(passenger_count), IsNotNull(trip_distance), IsNotNull(RatecodeID), IsNotNull(store_and_fwd_flag), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(payment_type), IsNotNull(fare_amount), IsNotNull(extra), IsNotNull(mta_tax), IsNotNull(tip_amount), IsNotNull(tolls_amount), IsNotNull(improvement_surcharge), IsNotNull(total_amount), IsNotNull(congestion_surcharge), IsNotNull(Airport_fee), IsNotNull(cbd_congestion_fee), GreaterThan(fare_amount,0.0), GreaterThan(trip_distance,0.0), GreaterThanOrEqual(passenger_count,1), LessThanOrEqual(passenger_count,6), GreaterThanOrEqual(PULocationID,1), LessThanOrEqual(PULocationID,263), GreaterThanOrEqual(DOLocationID,1), LessThanOrEqual(DOLocationID,263)]
+ReadSchema: struct<VendorID:int,tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,passenger_count:bigint,trip_distance:double,RatecodeID:bigint,store_and_fwd_flag:string,PULocationID:int,DOLocationID:int,payment_type:bigint,fare_amount:double,extra:double,mta_tax:double,tip_amount:double,tolls_amount:double,improvement_surcharge:double,total_amount:double,congestion_surcharge:double,Airport_fee:double,cbd_congestion_fee:double>
+
+(4) Filter
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+Condition : ((((((((((((((((((((((((((((isnotnull(VendorID#0) AND isnotnull(tpep_pickup_datetime#1L)) AND isnotnull(tpep_dropoff_datetime#2L)) AND isnotnull(passenger_count#3L)) AND isnotnull(trip_distance#4)) AND isnotnull(RatecodeID#5L)) AND isnotnull(store_and_fwd_flag#6)) AND isnotnull(PULocationID#7)) AND isnotnull(DOLocationID#8)) AND isnotnull(payment_type#9L)) AND isnotnull(fare_amount#10)) AND isnotnull(extra#11)) AND isnotnull(mta_tax#12)) AND isnotnull(tip_amount#13)) AND isnotnull(tolls_amount#14)) AND isnotnull(improvement_surcharge#15)) AND isnotnull(total_amount#16)) AND isnotnull(congestion_surcharge#17)) AND isnotnull(Airport_fee#18)) AND isnotnull(cbd_congestion_fee#19)) AND (fare_amount#10 > 0.0)) AND (trip_distance#4 > 0.0)) AND (passenger_count#3L >= 1)) AND (passenger_count#3L <= 6)) AND (tpep_dropoff_datetime#2L > tpep_pickup_datetime#1L)) AND (PULocationID#7 >= 1)) AND (PULocationID#7 <= 263)) AND (DOLocationID#8 >= 1)) AND (DOLocationID#8 <= 263))
+
+(5) Project
+Output [4]: [tpep_pickup_datetime#1L, trip_distance#4, PULocationID#7, fare_amount#10]
+Input [20]: [VendorID#0, tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, passenger_count#3L, trip_distance#4, RatecodeID#5L, store_and_fwd_flag#6, PULocationID#7, DOLocationID#8, payment_type#9L, fare_amount#10, extra#11, mta_tax#12, tip_amount#13, tolls_amount#14, improvement_surcharge#15, total_amount#16, congestion_surcharge#17, Airport_fee#18, cbd_congestion_fee#19]
+
+(6) Scan csv 
+Output [3]: [LocationID#20, Borough#21, Zone#22]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263), IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(7) Filter
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+Condition : (((LocationID#20 >= 1) AND (LocationID#20 <= 263)) AND isnotnull(LocationID#20))
+
+(8) BroadcastExchange
+Input [3]: [LocationID#20, Borough#21, Zone#22]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=35]
+
+(9) BroadcastHashJoin
+Left keys [1]: [PULocationID#7]
+Right keys [1]: [LocationID#20]
+Join type: Inner
+Join condition: None
+
+(10) Project
+Output [5]: [trip_distance#4, fare_amount#10, Zone#22, Borough#21, month(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS pickup_month#26]
+Input [7]: [tpep_pickup_datetime#1L, trip_distance#4, PULocationID#7, fare_amount#10, LocationID#20, Borough#21, Zone#22]
+
+(11) HashAggregate
+Input [5]: [trip_distance#4, fare_amount#10, Zone#22, Borough#21, pickup_month#26]
+Keys [3]: [Zone#22, Borough#21, pickup_month#26]
+Functions [5]: [partial_count(1), partial_avg(fare_amount#10), partial_stddev(fare_amount#10), partial_avg(trip_distance#4), partial_stddev(trip_distance#4)]
+Aggregate Attributes [11]: [count#78L, sum#79, count#80L, n#43, avg#44, m2#45, sum#81, count#82L, n#53, avg#54, m2#55]
+Results [14]: [Zone#22, Borough#21, pickup_month#26, count#83L, sum#84, count#85L, n#48, avg#49, m2#50, sum#86, count#87L, n#58, avg#59, m2#60]
+
+(12) Exchange
+Input [14]: [Zone#22, Borough#21, pickup_month#26, count#83L, sum#84, count#85L, n#48, avg#49, m2#50, sum#86, count#87L, n#58, avg#59, m2#60]
+Arguments: hashpartitioning(Zone#22, Borough#21, pickup_month#26, 200), ENSURE_REQUIREMENTS, [plan_id=40]
+
+(13) HashAggregate
+Input [14]: [Zone#22, Borough#21, pickup_month#26, count#83L, sum#84, count#85L, n#48, avg#49, m2#50, sum#86, count#87L, n#58, avg#59, m2#60]
+Keys [3]: [Zone#22, Borough#21, pickup_month#26]
+Functions [5]: [count(1), avg(fare_amount#10), stddev(fare_amount#10), avg(trip_distance#4), stddev(trip_distance#4)]
+Aggregate Attributes [5]: [count(1)#41L, avg(fare_amount#10)#42, stddev(fare_amount#10)#51, avg(trip_distance#4)#52, stddev(trip_distance#4)#61]
+Results [8]: [Zone#22, Borough#21, pickup_month#26, count(1)#41L AS trip_volume#27L, avg(fare_amount#10)#42 AS mean_fare#28, stddev(fare_amount#10)#51 AS stddev_fare#29, avg(trip_distance#4)#52 AS mean_distance#30, stddev(trip_distance#4)#61 AS stddev_distance#31]
+
+(14) AdaptiveSparkPlan
+Output [8]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+Arguments: isFinalPlan=false
+
+(15) Exchange
+Input [8]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+Arguments: hashpartitioning(Borough#21, pickup_month#26, 200), ENSURE_REQUIREMENTS, [plan_id=103]
+
+(16) Sort
+Input [8]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+Arguments: [Borough#21 ASC NULLS FIRST, pickup_month#26 ASC NULLS FIRST, trip_volume#27L DESC NULLS LAST], false, 0
+
+(17) Window
+Input [8]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31]
+Arguments: [dense_rank(trip_volume#27L) windowspecdefinition(Borough#21, pickup_month#26, trip_volume#27L DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS volume_rank#128], [Borough#21, pickup_month#26], [trip_volume#27L DESC NULLS LAST]
+
+(18) Exchange
+Input [9]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128]
+Arguments: hashpartitioning(Zone#22, 200), ENSURE_REQUIREMENTS, [plan_id=107]
+
+(19) Sort
+Input [9]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128]
+Arguments: [Zone#22 ASC NULLS FIRST, pickup_month#26 ASC NULLS FIRST], false, 0
+
+(20) Window
+Input [9]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128]
+Arguments: [sum(trip_volume#27L) windowspecdefinition(Zone#22, pickup_month#26 ASC NULLS FIRST, specifiedwindowframe(RowFrame, -2, currentrow$())) AS rolling_3m_volume#137L], [Zone#22], [pickup_month#26 ASC NULLS FIRST]
+
+(21) Exchange
+Input [10]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L]
+Arguments: hashpartitioning(Borough#21, pickup_month#26, 200), ENSURE_REQUIREMENTS, [plan_id=120]
+
+(22) Sort
+Input [10]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L]
+Arguments: [Borough#21 ASC NULLS FIRST, pickup_month#26 ASC NULLS FIRST], false, 0
+
+(23) InMemoryTableScan
+Output [3]: [Borough#174, pickup_month#177, trip_volume#194L]
+Arguments: [Borough#174, pickup_month#177, trip_volume#194L], [isnotnull(Borough#174)]
+
+(24) InMemoryRelation
+Arguments: [Zone#175, Borough#174, pickup_month#177, trip_volume#194L, mean_fare#195, stddev_fare#196, mean_distance#197, stddev_distance#198], StorageLevel(disk, memory, 1 replicas)
+
+(25) Filter
+Input [3]: [Borough#174, pickup_month#177, trip_volume#194L]
+Condition : isnotnull(Borough#174)
+
+(26) HashAggregate
+Input [3]: [Borough#174, pickup_month#177, trip_volume#194L]
+Keys [2]: [Borough#174, pickup_month#177]
+Functions [1]: [partial_sum(trip_volume#194L)]
+Aggregate Attributes [1]: [sum#620L]
+Results [3]: [Borough#174, pickup_month#177, sum#621L]
+
+(27) Exchange
+Input [3]: [Borough#174, pickup_month#177, sum#621L]
+Arguments: hashpartitioning(Borough#174, pickup_month#177, 200), ENSURE_REQUIREMENTS, [plan_id=110]
+
+(28) HashAggregate
+Input [3]: [Borough#174, pickup_month#177, sum#621L]
+Keys [2]: [Borough#174, pickup_month#177]
+Functions [1]: [sum(trip_volume#194L)]
+Aggregate Attributes [1]: [sum(trip_volume#194L)#150L]
+Results [3]: [Borough#174, pickup_month#177, sum(trip_volume#194L)#150L AS borough_trip_volume#139L]
+
+(29) Exchange
+Input [3]: [Borough#174, pickup_month#177, borough_trip_volume#139L]
+Arguments: hashpartitioning(Borough#174, 200), ENSURE_REQUIREMENTS, [plan_id=113]
+
+(30) Sort
+Input [3]: [Borough#174, pickup_month#177, borough_trip_volume#139L]
+Arguments: [Borough#174 ASC NULLS FIRST, pickup_month#177 ASC NULLS FIRST], false, 0
+
+(31) Window
+Input [3]: [Borough#174, pickup_month#177, borough_trip_volume#139L]
+Arguments: [sum(borough_trip_volume#139L) windowspecdefinition(Borough#174, pickup_month#177 ASC NULLS FIRST, specifiedwindowframe(RowFrame, -2, currentrow$())) AS borough_rolling_3m_volume#151L], [Borough#174], [pickup_month#177 ASC NULLS FIRST]
+
+(32) Filter
+Input [4]: [Borough#174, pickup_month#177, borough_trip_volume#139L, borough_rolling_3m_volume#151L]
+Condition : isnotnull(pickup_month#177)
+
+(33) Project
+Output [3]: [Borough#174, pickup_month#177, borough_rolling_3m_volume#151L]
+Input [4]: [Borough#174, pickup_month#177, borough_trip_volume#139L, borough_rolling_3m_volume#151L]
+
+(34) Exchange
+Input [3]: [Borough#174, pickup_month#177, borough_rolling_3m_volume#151L]
+Arguments: hashpartitioning(Borough#174, pickup_month#177, 200), ENSURE_REQUIREMENTS, [plan_id=121]
+
+(35) Sort
+Input [3]: [Borough#174, pickup_month#177, borough_rolling_3m_volume#151L]
+Arguments: [Borough#174 ASC NULLS FIRST, pickup_month#177 ASC NULLS FIRST], false, 0
+
+(36) SortMergeJoin
+Left keys [2]: [Borough#21, pickup_month#26]
+Right keys [2]: [Borough#174, pickup_month#177]
+Join type: LeftOuter
+Join condition: None
+
+(37) Project
+Output [12]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, (cast(rolling_3m_volume#137L as double) / cast(borough_rolling_3m_volume#151L as double)) AS rolling_3m_trip_share#225]
+Input [13]: [Zone#22, Borough#21, pickup_month#26, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, Borough#174, pickup_month#177, borough_rolling_3m_volume#151L]
+
+(38) Exchange
+Input [12]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225]
+Arguments: hashpartitioning(Zone#22, 200), ENSURE_REQUIREMENTS, [plan_id=127]
+
+(39) Sort
+Input [12]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225]
+Arguments: [Zone#22 ASC NULLS FIRST, pickup_month#26 ASC NULLS FIRST], false, 0
+
+(40) Window
+Input [12]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225]
+Arguments: [avg(trip_volume#27L) windowspecdefinition(Zone#22, pickup_month#26 ASC NULLS FIRST, specifiedwindowframe(RowFrame, -2, -1)) AS rolling_mean_volume#226], [Zone#22], [pickup_month#26 ASC NULLS FIRST]
+
+(41) Project
+Output [14]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226, cast(trip_volume#27L as double) AS _w0#246]
+Input [13]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226]
+
+(42) Window
+Input [14]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226, _w0#246]
+Arguments: [stddev(_w0#246) windowspecdefinition(Zone#22, pickup_month#26 ASC NULLS FIRST, specifiedwindowframe(RowFrame, -2, -1)) AS rolling_stddev_volume#228], [Zone#22], [pickup_month#26 ASC NULLS FIRST]
+
+(43) Project
+Output [15]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226, rolling_stddev_volume#228, (abs((cast(trip_volume#27L as double) - rolling_mean_volume#226)) > (rolling_stddev_volume#228 * 1.5)) AS volume_anomaly#255]
+Input [15]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226, _w0#246, rolling_stddev_volume#228]
+
+(44) AdaptiveSparkPlan
+Output [15]: [Borough#21, pickup_month#26, Zone#22, trip_volume#27L, mean_fare#28, stddev_fare#29, mean_distance#30, stddev_distance#31, volume_rank#128, rolling_3m_volume#137L, borough_rolling_3m_volume#151L, rolling_3m_trip_share#225, rolling_mean_volume#226, rolling_stddev_volume#228, volume_anomaly#255]
+Arguments: isFinalPlan=false
+
+
++-------------+------------+--------------------+-----------+------------------+------------------+------------------+------------------+-----------+-----------------+-------------------------+---------------------+-------------------+---------------------+--------------+
+|      Borough|pickup_month|                Zone|trip_volume|         mean_fare|       stddev_fare|     mean_distance|   stddev_distance|volume_rank|rolling_3m_volume|borough_rolling_3m_volume|rolling_3m_trip_share|rolling_mean_volume|rolling_stddev_volume|volume_anomaly|
++-------------+------------+--------------------+-----------+------------------+------------------+------------------+------------------+-----------+-----------------+-------------------------+---------------------+-------------------+---------------------+--------------+
+|        Bronx|           1|Allerton/Pelham G...|        274|43.425547445255475|11.575925689119284|12.633394160583936| 5.457050197898436|         32|              274|                    18293| 0.014978407040944624|               NULL|                 NULL|          NULL|
+|        Bronx|           2|Allerton/Pelham G...|        217|41.283870967741926| 10.84370306017956|11.353917050691237|  4.60830177330308|         34|              491|                    34590| 0.014194854004047413|              274.0|                 NULL|          NULL|
+|        Bronx|           3|Allerton/Pelham G...|        309| 42.99805825242719| 9.902311620937509|12.363495145631072|  4.70134335086644|         32|              800|                    56462|  0.01416882150827105|              245.5|    40.30508652763321|          true|
+|        Bronx|           4|Allerton/Pelham G...|        308| 41.32532467532468|11.565454917608983|11.377597402597406| 5.520219104747854|         34|              834|                    61720| 0.013512637718729747|              263.0|    65.05382386916237|         false|
+|        Bronx|           5|Allerton/Pelham G...|        285|40.271964912280694|11.692288312587916|11.238912280701754| 6.283791681557227|         32|              902|                    68078| 0.013249507917388877|              308.5|   0.7071067811865476|          true|
+|        Bronx|           6|Allerton/Pelham G...|          4|              25.4|27.104858113137823|            5.3975| 7.845467375072905|         25|              597|                    47252| 0.012634385846101753|              296.5|   16.263455967290593|          true|
+|        Bronx|           7|Allerton/Pelham G...|         23|18.325652173913046|18.040397805049277|5.6717391304347835| 6.208349694472257|         18|              312|                    25610| 0.012182741116751269|              144.5|   198.69700551341987|         false|
+|        Bronx|           8|Allerton/Pelham G...|         16|         19.024375| 17.46697683010238|         11.648125|17.740439385295204|         26|               43|                     5077|  0.00846956864289935|               13.5|   13.435028842544403|         false|
+|    Manhattan|           1|       Alphabet City|       3803| 16.98816197738626| 10.96369874765862|2.9915566657901667|2.8861694353607077|         51|             3803|                  2175144| 0.001748389991651...|               NULL|                 NULL|          NULL|
+|    Manhattan|           2|       Alphabet City|       4034|16.931650966782353| 9.999607666548226|2.8883465542885505| 2.752479065241262|         50|             7837|                  4152974| 0.001887081402387783|             3803.0|                 NULL|          NULL|
+|    Manhattan|           3|       Alphabet City|       4855|17.434129763130745|10.223531644132793|3.0891822863027905| 2.906213498024796|         51|            12692|                  6668456| 0.001903289157190...|             3918.5|    163.3416664540925|          true|
+|    Manhattan|           4|       Alphabet City|       4676|17.619826775021384| 9.929713359027355|3.1248331907613363|3.0691183206723016|         51|            13565|                  7035084| 0.001928193039343951|             4444.5|    580.5346673541555|         false|
+|    Manhattan|           5|       Alphabet City|       4991| 17.70437988379077|10.642514051756367| 3.050673211781209| 2.914486928382611|         52|            14522|                  7690127| 0.001888395341195...|             4765.5|     126.572113832392|          true|
+|    Manhattan|           6|       Alphabet City|       3383| 16.67223765888267|10.305621945831168| 2.720239432456399|2.3231507023235927|         52|            13050|                  7600762| 0.001716933118021...|             4833.5|   222.73863607376248|          true|
+|    Manhattan|           7|       Alphabet City|       3663|16.577016107016114|  9.45532773228212| 2.739645099645102|2.3066676403680537|         52|            12037|                  7234824| 0.001663758510227754|             4187.0|   1137.0277041479685|         false|
+|    Manhattan|           8|       Alphabet City|       4409| 16.41947153549558|  8.59271480656595| 2.753882966659115|2.3717046927557117|         51|            11455|                  6636990| 0.001725932990708...|             3523.0|    197.9898987322333|          true|
+|    Manhattan|           9|       Alphabet City|          6|13.266666666666667| 9.208836336186383|2.2283333333333335|2.4154454385613158|         30|             8078|                  4212294| 0.001917719893245818|             4036.0|    527.5016587651645|          true|
+|Staten Island|           1|       Arden Heights|          3|24.166666666666668|10.503967504392486|              3.97|1.6452051543804498|          7|                3|                       89| 0.033707865168539325|               NULL|                 NULL|          NULL|
+|Staten Island|           4|       Arden Heights|          4|            48.375| 59.07810508132433|           10.7775|15.804696295721723|          6|                7|                      278| 0.025179856115107913|                3.0|                 NULL|          NULL|
+|Staten Island|           6|       Arden Heights|          1|              81.1|              NULL|             16.04|              NULL|          4|                8|                      238|  0.03361344537815126|                3.5|   0.7071067811865476|          true|
++-------------+------------+--------------------+-----------+------------------+------------------+------------------+------------------+-----------+-----------------+-------------------------+---------------------+-------------------+---------------------+--------------+
+only showing top 20 rows
+[M3] wall time: 23.07s (18 stages, 1631 tasks) - see profiler.report() / profiler.compare(...)
+     wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  \
+run                                                                       
+M3         23.07        10          18       1631                120708   
+
+     executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes  \
+run                                                                     
+M3                  76842       8.5MB         0.0B            872.2KB   
+
+    shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes  
+run                                                              
+M3              872.2KB                 0.0B               0.0B  

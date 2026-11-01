@@ -1,0 +1,47 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: package sun.security.action not in java.base
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+26/11/01 00:10:32 WARN Utils: Your hostname, dingusmachine, resolves to a loopback address: 127.0.1.1; using 192.168.1.72 instead (on interface wlan0)
+26/11/01 00:10:32 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/11/01 00:10:32 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+INFO:proj1:Spark UI: http://dingusmachine.lan:4040
+INFO:proj1:Default parallelism: 8
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=False
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=True
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:write_once=True
+INFO:proj1:materialise_clean=True
+INFO:proj1:max_partition_mb=128
+INFO:proj1:Aggregating .parquet files in /tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8
+INFO:proj1:Found ['/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-08.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-07.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-06.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-05.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-04.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-03.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-02.parquet', '/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/yellow_tripdata_2026-01.parquet']
+INFO:proj1:Aggregating .csv files in /tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8
+INFO:proj1:Found ['/tmp/claude-1000/-home-kpgm-vault-uni-27-s1-cp-p-compar-spark-docker/8eb45866-1511-4563-93c9-53a371a16eb0/scratchpad/data_m8/taxi_zone_lookup.csv']
+[clean-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 17.94s (1 stages, 18 tasks) - see profiler.report() / profiler.compare(...)
+[M1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 9.23s (8 stages, 76 tasks) - see profiler.report() / profiler.compare(...)
+[M2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 8.55s (6 stages, 29 tasks) - see profiler.report() / profiler.compare(...)
+[M3-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 6.83s (7 stages, 34 tasks) - see profiler.report() / profiler.compare(...)
+[O1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 21.99s (20 stages, 114 tasks) - see profiler.report() / profiler.compare(...)
+Monthly route counts and shares:
+Top 20 routes per pickup borough:
+Routes with Q1/Q3 share reversals:
+[O2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 15.64s (47 stages, 2443 tasks) - see profiler.report() / profiler.compare(...)
+[O4-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, write_once=True, materialise_clean=True, max_partition_mb=128] wall time: 7.93s (11 stages, 65 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+clean-features:explain_plan=False, use_cleansed...        17.94         1           1         18                125416                 94172       6.2MB      324.5MB               0.0B                0.0B                 0.0B               0.0B
+M1-features:explain_plan=False, use_cleansed=Tr...         9.23         4           8         76                 56503                 45442     219.7KB         0.0B              5.4KB               2.9KB                 0.0B               0.0B
+M2-features:explain_plan=False, use_cleansed=Tr...         8.55         5           6         29                 47765                 37700     687.5KB       37.8KB            543.6KB             543.6KB                 0.0B               0.0B
+M3-features:explain_plan=False, use_cleansed=Tr...         6.83         4           7         34                 34966                 27555     674.4KB         0.0B            658.0KB             658.0KB                 0.0B               0.0B
+O1-features:explain_plan=False, use_cleansed=Tr...        21.99         7          20        114                154649                130382     674.4KB         0.0B            227.9MB             227.9MB                1.4GB            176.7MB
+O2-features:explain_plan=False, use_cleansed=Tr...        15.64        14          47       2443                 84533                 51154      19.9MB         0.0B             55.1MB              55.1MB                 0.0B               0.0B
+O4-features:explain_plan=False, use_cleansed=Tr...         7.93         6          11         65                 48324                 38519       1.3MB         0.0B              1.3MB               1.3MB                 0.0B               0.0B
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection

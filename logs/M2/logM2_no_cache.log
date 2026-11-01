@@ -1,0 +1,185 @@
+== Physical Plan ==
+AdaptiveSparkPlan (11)
++- HashAggregate (10)
+   +- Exchange (9)
+      +- HashAggregate (8)
+         +- Project (7)
+            +- BroadcastHashJoin Inner BuildRight (6)
+               :- Filter (2)
+               :  +- Scan parquet  (1)
+               +- BroadcastExchange (5)
+                  +- Filter (4)
+                     +- Scan csv  (3)
+
+
+(1) Scan parquet 
+Output [5]: [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10]
+Batched: true
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/yellow_tripdata_2026-01.parquet, ... 7 entries]
+PushedFilters: [IsNotNull(PULocationID)]
+ReadSchema: struct<tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,trip_distance:double,PULocationID:int,fare_amount:double>
+
+(2) Filter
+Input [5]: [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10]
+Condition : isnotnull(PULocationID#7)
+
+(3) Scan csv 
+Output [2]: [LocationID#20, Borough#21]
+Batched: false
+Location: InMemoryFileIndex [file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string>
+
+(4) Filter
+Input [2]: [LocationID#20, Borough#21]
+Condition : isnotnull(LocationID#20)
+
+(5) BroadcastExchange
+Input [2]: [LocationID#20, Borough#21]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=35]
+
+(6) BroadcastHashJoin
+Left keys [1]: [PULocationID#7]
+Right keys [1]: [LocationID#20]
+Join type: Inner
+Join condition: None
+
+(7) Project
+Output [6]: [trip_distance#4, fare_amount#10, Borough#21, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / 6.0E7) AS trip_duration_minutes#28]
+Input [7]: [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, LocationID#20, Borough#21]
+
+(8) HashAggregate
+Input [6]: [trip_distance#4, fare_amount#10, Borough#21, day_of_week#26, hour_of_day#27, trip_duration_minutes#28]
+Keys [3]: [Borough#21, day_of_week#26, hour_of_day#27]
+Functions [4]: [partial_count(1), partial_avg(fare_amount#10), partial_avg(trip_duration_minutes#28), partial_avg(trip_distance#4)]
+Aggregate Attributes [7]: [count#47L, sum#48, count#49L, sum#50, count#51L, sum#52, count#53L]
+Results [10]: [Borough#21, day_of_week#26, hour_of_day#27, count#54L, sum#55, count#56L, sum#57, count#58L, sum#59, count#60L]
+
+(9) Exchange
+Input [10]: [Borough#21, day_of_week#26, hour_of_day#27, count#54L, sum#55, count#56L, sum#57, count#58L, sum#59, count#60L]
+Arguments: hashpartitioning(Borough#21, day_of_week#26, hour_of_day#27, 200), ENSURE_REQUIREMENTS, [plan_id=40]
+
+(10) HashAggregate
+Input [10]: [Borough#21, day_of_week#26, hour_of_day#27, count#54L, sum#55, count#56L, sum#57, count#58L, sum#59, count#60L]
+Keys [3]: [Borough#21, day_of_week#26, hour_of_day#27]
+Functions [4]: [count(1), avg(fare_amount#10), avg(trip_duration_minutes#28), avg(trip_distance#4)]
+Aggregate Attributes [4]: [count(1)#43L, avg(fare_amount#10)#44, avg(trip_duration_minutes#28)#45, avg(trip_distance#4)#46]
+Results [7]: [Borough#21, day_of_week#26, hour_of_day#27, count(1)#43L AS total_trip_count#29L, avg(fare_amount#10)#44 AS mean_fare_amount#30, avg(trip_duration_minutes#28)#45 AS mean_trip_duration_minutes#31, avg(trip_distance#4)#46 AS mean_trip_distance#32]
+
+(11) AdaptiveSparkPlan
+Output [7]: [Borough#21, day_of_week#26, hour_of_day#27, total_trip_count#29L, mean_fare_amount#30, mean_trip_duration_minutes#31, mean_trip_distance#32]
+Arguments: isFinalPlan=false
+
+
+== Parsed Logical Plan ==
+'Aggregate ['Borough, 'day_of_week, 'hour_of_day], ['Borough, 'day_of_week, 'hour_of_day, 'count(*) AS total_trip_count#29, 'avg('fare_amount) AS mean_fare_amount#30, 'avg('trip_duration_minutes) AS mean_trip_duration_minutes#31, 'avg('trip_distance) AS mean_trip_distance#32]
++- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, day_of_week#26, hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / cast(60000000 as double)) AS trip_duration_minutes#28]
+   +- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27]
+      +- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26]
+         +- Join Inner, (PULocationID#7 = LocationID#20)
+            :- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10]
+            :  +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+            +- ResolvedHint (strategy=broadcast)
+               +- Project [Borough#21, LocationID#20]
+                  +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+
+== Analyzed Logical Plan ==
+Borough: string, day_of_week: int, hour_of_day: int, total_trip_count: bigint, mean_fare_amount: double, mean_trip_duration_minutes: double, mean_trip_distance: double
+Aggregate [Borough#21, day_of_week#26, hour_of_day#27], [Borough#21, day_of_week#26, hour_of_day#27, count(1) AS total_trip_count#29L, avg(fare_amount#10) AS mean_fare_amount#30, avg(trip_duration_minutes#28) AS mean_trip_duration_minutes#31, avg(trip_distance#4) AS mean_trip_distance#32]
++- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, day_of_week#26, hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / cast(60000000 as double)) AS trip_duration_minutes#28]
+   +- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27]
+      +- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10, Borough#21, LocationID#20, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26]
+         +- Join Inner, (PULocationID#7 = LocationID#20)
+            :- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10]
+            :  +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+            +- ResolvedHint (strategy=broadcast)
+               +- Project [Borough#21, LocationID#20]
+                  +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+
+== Optimized Logical Plan ==
+Aggregate [Borough#21, day_of_week#26, hour_of_day#27], [Borough#21, day_of_week#26, hour_of_day#27, count(1) AS total_trip_count#29L, avg(fare_amount#10) AS mean_fare_amount#30, avg(trip_duration_minutes#28) AS mean_trip_duration_minutes#31, avg(trip_distance#4) AS mean_trip_distance#32]
++- Project [trip_distance#4, fare_amount#10, Borough#21, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / 6.0E7) AS trip_duration_minutes#28]
+   +- Join Inner, (PULocationID#7 = LocationID#20), rightHint=(strategy=broadcast)
+      :- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10]
+      :  +- Filter isnotnull(PULocationID#7)
+      :     +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet
+      +- Project [Borough#21, LocationID#20]
+         +- Filter isnotnull(LocationID#20)
+            +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[Borough#21, day_of_week#26, hour_of_day#27], functions=[count(1), avg(fare_amount#10), avg(trip_duration_minutes#28), avg(trip_distance#4)], output=[Borough#21, day_of_week#26, hour_of_day#27, total_trip_count#29L, mean_fare_amount#30, mean_trip_duration_minutes#31, mean_trip_distance#32])
+   +- Exchange hashpartitioning(Borough#21, day_of_week#26, hour_of_day#27, 200), ENSURE_REQUIREMENTS, [plan_id=40]
+      +- HashAggregate(keys=[Borough#21, day_of_week#26, hour_of_day#27], functions=[partial_count(1), partial_avg(fare_amount#10), partial_avg(trip_duration_minutes#28), partial_avg(trip_distance#4)], output=[Borough#21, day_of_week#26, hour_of_day#27, count#54L, sum#55, count#56L, sum#57, count#58L, sum#59, count#60L])
+         +- Project [trip_distance#4, fare_amount#10, Borough#21, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / 6.0E7) AS trip_duration_minutes#28]
+            +- BroadcastHashJoin [PULocationID#7], [LocationID#20], Inner, BuildRight, false, false
+               :- Filter isnotnull(PULocationID#7)
+               :  +- FileScan parquet [tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,trip_distance#4,PULocationID#7,fare_amount#10] Batched: true, DataFilters: [isnotnull(PULocationID#7)], Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,trip_distance:double,PULocationID...
+               +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=35]
+                  +- Filter isnotnull(LocationID#20)
+                     +- FileScan csv [LocationID#20,Borough#21] Batched: false, DataFilters: [isnotnull(LocationID#20)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string>
+
+== Optimized Logical Plan ==
+Aggregate [Borough#21, day_of_week#26, hour_of_day#27], [Borough#21, day_of_week#26, hour_of_day#27, count(1) AS total_trip_count#29L, avg(fare_amount#10) AS mean_fare_amount#30, avg(trip_duration_minutes#28) AS mean_trip_duration_minutes#31, avg(trip_distance#4) AS mean_trip_distance#32], Statistics(sizeInBytes=683.6 GiB)
++- Project [trip_distance#4, fare_amount#10, Borough#21, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / 6.0E7) AS trip_duration_minutes#28], Statistics(sizeInBytes=603.2 GiB)
+   +- Join Inner, (PULocationID#7 = LocationID#20), rightHint=(strategy=broadcast), Statistics(sizeInBytes=683.6 GiB)
+      :- Project [tpep_pickup_datetime#1L, tpep_dropoff_datetime#2L, trip_distance#4, PULocationID#7, fare_amount#10], Statistics(sizeInBytes=127.7 MiB)
+      :  +- Filter isnotnull(PULocationID#7), Statistics(sizeInBytes=487.8 MiB)
+      :     +- Relation [VendorID#0,tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,passenger_count#3L,trip_distance#4,RatecodeID#5L,store_and_fwd_flag#6,PULocationID#7,DOLocationID#8,payment_type#9L,fare_amount#10,extra#11,mta_tax#12,tip_amount#13,tolls_amount#14,improvement_surcharge#15,total_amount#16,congestion_surcharge#17,Airport_fee#18,cbd_congestion_fee#19] parquet, Statistics(sizeInBytes=487.8 MiB)
+      +- Project [Borough#21, LocationID#20], Statistics(sizeInBytes=5.4 KiB)
+         +- Filter isnotnull(LocationID#20), Statistics(sizeInBytes=12.0 KiB)
+            +- Relation [LocationID#20,Borough#21,Zone#22,service_zone#23] csv, Statistics(sizeInBytes=12.0 KiB)
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[Borough#21, day_of_week#26, hour_of_day#27], functions=[count(1), avg(fare_amount#10), avg(trip_duration_minutes#28), avg(trip_distance#4)], output=[Borough#21, day_of_week#26, hour_of_day#27, total_trip_count#29L, mean_fare_amount#30, mean_trip_duration_minutes#31, mean_trip_distance#32])
+   +- Exchange hashpartitioning(Borough#21, day_of_week#26, hour_of_day#27, 200), ENSURE_REQUIREMENTS, [plan_id=40]
+      +- HashAggregate(keys=[Borough#21, day_of_week#26, hour_of_day#27], functions=[partial_count(1), partial_avg(fare_amount#10), partial_avg(trip_duration_minutes#28), partial_avg(trip_distance#4)], output=[Borough#21, day_of_week#26, hour_of_day#27, count#54L, sum#55, count#56L, sum#57, count#58L, sum#59, count#60L])
+         +- Project [trip_distance#4, fare_amount#10, Borough#21, dayofweek(cast(timestamp_micros(tpep_pickup_datetime#1L) as date)) AS day_of_week#26, hour(timestamp_micros(tpep_pickup_datetime#1L), Some(Europe/Lisbon)) AS hour_of_day#27, (cast((tpep_dropoff_datetime#2L - tpep_pickup_datetime#1L) as double) / 6.0E7) AS trip_duration_minutes#28]
+            +- BroadcastHashJoin [PULocationID#7], [LocationID#20], Inner, BuildRight, false, false
+               :- Filter isnotnull(PULocationID#7)
+               :  +- FileScan parquet [tpep_pickup_datetime#1L,tpep_dropoff_datetime#2L,trip_distance#4,PULocationID#7,fare_amount#10] Batched: true, DataFilters: [isnotnull(PULocationID#7)], Format: Parquet, Location: InMemoryFileIndex(8 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ye..., PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:bigint,tpep_dropoff_datetime:bigint,trip_distance:double,PULocationID...
+               +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)),false), [plan_id=35]
+                  +- Filter isnotnull(LocationID#20)
+                     +- FileScan csv [LocationID#20,Borough#21] Batched: false, DataFilters: [isnotnull(LocationID#20)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/kpgm/vault/uni/27/s1/cp/p/compar-spark-docker/proj1/data/ta..., PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string>
+
+
++-------------+-----------+-----------+----------------+------------------+--------------------------+--------------------+
+|      Borough|day_of_week|hour_of_day|total_trip_count|  mean_fare_amount|mean_trip_duration_minutes|  mean_trip_distance|
++-------------+-----------+-----------+----------------+------------------+--------------------------+--------------------+
+|      Unknown|          7|         21|             253| 23.48806324110672|        16.409420289855074|  3.9761264822134383|
+|          N/A|          5|         15|             124|  86.8366129032258|         8.687768817204304|   5.172419354838708|
+|          N/A|          2|          3|              54| 77.77240740740741|        1.8959876543209877|  1.0744444444444443|
+|          EWR|          7|         12|              24|102.27166666666666|         2.870833333333333|  1.1783333333333335|
+|        Bronx|          1|         10|            1738|  28.9423245109321|        27.842203682393556|   7.732203682393556|
+|    Manhattan|          1|         15|          194527|17.988950171441882|        15.245334580803705|   4.979269715772108|
+|          N/A|          3|         13|              73| 69.24520547945205|        26.540639269406395|  2.9753424657534246|
+|        Bronx|          4|          2|             148| 27.81797297297297|         14.91587837837838|   5.154054054054054|
+|          N/A|          5|         13|              78| 95.37948717948717|         9.754273504273504|   4.334487179487178|
+|Staten Island|          1|         10|              15| 41.59466666666666|        28.093333333333337|  12.116000000000001|
+|Staten Island|          7|         14|              18| 51.59555555555556|         25.37037037037037|    9.07611111111111|
+|        Bronx|          7|          3|             301| 28.80671096345515|        15.793189368770761|   6.193156146179402|
+|          N/A|          3|         19|              89| 93.50955056179775|          7.15992509363296|  2.9105617977528087|
+|     Brooklyn|          4|          3|             786|29.128944020356233|        26.114397794741304|   6.482760814249365|
+|          EWR|          4|          6|              11|102.45454545454545|        0.1212121212121212|0.004545454545454546|
+|Staten Island|          5|          9|              29| 49.86103448275862|         38.93390804597702|   9.157241379310346|
+|       Queens|          5|         18|           22241| 52.33854592869028|         41.47407415733706|  11.109971224315453|
+|Staten Island|          2|          8|              60| 41.64066666666667|         28.33916666666666|   7.844833333333332|
+|Staten Island|          2|          2|               3|             43.09|        23.477777777777778|  11.386666666666668|
+|       Queens|          6|         11|           14792| 48.15086938885884|         37.73833265729222|  10.428575581395341|
++-------------+-----------+-----------+----------------+------------------+--------------------------+--------------------+
+only showing top 20 rows
+[M2] wall time: 26.75s (8 stages, 36 tasks) - see profiler.report() / profiler.compare(...)
+     wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  \
+run                                                                       
+M2         26.75         6           8         36                153803   
+
+     executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes  \
+run                                                                     
+M2                 105448     229.6KB       54.0KB              1.3MB   
+
+    shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes  
+run                                                              
+M2                1.3MB                 0.0B               0.0B  
+Hit Enter to Exit
