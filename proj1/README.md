@@ -52,12 +52,23 @@ Useful options (see `uv run --package proj1 proj1 --help` for all of them):
   - `spark.driver.memory=2g`, `spark.executor.memory=1536m`
   - `spark.sql.autoBroadcastJoinThreshold=-1` (no automatic broadcast, so the baseline shows every join as SortMergeJoin)
   - `spark.sql.session.timeZone=UTC` (TLC timestamps are NYC wall-clock times, this keeps hour/day of week independent of the host time zone)
+- `spark.sql.files.maxPartitionBytes` is set from `--max-partition-mb` (default 128 MiB, Spark's default)
+- Optimised configuration (all reports applied): `--broadcast-join --cache-dataframe --write-once --materialise-clean`
 - TODO: DI cluster topology (workers, cores, memory per worker) and `spark-submit` command
 
 ### Docker
 
-TODO: Check if docker can use uv too
-TODO: Update docker to include data file
+The standalone cluster in [docker-spark-env](../docker-spark-env/docker-compose.yml) runs Spark 4.2.0 with Python 3.10. It has 1 master and N workers of 2 cores / 2 GiB each. The driver runs in the `jupyter` container. Workers and driver mount the repository at `/repo`, so data and output paths are the same in every container. Workers run as root so executors can write outputs into the bind mount. Docker runs therefore write to `out/docker` (root-owned on the host), apart from the local `out/`.
+
+```bash
+cd docker-spark-env && docker compose up -d --scale spark-worker=3
+docker compose exec -T -w /repo \
+  -e PYTHONPATH=/repo/proj1/src:/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.9-src.zip \
+  jupyter python3 -m proj1 all --master docker --data-dir /repo/proj1/data --output-dir /repo/out/docker \
+  --broadcast-join --cache-dataframe --write-once --materialise-clean --sink noop -v
+```
+
+Spark master UI: <http://localhost:8080>, application UI: <http://localhost:4040>. Clean up the root-owned output with `docker compose exec jupyter rm -rf /repo/out/docker`.
 
 #### Setup
 

@@ -53,6 +53,11 @@ class Master(Enum):
         self._value_ = value
         self.url = url
 
+    # Python < 3.11 does not index a _value_ set in __init__, so Master("docker") needs this
+    @classmethod
+    def _missing_(cls, value):
+        return next((m for m in cls if m._value_ == value), None)
+
     def __str__(self):
         return self.value
 

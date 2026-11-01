@@ -23,10 +23,18 @@ services:
       --cores 2
       --memory 2G
 
+    # root so executors can write proj1 outputs into the bind-mounted repo (the image's
+    # spark uid cannot, an arbitrary host uid has no passwd entry and Hadoop login fails);
+    # proj1 docker runs write to out/docker, apart from the local runs' out/
+    user: root
+
     depends_on:
       - spark-master
 
     volumes: #Edit when add new lab
+      # proj1: whole repo at the same path as in the jupyter (driver) container
+      - ..:/repo
+
       - ../test-project/apps:/apps/test-project
       - ../test-project/data:/data/test-project
 
@@ -58,6 +66,9 @@ services:
       - "4040-4045:4040-4045"
 
     volumes: #Edit when add new lab
+      # proj1: whole repo at the same path as on the workers
+      - ..:/repo
+
       - ../test-project/notebooks:/workspace/test-project
       - ../test-project/data:/data/test-project
 

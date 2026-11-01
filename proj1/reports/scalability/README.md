@@ -70,3 +70,40 @@ Runs: optimised `all` on 2 nodes, then on the full allocation. Report speedup S 
 | TODO  | TODO  | TODO                 | TODO    | TODO       |
 
 Record the cluster topology (workers, cores and memory per worker) and the `spark-submit` command in the project README.
+
+### Docker standalone cluster on the laptop (2026-11-01, supplement)
+
+Topology: the Spark 4.2.0 standalone image (`docker-spark-env`), with 1 master and 1-3 workers of 2 cores / 2 GiB each (`spark.executor.memory=1536m`). The driver runs in the `jupyter` container, and every container mounts the repo at `/repo`. Each worker hosts one executor. All containers share the same laptop: 4 physical cores / 8 threads (i7-1195G7).
+
+Same optimised `all` on the full data (29.7 M records), 3 runs per worker count, interleaved. Each run started only once the 1-minute load average was below 1.5. A first series was discarded because a machine-wide slowdown hit every op equally in 6 of its 9 runs. Logs: `logs/docker_w<workers>_<n>.log`.
+
+```bash
+./boot.sh   # or: cd docker-spark-env && docker compose up -d --scale spark-worker=<w>
+cd docker-spark-env && docker compose exec -T -w /repo \
+  -e PYTHONPATH=/repo/proj1/src:/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.9-src.zip \
+  jupyter python3 -m proj1 all --master docker --data-dir /repo/proj1/data --output-dir /repo/out/docker \
+  --broadcast-join --cache-dataframe --write-once --materialise-clean --sink noop -v
+```
+
+| Workers | Executor cores | Median wall time (s) [min-max] | Speedup vs 1 worker | Efficiency |
+| ------- | -------------- | ------------------------------ | ------------------- | ---------- |
+| 1       | 2              | 69.3 [66.0-70.5]               | 1.00                | 1.00       |
+| 2       | 4              | 64.2 [62.2-66.0]               | 1.08                | 0.54       |
+| 3       | 6              | 74.0 [73.7-74.5]               | 0.94                | 0.31       |
+
+For comparison, `local[*]` (8 threads, one JVM) runs the same pipeline in 90.3 s (see dataset scale above).
+
+**Why adding workers does not help here.** The extra cores are not real extra hardware. The same work costs more CPU as more executors run at once (task and CPU time from the run 2 logs):
+
+| Workers | `clean` task time / CPU time | M3 task time / CPU time | O2 task time / CPU time |
+| ------- | ---------------------------- | ----------------------- | ----------------------- |
+| 1       | 23 s / 21 s                  | 8 s / 8 s               | 21 s / 20 s             |
+| 2       | 38 s / 33 s                  | 14 s / 11 s             | 49 s / 33 s             |
+| 3       | 63 s / 45 s                  | 21 s / 16 s             | 86 s / 39 s             |
+
+- **Shared hardware.** 6 executor cores plus the driver and master JVMs compete for 4 physical cores. Beyond 4 busy threads, hyper-threads share execution units, and the CPU lowers its turbo clock with more active cores. So per-task time grows with parallelism: M3 does the same work in 8 s of task time on 1 worker and 21 s on 3.
+- **Per-executor fixed costs.** Every executor is a separate JVM that loads classes, JIT-compiles the same code and fetches the broadcast tables. In a ~70 s pipeline of ~10 short jobs, that warm-up is repeated per executor and never amortised. CPU time rising for the same work (M3: 8 s → 16 s) is that overhead.
+- **The fixed driver-side part does not shrink.** The ~25 s fixed cost found in the dataset-scale analysis (job scheduling, O2's ~2 300 small tasks) runs on the driver whatever the executor count. By Amdahl's law that alone caps the speedup well below linear.
+- **The same effect explains `local[*]`.** One worker with 2 cores (69.3 s) beats `local[*]` with 8 threads (90.3 s): on this laptop, more concurrent tasks slow each task down more than they add throughput.
+
+**What this means for the DI cluster.** On real nodes each executor gets its own cores, memory bandwidth and disk, so the contention terms disappear, and speedup should come much closer to linear for the scan-dominated part. The fixed driver-side part (~25 s locally) and the 2-to-n node comparison remain to be measured there.
