@@ -53,8 +53,15 @@ Useful options (see `uv run --package proj1 proj1 --help` for all of them):
   - `spark.sql.autoBroadcastJoinThreshold=-1` (no automatic broadcast, so the baseline shows every join as SortMergeJoin)
   - `spark.sql.session.timeZone=UTC` (TLC timestamps are NYC wall-clock times, this keeps hour/day of week independent of the host time zone)
 - `spark.sql.files.maxPartitionBytes` is set from `--max-partition-mb` (default 128 MiB, Spark's default)
-- Optimised configuration (all reports applied): `--broadcast-join --cache-dataframe --write-once --materialise-clean`
-- TODO: DI cluster topology (workers, cores, memory per worker) and `spark-submit` command
+- Optimised configuration (all reports applied): `--broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache`
+- Cluster: the DI cluster was not available; cluster runs use the Docker standalone cluster below (1 master, N workers of 2 cores / 2 GiB, Spark 4.2.0, driver in the `jupyter` container)
+- `spark-submit` (from the `jupyter` container, entry point [submit.py](submit.py)):
+
+  ```bash
+  /opt/spark/bin/spark-submit --master spark://spark-master:7077 proj1/submit.py all --master docker \
+    --data-dir /repo/proj1/data --output-dir /repo/out/docker \
+    --broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache --sink noop -v
+  ```
 
 ### Docker
 

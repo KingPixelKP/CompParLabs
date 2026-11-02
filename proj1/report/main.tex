@@ -13,6 +13,12 @@
 \makeglossaries
 \input{acronyms}
 
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\textfraction}{0.07}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{2}
+
 \begin{document}
 \title{Performance Engineering of a PySpark Pipeline on NYC Taxi Trips}
 
@@ -140,7 +146,7 @@ operation. Per-stage task-time quantiles come from the Spark UI REST API\cite{sp
 Spark's input metric reports 6\,MiB for scans that read 383\,MiB of parquet column
 chunks, so input volume is taken from the parquet footers instead.
 
-\begin{table}[t]
+\begin{table}[!t]
       \centering
       \footnotesize
       \setlength{\tabcolsep}{3pt}
@@ -169,13 +175,50 @@ and spills, and 9 tasks run on 8 cores in two waves, the 9th alone for $\sim$12\
 scan and join run twice (stages 11/14 rerun as 20/23, half of its shuffle); O2
 rescans the trips for each of its 3 outputs and O4 scans them twice. (4)~\emph{Skew}:
 not found, the slowest reduce task is at most 1.1$\times$ the median, because \gls{aqe}
-packs many zones into each partition.
+packs many zones into each partition. (5)~\emph{Column pruning}: already
+done by Catalyst, which pushes the projection into the scan (7 of 20 columns
+read); selecting the used columns explicitly (\texttt{-{}-prune-column})
+leaves the \texttt{ReadSchema} unchanged. Three of the seven columns are read
+only for the cleaning rules, which Section~4.3 removes.
 
 \section{Optimisation Study}
 
+\begin{table*}[!t]
+      \centering
+      \footnotesize
+      \begin{tabular}{p{3.0cm}p{4.4cm}p{9.2cm}}
+            \toprule Optimisation    & Bottleneck addressed                        & Measured impact (median wall time)                                                                                     \\
+            \midrule Broadcast joins & Trip shuffle + sort of the \gls{smj}, spill & M2 45.7$\to$20.9\,s, M3 21.1$\to$11.8\,s, O4 22.1$\to$15.6\,s; spill 1.9\,GB$\to$0                                     \\
+            Cache shared results     & Trips scanned once per action               & O2 21.7$\to$17.0\,s; M2 and O4 slower, kept for O2 only                                                                \\
+            Smaller scan splits      & Uneven scan tasks                           & No gain, parallelism capped by 32 row groups                                                                           \\
+            Write once (M2)          & Result computed twice                       & M2 23.0$\to$15.3\,s, one scan stage less                                                                               \\
+            Clean once, read many    & Re-scan, cast and clean per operation       & M2 13.8$\to$9.0\,s, M3 13.4$\to$6.8\,s, O2 19.0$\to$16.3\,s, O4 13.9$\to$7.9\,s; all ops 96.2$\to$92.3\,s incl.\ write \\
+            Coalesce O2 cache        & 200 tiny tasks per cache read               & O2 24.2$\to$14.8\,s (run alone), tasks 2\,443$\to$370                                                                  \\
+            \midrule All applied (one session) &                                   & M2 38.3$\to$7.7\,s (5.0$\times$), M3 18.2$\to$7.4\,s (2.5$\times$), O2 18.4$\to$9.8\,s (1.9$\times$), O4 21.0$\to$8.6\,s (2.4$\times$); all ops 136.8$\to$76.9\,s incl.\ clean write \\
+            \bottomrule
+      \end{tabular}
+      \caption{Summary of the optimisations; each row is measured against the configuration
+            with the rows above it applied, in its own report. The last row comes from
+            one session that ran every cumulative configuration 3 times (Figure~\ref{fig:cumulative}).}
+      \label{tab:summary}
+\end{table*}
+
 Optimisations are cumulative: each one is measured against the configuration
 that includes the previous ones, with all other settings unchanged.
-Table~\ref{tab:summary} summarises them.
+Table~\ref{tab:summary} summarises them, and Figure~\ref{fig:cumulative}
+re-measures the whole path in a single session (3 runs per configuration, each
+started on an idle machine), so the steps are directly comparable. It also shows
+that caching O2 alone did not pay off inside a full run (16.9\,s $\to$
+18.6\,s); only the coalesced cache did (9.8\,s).
+
+\begin{figure}[!t]
+      \centering
+      \Description{Grouped bar chart of wall time for M2, M3, O2 and O4 across five cumulative configurations, falling from 18 to 38 seconds at baseline to 7 to 10 seconds at the end.}
+      \includegraphics[width=\columnwidth]{cumulative.pdf}
+      \caption{Wall time per operation across the cumulative optimisations, one
+            session, median of 3 runs of all operations.}
+      \label{fig:cumulative}
+\end{figure}
 
 \subsection{Broadcast the small side of every join}
 \label{sec:bhj} \emph{Bottleneck:} the trip-side \texttt{Exchange} and sort of
@@ -242,25 +285,7 @@ O2 run alone) with identical output. Smaller scan splits (\texttt{max\allowbreak
       Partition\allowbreak Bytes}) gave no gain: the raw files hold only 32 row
 groups, which splits cannot divide~\cite{parquet-format,spark-parquet}.
 
-\begin{table*}[t]
-      \centering
-      \footnotesize
-      \begin{tabular}{p{3.0cm}p{4.4cm}p{9.2cm}}
-            \toprule Optimisation    & Bottleneck addressed                        & Measured impact (median wall time)                                                                                     \\
-            \midrule Broadcast joins & Trip shuffle + sort of the \gls{smj}, spill & M2 45.7$\to$20.9\,s, M3 21.1$\to$11.8\,s, O4 22.1$\to$15.6\,s; spill 1.9\,GB$\to$0                                     \\
-            Cache shared results     & Trips scanned once per action               & O2 21.7$\to$17.0\,s; M2 and O4 slower, kept for O2 only                                                                \\
-            Smaller scan splits      & Uneven scan tasks                           & No gain, parallelism capped by 32 row groups                                                                           \\
-            Write once (M2)          & Result computed twice                       & M2 23.0$\to$15.3\,s, one scan stage less                                                                               \\
-            Clean once, read many    & Re-scan, cast and clean per operation       & M2 13.8$\to$9.0\,s, M3 13.4$\to$6.8\,s, O2 19.0$\to$16.3\,s, O4 13.9$\to$7.9\,s; all ops 96.2$\to$92.3\,s incl.\ write \\
-            Coalesce O2 cache        & 200 tiny tasks per cache read               & O2 24.2$\to$14.8\,s (run alone), tasks 2\,443$\to$370                                                                  \\
-            \midrule All applied     &                                             & M2 45.7$\to$9.0\,s, M3 21.1$\to$6.8\,s, O4 22.1$\to$7.9\,s, O2 20.3$\to$16.3\,s before coalescing (1.64$\times$ after) \\
-            \bottomrule
-      \end{tabular}
-      \caption{Summary of the optimisations; each row is measured against the configuration
-            with the rows above it applied. The last row compares the baseline with the
-            final configuration (measured in different sessions).}
-      \label{tab:summary}
-\end{table*}
+
 
 \section{Analysis}
 \label{sec:analysis}
@@ -278,7 +303,7 @@ nothing spills at any size. Sampling understates small inputs: \texttt{sample()}
 drops rows after the scan, so a 10\,\% sample (43.0\,s) is slower than a real
 12.5\,\% input (32.9\,s).
 
-\begin{figure}[t]
+\begin{figure}[!t]
       \centering
       \Description{Line chart of wall time against dataset fraction for month files and samples, both above a dashed linear-scaling line at small fractions.}
       \includegraphics[width=\columnwidth]{scale.pdf}
@@ -295,7 +320,7 @@ far from linear and turns negative at 3 workers. The extra cores are not extra
 hardware: the same work costs more CPU as executors are added (M3 task time
 8\,s with one worker, 21\,s with three), because
 
-\begin{table}[t]
+\begin{table}[!t]
       \centering
       \footnotesize
       \begin{tabular}{rrrrr}
@@ -365,9 +390,11 @@ Single-author project: Gabriel Matias Falcão, 100\,\%.
 
 Many more optimisations are possible, and the assignment's goal is to explore
 them. Unfortunately, both to time and report length constrains, many were left
-unexplored. Whilst it is known that the DI cluster's unavailability is not the
-professor's fault, it is a pity that the assignment's main goal could not be
-fully explored.
+unexplored, nonetheless the optimisations implemented are modular through
+feature flags, some other's were implemented though not reported on, though
+still fun to explore and learn from. Whilst it is known that the DI cluster's
+unavailability is not the professor's fault, it is a pity that the assignment's
+main goal could not be fully explored.
 
 \printglossary[type=\acronymtype,title={Acronyms}]
 \end{document}
