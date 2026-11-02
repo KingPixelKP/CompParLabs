@@ -1,0 +1,4 @@
+% acmart 1.88 (course template) loads hyperxmp before hyperref; hyperxmp >= 5.x
+% refuses that order. acmart reads this hook first, so hyperref is loaded here,
+% with the same options acmart passes to it.
+\RequirePackage[bookmarksnumbered,unicode]{hyperref}
