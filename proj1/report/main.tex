@@ -18,43 +18,42 @@
 
 \author{Gabriel Matias Falcão (77390)}
 \affiliation{%
-  \institution{NOVA School of Science and Technology, Universidade NOVA de Lisboa}
-  \city{Lisbon}
-  \country{Portugal}}
+      \institution{NOVA School of Science and Technology, Universidade NOVA de Lisboa}
+      \city{Lisbon}
+      \country{Portugal}}
 
 \begin{abstract}
-We profile and optimise a PySpark pipeline over 29.7\,M NYC yellow-taxi trips
-(three mandatory operations plus origin-destination flows and trip-type
-classification). Following a profile, hypothesise, optimise, measure loop, the
-baseline's cost is traced to sort-merge joins against tiny tables, spills in
-under-partitioned reduce stages and repeated scans. Broadcast joins, writing
-results once, materialising the cleaned data and explicitly partitioning a
-cached result cut individual operations by up to 5$\times$; caching the wrong
-DataFrames and smaller scan splits are reported as measured failures. Execution
-time scales sub-linearly with input size because of a $\sim$25\,s fixed cost,
-and a single-machine Docker cluster shows why adding executors on shared
-hardware does not help.
+      We profile and optimise a PySpark pipeline over 29.7\,M NYC yellow-taxi trips
+      (three mandatory operations plus origin-destination flows and trip-type
+      classification). Following a profile, hypothesise, optimise, measure loop, the
+      baseline's cost is traced to sort-merge joins against tiny tables, spills in
+      under-partitioned reduce stages and repeated scans. Broadcast joins, writing
+      results once, materialising the cleaned data and explicitly partitioning a
+      cached result cut individual operations by up to 5$\times$; caching the wrong
+      DataFrames and smaller scan splits are reported as measured failures. Execution
+      time scales sub-linearly with input size because of a $\sim$25\,s fixed cost,
+      and a single-machine Docker cluster shows why adding executors on shared
+      hardware does not help.
 \end{abstract}
 
 \keywords{Apache Spark, performance engineering, query plans, broadcast join, caching}
 
 \maketitle
 
-
-
 \section{Introduction}
 
 The pipeline processes the \gls{tlc} yellow taxi trip records~\cite{tlc}: one
 parquet file per month plus a 265-row zone lookup table. Development and all
-measurements use 2026-01..08 (29.7\,M records, 488\,MB of parquet). Besides the mandatory operations (M1 cleaning
-statistics, M2 temporal aggregation per borough, day and hour, M3 monthly zone
-statistics with rolling windows), two optional ones were chosen for the
-bottlenecks they expose. \textbf{O2} (origin-destination flows) joins the zone
-table twice and derives three outputs (route shares, top-20 per borough, Q1/Q3
-reversals) from one monthly aggregate, so it stresses multi-way joins and
-recomputation. \textbf{O4} (trip-type classification) aggregates trips into at
-most 263\,$\times$\,24 buckets and joins that small result back to every trip,
-the shape where join strategy and hot-zone skew decide the cost.
+measurements use 2026-01..08 (29.7\,M records, 488\,MB of parquet). Besides the
+mandatory operations (M1 cleaning statistics, M2 temporal aggregation per
+borough, day and hour, M3 monthly zone statistics with rolling windows), two
+optional ones were chosen for the bottlenecks they expose. \textbf{O2}
+(origin-destination flows) joins the zone table twice and derives three outputs
+(route shares, top-20 per borough, Q1/Q3 reversals) from one monthly aggregate,
+so it stresses multi-way joins and recomputation. \textbf{O4} (trip-type
+classification) aggregates trips into at most 263\,$\times$\,24 buckets and
+joins that small result back to every trip, the shape where join strategy and
+hot-zone skew decide the cost.
 
 Every operation joins $\sim$21\,M trips with a tiny table and aggregates, so
 the cost is how Spark moves and re-reads data, not arithmetic. Code, logs and
@@ -77,9 +76,9 @@ flags), and it compiles to the same Catalyst plans as SQL; no UDFs are used, so
 no work goes through Python workers; timestamps are read as
 \texttt{timestamp\_ntz} with the session zone fixed to UTC, so hours and
 weekdays do not depend on the host; routes and zones are keyed by id because
-zone names are not unique. In the baseline
-\texttt{spark.sql.\allowbreak autoBroadcast\allowbreak JoinThreshold=-1}, so every join starts as a
-\gls{smj} and each optimisation is an explicit, measured feature flag.
+zone names are not unique. In the baseline \texttt{spark.sql.\allowbreak
+      autoBroadcast\allowbreak JoinThreshold=-1}, so every join starts as a \gls{smj}
+and each optimisation is an explicit, measured feature flag.
 Figure~\ref{fig:plan} shows the physical plan of M2.
 
 \begin{figure*}[t]
@@ -303,9 +302,9 @@ hardware: the same work costs more CPU as executors are added (M3 task time
             \toprule
             Workers & Cores & Wall (s), median [min--max] & Speedup & Efficiency \\
             \midrule
-            1 & 2 & 69.3 [66.0--70.5] & 1.00 & 1.00 \\
-            2 & 4 & 64.2 [62.2--66.0] & 1.08 & 0.54 \\
-            3 & 6 & 74.0 [73.7--74.5] & 0.94 & 0.31 \\
+            1       & 2     & 69.3 [66.0--70.5]           & 1.00    & 1.00       \\
+            2       & 4     & 64.2 [62.2--66.0]           & 1.08    & 0.54       \\
+            3       & 6     & 74.0 [73.7--74.5]           & 0.94    & 0.31       \\
             \bottomrule
       \end{tabular}
       \caption{Docker standalone cluster on one laptop (4 cores / 8 threads),
