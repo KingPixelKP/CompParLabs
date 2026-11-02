@@ -96,7 +96,7 @@ Shorthand: `P="uv run --package proj1 proj1"`, and `OPT="--broadcast-join --cach
 
 `uv run python proj1/reports/tools/medians.py <logs...>` prints per-run metrics and medians from the profiler tables. The figures in §5 and the Docker table were measured before `--coalesce-cache` existed, so they use `OPT` without it.
 
-The PDF is built with `latexmk -pdf main.tex` in [report/](latex) (pdflatex, bibtex and makeglossaries).
+The PDF is built with `latexmk -pdf main.tex` in [latex/](latex) (pdflatex, bibtex and makeglossaries).
 
 ### Docker
 
