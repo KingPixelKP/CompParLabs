@@ -77,7 +77,7 @@ Useful options (see `uv run --package proj1 proj1 --help` for all of them):
 
 ### Reproducing the report
 
-Every number in [the report](report/main.tex) comes from a log under [reports/](reports/README.md). Measurement rules: `--sink noop`, 3 runs per configuration, median reported, machine idle (load average < 1.5) before each run. Local runs need nothing but uv; the Docker rows need the cluster below.
+Every number in [the report](latex/main.tex) comes from a log under [reports/](reports/README.md). Measurement rules: `--sink noop`, 3 runs per configuration, median reported, machine idle (load average < 1.5) before each run. Local runs need nothing but uv; the Docker rows need the cluster below.
 
 Shorthand: `P="uv run --package proj1 proj1"`, and `OPT="--broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache"` (final configuration).
 
@@ -96,7 +96,7 @@ Shorthand: `P="uv run --package proj1 proj1"`, and `OPT="--broadcast-join --cach
 
 `uv run python proj1/reports/tools/medians.py <logs...>` prints per-run metrics and medians from the profiler tables. The figures in §5 and the Docker table were measured before `--coalesce-cache` existed, so they use `OPT` without it.
 
-The PDF is built with `latexmk -pdf main.tex` in [report/](report/) (pdflatex, bibtex and makeglossaries).
+The PDF is built with `latexmk -pdf main.tex` in [report/](latex) (pdflatex, bibtex and makeglossaries).
 
 ### Docker
 
