@@ -10,12 +10,12 @@ from tqdm import tqdm
 MAX_PARALLEL_DOWNLOADS = 8
 
 
-def build_links(years: list[int]) -> list[str]:
+def build_links(years: list[int], months: list[int]) -> list[str]:
     return [
         *[
             f"https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year}-{month:02d}.parquet"
             for year in years
-            for month in range(1, 13)
+            for month in months
         ],
         "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv",
     ]
@@ -84,9 +84,9 @@ def fetch_file(link: str, data_dir: str, position: int) -> None:
         pbar.refresh()
 
 
-def fetch(data_dir: str, years: list[int]) -> None:
+def fetch(data_dir: str, years: list[int], months: list[int]) -> None:
     os.makedirs(data_dir, exist_ok=True)
-    links = build_links(years)
+    links = build_links(years, months)
 
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL_DOWNLOADS) as pool:
         futures = [
@@ -114,7 +114,16 @@ def main() -> None:
         default=list(range(2016, 2021)),
         help="Years of yellow taxi trip data to download (default: 2016-2020, as in the assignment)",
     )
+    parser.add_argument(
+        "--months",
+        type=int,
+        nargs="+",
+        choices=range(1, 13),
+        default=list(range(1, 13)),
+        metavar="MONTH",
+        help="Months of each year to download (default: 1-12)",
+    )
 
     args = parser.parse_args()
 
-    fetch(args.data_dir, args.years)
+    fetch(args.data_dir, args.years, args.months)

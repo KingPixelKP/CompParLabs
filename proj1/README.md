@@ -4,19 +4,31 @@
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
-To fetch any data to be used by the project the python script [fetch](./src/proj1/fetch.py) is provided you can run it with:
+Data is downloaded with [fetch](./src/proj1/fetch.py). **Every measurement in the report uses 2026-01..08**; fetch exactly those files with:
 
 ```bash
-uv run --package proj1 proj1fetch --data-dir proj1/data/ --years 2016 2017 2018 2019 2020
+uv run --package proj1 proj1fetch --data-dir proj1/data/ --years 2026 --months 1 2 3 4 5 6 7 8
 ```
 
-It downloads every month of the given years (default 2016-2020, as in the assignment) plus the zone lookup table. Months not yet published are skipped.
+Without `--months` all 12 months of each year are tried (unpublished months are skipped), so a 2026 fetch made later would also include September onwards and change every number. The assignment's full range is `--years 2016 2017 2018 2019 2020` (~12 GB); it was not used because no cluster was available.
 
 ### Dataset
 
 - Trip records: `https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_YYYY-MM.parquet` ([NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page))
 - Zone lookup: `https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv`
-- Version: TODO record the download date, TLC republishes files
+- Version used: downloaded 2026-10-08; 8 files, 488 MB, 29.7 M records (20.95 M after cleaning). TLC republishes files, so check the SHA-256 prefixes (`sha256sum proj1/data/*`):
+
+  | File | SHA-256 (first 16 hex) |
+  | --- | --- |
+  | `yellow_tripdata_2026-01.parquet` | `8b3933fe6f0d7b6d` |
+  | `yellow_tripdata_2026-02.parquet` | `5352ca800f29c40a` |
+  | `yellow_tripdata_2026-03.parquet` | `d7af794a7ac06cbb` |
+  | `yellow_tripdata_2026-04.parquet` | `e03b82d5722a6b21` |
+  | `yellow_tripdata_2026-05.parquet` | `9aa5a1609e2bf07d` |
+  | `yellow_tripdata_2026-06.parquet` | `f340c62a18885c56` |
+  | `yellow_tripdata_2026-07.parquet` | `3260bb629c2f3340` |
+  | `yellow_tripdata_2026-08.parquet` | `6683a025443afcbb` |
+  | `taxi_zone_lookup.csv` | `1a99e105092230f8` |
 
 The dataset must not be committed, it stays under `proj1/data/` (git ignored).
 
@@ -47,7 +59,7 @@ Useful options (see `uv run --package proj1 proj1 --help` for all of them):
 
 ### Reproducibility
 
-- Spark: 4.2.0 (PySpark from `uv.lock`), Python 3.14
+- Spark: 4.2.0 (PySpark from `uv.lock`), Python 3.14 locally, 3.10 in the Docker image (both work)
 - Non-default Spark configuration, set in `create_spark_session`:
   - `spark.driver.memory=2g`, `spark.executor.memory=1536m`
   - `spark.sql.autoBroadcastJoinThreshold=-1` (no automatic broadcast, so the baseline shows every join as SortMergeJoin)
@@ -62,6 +74,29 @@ Useful options (see `uv run --package proj1 proj1 --help` for all of them):
     --data-dir /repo/proj1/data --output-dir /repo/out/docker \
     --broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache --sink noop -v
   ```
+
+### Reproducing the report
+
+Every number in [the report](report/main.tex) comes from a log under [reports/](reports/README.md). Measurement rules: `--sink noop`, 3 runs per configuration, median reported, machine idle (load average < 1.5) before each run. Local runs need nothing but uv; the Docker rows need the cluster below.
+
+Shorthand: `P="uv run --package proj1 proj1"`, and `OPT="--broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache"` (final configuration).
+
+| Report element | Command (run 3 times) | Logs and details |
+| --- | --- | --- |
+| Table 1, baseline | `$P all --sink noop --explain-plan -v` | [baseline](reports/baseline/README.md) |
+| Per-stage numbers (§3, §4) | `uv run python proj1/reports/tools/stages.py <OP> <out.txt> [flags]` (runs one op with the Spark UI up and dumps stage metrics from its REST API) | `logs/stages_*.txt` in each report |
+| §4.1 broadcast joins | `$P all --broadcast-join --sink noop --explain-plan -v` | [all/broadcast-join](reports/all/broadcast-join/README.md) |
+| §4.2 cache vs write once | add `--cache-dataframe`, then `--write-once` (M2) | [all/reuse-results](reports/all/reuse-results/README.md), [M2/write-once](reports/M2/write-once/README.md) |
+| §4.3 clean once | add `--materialise-clean` | [all/materialise-clean](reports/all/materialise-clean/README.md) |
+| §4.4 coalesce O2 cache | `$P O2 $OPT --sink noop --explain-plan -v` with and without `--coalesce-cache` | [O2/coalesce-cache](reports/O2/coalesce-cache/README.md) |
+| Split size (Table 2 row) | `$P all --broadcast-join --cache-dataframe --max-partition-mb <128\|64\|32\|16\|8> --sink noop -v` | [all/split-size](reports/all/split-size/README.md) |
+| Table 2 last row, Figure 2 | `$P all <flags of each cumulative step> --sink noop -v`, steps: none; `--broadcast-join`; `+ --write-once --cache-dataframe`; `+ --materialise-clean`; `+ --coalesce-cache` | [cumulative](reports/cumulative/logs/), chart: `uv run python proj1/reports/tools/plot_cumulative.py proj1/reports/cumulative/logs proj1/reports/cumulative/images/cumulative` |
+| Figure 3, dataset scale | samples: `$P all $OPT --sample-fraction <0.1\|0.2\|0.5> --sink noop -v`; months: `uv run python proj1/reports/tools/month_dirs.py proj1/data <dir>`, then `$P all $OPT --data-dir <dir>/data_m<1\|2\|4\|8> --sink noop -v` | [scalability](reports/scalability/README.md), chart: `plot_scale.py` |
+| Table 3, cluster size | Docker cluster with `--scale spark-worker=<1\|2\|3>`, then the `spark-submit` command above | [scalability](reports/scalability/README.md#docker-standalone-cluster-on-the-laptop-2026-11-01-supplement) |
+
+`uv run python proj1/reports/tools/medians.py <logs...>` prints per-run metrics and medians from the profiler tables. The figures in §5 and the Docker table were measured before `--coalesce-cache` existed, so they use `OPT` without it.
+
+The PDF is built with `latexmk -pdf main.tex` in [report/](report/) (pdflatex, bibtex and makeglossaries).
 
 ### Docker
 
