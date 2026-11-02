@@ -1,0 +1,10 @@
+*
+!main.tex
+!refs.bib
+!acronyms.tex
+!acmart.cls
+!acm.bst
+!acmart-preload-hook.tex
+!.gitignore
+!images/
+!images/**
