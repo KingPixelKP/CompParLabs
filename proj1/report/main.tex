@@ -187,14 +187,14 @@ only for the cleaning rules, which Section~4.3 removes.
       \centering
       \footnotesize
       \begin{tabular}{p{3.0cm}p{4.4cm}p{9.2cm}}
-            \toprule Optimisation    & Bottleneck addressed                        & Measured impact (median wall time)                                                                                     \\
-            \midrule Broadcast joins & Trip shuffle + sort of the \gls{smj}, spill & M2 45.7$\to$20.9\,s, M3 21.1$\to$11.8\,s, O4 22.1$\to$15.6\,s; spill 1.9\,GB$\to$0                                     \\
-            Cache shared results     & Trips scanned once per action               & O2 21.7$\to$17.0\,s; M2 and O4 slower, kept for O2 only                                                                \\
-            Smaller scan splits      & Uneven scan tasks                           & No gain, parallelism capped by 32 row groups                                                                           \\
-            Write once (M2)          & Result computed twice                       & M2 23.0$\to$15.3\,s, one scan stage less                                                                               \\
-            Clean once, read many    & Re-scan, cast and clean per operation       & M2 13.8$\to$9.0\,s, M3 13.4$\to$6.8\,s, O2 19.0$\to$16.3\,s, O4 13.9$\to$7.9\,s; all ops 96.2$\to$92.3\,s incl.\ write \\
-            Coalesce O2 cache        & 200 tiny tasks per cache read               & O2 24.2$\to$14.8\,s (run alone), tasks 2\,443$\to$370                                                                  \\
-            \midrule All applied (one session) &                                   & M2 38.3$\to$7.7\,s (5.0$\times$), M3 18.2$\to$7.4\,s (2.5$\times$), O2 18.4$\to$9.8\,s (1.9$\times$), O4 21.0$\to$8.6\,s (2.4$\times$); all ops 136.8$\to$76.9\,s incl.\ clean write \\
+            \toprule Optimisation              & Bottleneck addressed                        & Measured impact (median wall time)                                                                                                                                                   \\
+            \midrule Broadcast joins           & Trip shuffle + sort of the \gls{smj}, spill & M2 45.7$\to$20.9\,s, M3 21.1$\to$11.8\,s, O4 22.1$\to$15.6\,s; spill 1.9\,GB$\to$0                                                                                                   \\
+            Cache shared results               & Trips scanned once per action               & O2 21.7$\to$17.0\,s; M2 and O4 slower, kept for O2 only                                                                                                                              \\
+            Smaller scan splits                & Uneven scan tasks                           & No gain, parallelism capped by 32 row groups                                                                                                                                         \\
+            Write once (M2)                    & Result computed twice                       & M2 23.0$\to$15.3\,s, one scan stage less                                                                                                                                             \\
+            Clean once, read many              & Re-scan, cast and clean per operation       & M2 13.8$\to$9.0\,s, M3 13.4$\to$6.8\,s, O2 19.0$\to$16.3\,s, O4 13.9$\to$7.9\,s; all ops 96.2$\to$92.3\,s incl.\ write                                                               \\
+            Coalesce O2 cache                  & 200 tiny tasks per cache read               & O2 24.2$\to$14.8\,s (run alone), tasks 2\,443$\to$370                                                                                                                                \\
+            \midrule All applied (one session) &                                             & M2 38.3$\to$7.7\,s (5.0$\times$), M3 18.2$\to$7.4\,s (2.5$\times$), O2 18.4$\to$9.8\,s (1.9$\times$), O4 21.0$\to$8.6\,s (2.4$\times$); all ops 136.8$\to$76.9\,s incl.\ clean write \\
             \bottomrule
       \end{tabular}
       \caption{Summary of the optimisations; each row is measured against the configuration
@@ -207,8 +207,8 @@ Optimisations are cumulative: each one is measured against the configuration
 that includes the previous ones, with all other settings unchanged.
 Table~\ref{tab:summary} summarises them, and Figure~\ref{fig:cumulative}
 re-measures the whole path in a single session (3 runs per configuration, each
-started on an idle machine), so the steps are directly comparable. It also shows
-that caching O2 alone did not pay off inside a full run (16.9\,s $\to$
+started on an idle machine), so the steps are directly comparable. It also
+shows that caching O2 alone did not pay off inside a full run (16.9\,s $\to$
 18.6\,s); only the coalesced cache did (9.8\,s).
 
 \begin{figure}[!t]
@@ -284,8 +284,6 @@ instead of 74\,s of task time, and O2 goes from 24.2\,s to 14.8\,s (1.64$\times$
 O2 run alone) with identical output. Smaller scan splits (\texttt{max\allowbreak
       Partition\allowbreak Bytes}) gave no gain: the raw files hold only 32 row
 groups, which splits cannot divide~\cite{parquet-format,spark-parquet}.
-
-
 
 \section{Analysis}
 \label{sec:analysis}
@@ -379,8 +377,8 @@ sort or bucket the cleaned copy by \texttt{PULocationID}.
 \section*{Acknowledgements}
 Claude Code (Anthropic) was used as a programming and writing assistant:
 reviewing the implementation against the assignment, aiding in writing the measurement tooling
-(per-stage REST dumps, median and chart scripts), and drafting the markdown reports and this
-text from the logs. All measurements were taken on the author's machine, and every number in this report traces to
+(per-stage REST dumps, median and chart scripts), and drafting the markdown reports.
+All measurements were taken on the author's machine, and every number in this report traces to
 a log in the repository~\cite{repo}.
 
 \section*{Individual contributions}
