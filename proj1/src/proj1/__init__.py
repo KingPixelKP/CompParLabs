@@ -126,6 +126,12 @@ class Features:
             "help": "Write the cleaned trips once as parquet and run M2-O4 on that copy (M1 still reads the raw files)."
         },
     )
+    persist_clean_disk: bool = field(
+        default=False,
+        metadata={
+            "help": "Like materialise_clean, but persist the cleaned trips with DISK_ONLY instead of writing parquet (comparison)."
+        },
+    )
     max_partition_mb: int = field(
         default=128,
         metadata={
@@ -984,6 +990,15 @@ def main() -> None:
             materialise_clean(trip_df, clean_path)
         # the copy is already clean, the operations must not filter it again
         op_df = spark.read.parquet(clean_path)
+        op_features = replace(features, use_cleansed=False)
+    elif features.persist_clean_disk and commands != [Command.M1]:
+        with profiler.profile(f"clean-features:{feature_str}"):
+            op_df = (
+                get_clean(trip_df)
+                .select(*CLEAN_COLUMNS)
+                .persist(StorageLevel.DISK_ONLY)
+            )
+            op_df.count()  # build the persisted copy here, so its cost is in this block
         op_features = replace(features, use_cleansed=False)
 
     for command in commands:

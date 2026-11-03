@@ -270,7 +270,9 @@ M1 still reads the raw files. \emph{Result:} \texttt{Union} nodes drop from 9 to
 filter instead of 7 with 13. Task time falls by 41\,\% (M2), 60\,\% (M3), 19\,\%
 (O2) and 48\,\% (O4). The one-time write costs 19.4\,s, yet a run of all
 operations already drops from 96.2\,s to 92.3\,s including it, and to 72.5\,s once
-the copy exists.
+the copy exists. A \texttt{DISK\_ONLY} persist of the same data was also
+measured: it builds 4.4\,s slower (21.4\,s versus 17.0\,s), reads are within
+noise, and unlike the parquet copy it is lost when the application ends.
 
 \subsection{Partition the O2 cache explicitly}
 \label{sec:coalesce} \emph{Bottleneck:} O2 is now the slowest operation, and its
