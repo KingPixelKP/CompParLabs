@@ -93,6 +93,7 @@ Shorthand: `P="uv run --package proj1 proj1"`, and `OPT="--broadcast-join --cach
 | Table 2 last row, Figure 2 | `$P all <flags of each cumulative step> --sink noop -v`, steps: none; `--broadcast-join`; `+ --write-once --cache-dataframe`; `+ --materialise-clean`; `+ --coalesce-cache` | [cumulative](reports/cumulative/logs/), chart: `uv run python proj1/reports/tools/plot_cumulative.py proj1/reports/cumulative/logs proj1/reports/cumulative/images/cumulative` |
 | Figure 3, dataset scale | samples: `$P all $OPT --sample-fraction <0.1\|0.2\|0.5> --sink noop -v`; months: `uv run python proj1/reports/tools/month_dirs.py proj1/data <dir>`, then `$P all $OPT --data-dir <dir>/data_m<1\|2\|4\|8> --sink noop -v` | [scalability](reports/scalability/README.md), chart: `plot_scale.py` |
 | Table 3, cluster size | Docker cluster with `--scale spark-worker=<1\|2\|3>`, then the `spark-submit` command above | [scalability](reports/scalability/README.md#docker-standalone-cluster-on-the-laptop-2026-11-01-supplement) |
+| Table 4, baseline on the cluster | 3-worker Docker cluster; `all` with no flags and with `$OPT` (container paths, `--master docker`); per-stage durations: `stages.py all <out.txt> --master docker --data-dir /repo/proj1/data --output-dir /repo/out/docker [$OPT]` | [docker](reports/docker/README.md) |
 
 `uv run python proj1/reports/tools/medians.py <logs...>` prints per-run metrics and medians from the profiler tables. The figures in §5 and the Docker table were measured before `--coalesce-cache` existed, so they use `OPT` without it.
 

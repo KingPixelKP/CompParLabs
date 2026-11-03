@@ -341,6 +341,38 @@ part found above also caps the speedup (Amdahl~\cite{amdahl}). On separate
 nodes the contention would disappear, so the scan-dominated part should scale
 much closer to linearly, while the fixed part would not.
 
+\textbf{Baseline on the cluster.} The baseline and the final configuration were
+also run on the 3-worker Docker cluster (Table~\ref{tab:dockerbase}), where
+shuffles cross between executor \glspl{jvm} in different containers. The longest
+baseline stages are again the \gls{smj} reduce stages (M2: 9 tasks, 12.8\,s wall,
+476\,MB read; O4: 10.0\,s, 222\,MB read, 1.0\,GB spill); after the optimisations
+the longest is the one-time write of the cleaned copy (21.2\,s). M2's reduce
+stage no longer spills here, because its tasks are spread over three 1.5\,GiB
+executors instead of sharing one 2\,GiB \gls{jvm}. The overall gain is smaller
+than locally (1.5$\times$ versus 1.8$\times$), since the cleaned-copy write and
+O2's cached stages are scan- and task-bound on the oversubscribed cores, but the
+operations whose shuffle the broadcast removes keep the largest speedups.
+
+\begin{table}[!t]
+      \centering
+      \footnotesize
+      \begin{tabular}{lrrr}
+            \toprule
+            Op       & Baseline (s) & Final (s) & Speedup     \\
+            \midrule
+            M2       & 42.9         & 12.5      & 3.4$\times$ \\
+            M3       & 19.2         & 10.2      & 1.9$\times$ \\
+            O2       & 26.0         & 17.2      & 1.5$\times$ \\
+            O4       & 32.3         & 9.9       & 3.3$\times$ \\
+            All ops  & 168.2        & 113.5     & 1.5$\times$ \\
+            \bottomrule
+      \end{tabular}
+      \caption{Baseline versus final configuration on the 3-worker Docker
+            cluster, median of 3 runs; the final run includes the 22.9\,s
+            cleaned-copy write.}
+      \label{tab:dockerbase}
+\end{table}
+
 \section{Discussion}
 
 \textbf{The optional operations.} Both choices exposed the bottleneck they were
