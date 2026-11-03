@@ -1,6 +1,6 @@
 # Comp Par Labs
 
-Repository that holds code and docs related do Parallel Computing class labs.
+Repository that holds code and docs related do Parallel Computing class labs and projects.
 
 ## Running
 
@@ -8,8 +8,21 @@ Repository that holds code and docs related do Parallel Computing class labs.
 
 In dev environments it is much faster and easier to use uv.
 
-#### Setup
+#### Python Script
 
+To run a python script with uv use:
+
+```bash
+uv run python <script-name>.py
+```
+
+The project [uv.lock](./uv.lock) already has the dependencies needed to run the labs and projects, so you can just run the script without worrying about installing dependencies.
+
+#### Jupyter
+
+##### Setup
+
+Here are the steps to setup a jupyter notebook kernel with uv packages in a virtual environment.
 First we must create the python kernel with uv packages:
 
 ```bash
@@ -34,6 +47,11 @@ Or manually introduce it in [pyproject.toml](./pyproject.toml)
 After adding the package run the steps described in [Setup](#setup).
 
 ### Docker
+
+Sometimes it is necessary to run the code in a docker environment, for example when testing cluster environments. In this case we can use the provided docker-compose file to run a spark cluster with jupyter.
+
+> [!WARNING]
+> Docker does not use uv, so you must install the dependencies in the docker image, check [Adding pip packages](#adding-pip-packages) for more information.
 
 #### Setup
 
