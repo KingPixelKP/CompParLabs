@@ -29,17 +29,21 @@
       \country{Portugal}}
 
 \begin{abstract}
-      We profile and optimise a PySpark pipeline over 29.7\,M NYC yellow-taxi trips
-      (three mandatory operations plus origin-destination flows and trip-type
-      classification). Following a profile, hypothesise, optimise, measure loop, the
-      baseline's cost is traced to sort-merge joins against tiny tables, spills in
-      under-partitioned reduce stages and repeated scans. Broadcast joins, writing
-      results once, materialising the cleaned data and explicitly partitioning a
-      cached result cut individual operations by up to 5$\times$; caching the wrong
-      DataFrames and smaller scan splits are reported as measured failures. Execution
-      time scales sub-linearly with input size because of a $\sim$25\,s fixed cost,
-      and a single-machine Docker cluster shows why adding executors on shared
-      hardware does not help.
+      This report presents the profiling and optimisation of a PySpark pipeline that
+      processes 29.7\,M NYC yellow-taxi trips (three mandatory operations plus
+      origin-destination flows and trip-type classification). Each report's structure
+      follows a profile, hypothesise, optimise, measure loop, sort-merge joins
+      against tiny tables, spills in under-partitioned reduce stages and repeated
+      scans are identified as the main weights of the baseline. Optimisations include
+      broadcast joins, writing results once, materialising the cleansed data and
+      explicitly partitioning a cached result, which cut individual operations by up
+      to 5$\times$; caching the wrong DataFrames and smaller scan splits are reported
+      as measured failures. Sub-linear scaling with input size is observed because of
+      a $\sim$25\,s fixed cost, the Ducker cluster's constraint to a single machine
+      shows why adding executors on shared hardware does not help. Execution time
+      scales sub-linearly with input size because of a $\sim$25\,s fixed cost, and a
+      single-machine Docker cluster shows why adding executors on shared hardware
+      does not help.
 \end{abstract}
 
 \keywords{Apache Spark, performance engineering, query plans, broadcast join, caching}
@@ -358,13 +362,13 @@ operations whose shuffle the broadcast removes keep the largest speedups.
       \footnotesize
       \begin{tabular}{lrrr}
             \toprule
-            Op       & Baseline (s) & Final (s) & Speedup     \\
+            Op      & Baseline (s) & Final (s) & Speedup     \\
             \midrule
-            M2       & 42.9         & 12.5      & 3.4$\times$ \\
-            M3       & 19.2         & 10.2      & 1.9$\times$ \\
-            O2       & 26.0         & 17.2      & 1.5$\times$ \\
-            O4       & 32.3         & 9.9       & 3.3$\times$ \\
-            All ops  & 168.2        & 113.5     & 1.5$\times$ \\
+            M2      & 42.9         & 12.5      & 3.4$\times$ \\
+            M3      & 19.2         & 10.2      & 1.9$\times$ \\
+            O2      & 26.0         & 17.2      & 1.5$\times$ \\
+            O4      & 32.3         & 9.9       & 3.3$\times$ \\
+            All ops & 168.2        & 113.5     & 1.5$\times$ \\
             \bottomrule
       \end{tabular}
       \caption{Baseline versus final configuration on the 3-worker Docker
@@ -397,9 +401,6 @@ nodes. Two series were rerun because unrelated load slowed every operation;
 differences below $\sim$2\,s are noise. Without a cluster, the 2016--2020 data
 was not processed, so effects that appear only at that scale (spill, skew) may
 be under-represented.
-
-\textbf{With more time.} Measure on a real multi-node cluster and on 2016--2020;
-sort or bucket the cleaned copy by \texttt{PULocationID}.
 
 \clearpage
 
