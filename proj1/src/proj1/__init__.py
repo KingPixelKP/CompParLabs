@@ -1,31 +1,31 @@
 import argparse
+import functools
+import logging
 import operator
 import pathlib
 import re
-from enum import Enum
-import logging
-import functools
-from typing import get_type_hints
-import pandas as pd
-from dataclasses import dataclass, field, fields, replace
 import sys
+from dataclasses import dataclass, field, fields, replace
+from enum import Enum
+from typing import get_type_hints
 
+import pandas as pd
 import pyspark.sql.functions as sf
+from pyspark import StorageLevel
 from pyspark.sql import (
     Column,
+    DataFrame,
     SparkSession,
     Window,
-    DataFrame,
 )
 from pyspark.sql.types import (
     DoubleType,
     IntegerType,
+    StringType,
     StructField,
     StructType,
-    StringType,
     TimestampNTZType,
 )
-from pyspark import StorageLevel
 
 import proj1.spark_profiler
 
@@ -459,9 +459,7 @@ def run_M2(
         .withColumn("hour_of_day", sf.hour(pickup_ts))
         .withColumn(
             "trip_duration_minutes",
-            sf.timestamp_diff(
-                "SECOND", "tpep_pickup_datetime", "tpep_dropoff_datetime"
-            )
+            sf.timestamp_diff("SECOND", "tpep_pickup_datetime", "tpep_dropoff_datetime")
             / 60,
         )
         .groupBy("Borough", "day_of_week", "hour_of_day")
@@ -587,9 +585,7 @@ def run_O1(trip_df: DataFrame, zone_df: DataFrame, features: Features, sink: Sin
         .withColumn("hour_of_day", sf.hour(pickup_ts))
         .withColumn(
             "day_type",
-            sf.when(sf.dayofweek(pickup_ts).isin(1, 7), "weekend").otherwise(
-                "weekday"
-            ),
+            sf.when(sf.dayofweek(pickup_ts).isin(1, 7), "weekend").otherwise("weekday"),
         )
     )
 
@@ -909,7 +905,9 @@ def main() -> None:
         level=(
             logging.DEBUG
             if args.debug
-            else logging.INFO if args.verbose else logging.WARNING
+            else logging.INFO
+            if args.verbose
+            else logging.WARNING
         ),
         stream=sys.stdout,
     )
@@ -971,9 +969,7 @@ def main() -> None:
         Command.M3: lambda: run_M3(op_df, zone_df, op_features, args.sink),
         Command.O1: lambda: run_O1(op_df, zone_df, op_features, args.sink),
         Command.O2: lambda: run_O2(op_df, zone_df, op_features, args.sink),
-        Command.O4: lambda: run_O4(
-            op_df, zone_df, op_features, args.sink, thresholds
-        ),
+        Command.O4: lambda: run_O4(op_df, zone_df, op_features, args.sink, thresholds),
     }
     commands = list(runners) if args.command == Command.All else [args.command]
 
