@@ -39,7 +39,7 @@
       explicitly partitioning a cached result, which cut individual operations by up
       to 5$\times$; caching the wrong DataFrames and smaller scan splits are reported
       as measured failures. Sub-linear scaling with input size is observed because of
-      a $\sim$25\,s fixed cost, the Ducker cluster's constraint to a single machine
+      a $\sim$25\,s fixed cost, the Docker cluster's constraint to a single machine
       shows why adding executors on shared hardware does not help. Execution time
       scales sub-linearly with input size because of a $\sim$25\,s fixed cost, and a
       single-machine Docker cluster shows why adding executors on shared hardware
