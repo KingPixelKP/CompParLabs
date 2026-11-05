@@ -393,7 +393,7 @@ table; the hot-zone skew it was chosen to probe did not appear at this scale
 \textbf{Remaining bottlenecks.} After the optimisations each operation is one scan
 plus small stages. The scan itself is now the cost, bounded locally by CPU decode
 and on the raw files by their 32 row groups; the per-action scheduling cost
-remains as a fixed part of every run. O1 (outside the report scope) still spills
+remains as a fixed part of every run.  O1 (outside the report scope) still spills
 1.4\,GB in a window over all trips.
 
 \textbf{Limitations.} All numbers come from one laptop (\texttt{local[*]} or
