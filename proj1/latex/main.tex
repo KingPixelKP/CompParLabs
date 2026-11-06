@@ -21,7 +21,7 @@
 
 % where the logs and screenshots behind a number live, relative to the repository's proj1/
 \newcommand{\src}[1]{\footnote{Logs: \texttt{reports/#1}~\cite{repo}.}}
-\newcommand{\srcpath}[1]{\texttt{reports/#1}}
+\newcommand{\srcpath}[1]{\texttt{reports/#1}~\cite{repo}}
 
 \begin{document}
 \title{Performance Engineering of a PySpark Pipeline on NYC Taxi Trips}
@@ -296,11 +296,11 @@ groups, which splits cannot divide~\cite{parquet-format,spark-parquet}.
 \section{Analysis}
 \label{sec:analysis}
 
-No multi-node cluster was available, so all cluster results come from a
-Docker standalone cluster~\cite{spark-standalone} on the same laptop (one
-master, workers of 2 cores / 2\,GiB, driver in its own container), measured in
-a single session with the final configuration\src{docker-session};
-\texttt{local[*]} runs supplement them.
+No multi-node cluster was available, so all cluster results come from a Docker
+standalone cluster~\cite{spark-standalone} on the same laptop (one master,
+workers of 2 cores / 2\,GiB, driver in its own container), measured in a single
+session with the final configuration\src{docker-session}; \texttt{local[*]}
+runs supplement them.
 
 \textbf{Dataset scale.} On 3 workers, the pipeline was run on 10, 20 and 50\,\%
 samples (the method suggested by the assignment) and on 1, 2, 4 and 8 month
@@ -349,7 +349,7 @@ work costs more task time as executors are added (M3 13\,s with one worker,
       \label{tab:docker}
 \end{table} 6 executor cores, driver and master compete for 4 physical
 cores, the clock drops with more active cores, and every executor \gls{jvm}
-repeats class loading and JIT compilation in a short run. The fixed driver-side
+repeats class loading and JIT compilation in a short run. The fixed
 part found above also caps the speedup (Amdahl~\cite{amdahl}). On separate
 nodes the contention would disappear, so the scan-dominated part should scale
 much closer to linearly, while the fixed part would not.
@@ -426,17 +426,16 @@ All measurements were taken on the author's machine, and every number in this re
 a log in the repository~\cite{repo}.
 
 \section*{Individual contributions}
-Single-author project: Gabriel Matias Falcão, 100\,\%.
+Single-author project: Gabriel Matias Falcão (77390), 100\,\%.
 
 \section*{Comments and suggestions}
 
 Many more optimisations are possible, and exploring them is the goal of the
 assignment. Time and report length left several unexplored. Every optimisation
 is behind a feature flag, so each can be enabled on its own, and some were
-implemented but not reported. The DI cluster
-was unavailable, so all cluster results come from a local Docker standalone
-cluster; running the pipeline on real separate nodes and on the 2016--2020 data
-would be the natural next step.
+implemented but not reported. The DI cluster was unavailable, so all cluster
+results come from a local Docker standalone cluster; running the pipeline on
+real separate nodes and on the 2016--2020 data would be the natural next step.
 
 \printglossary[type=\acronymtype,title={Acronyms}]
 \end{document}
