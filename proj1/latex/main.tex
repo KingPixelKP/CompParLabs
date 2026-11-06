@@ -38,12 +38,10 @@
       broadcast joins, writing results once, materialising the cleansed data and
       explicitly partitioning a cached result, which cut individual operations by up
       to 5$\times$; caching the wrong DataFrames and smaller scan splits are reported
-      as measured failures. Sub-linear scaling with input size is observed because of
-      a $\sim$25\,s fixed cost, the Docker cluster's constraint to a single machine
-      shows why adding executors on shared hardware does not help. Execution time
-      scales sub-linearly with input size because of a $\sim$25\,s fixed cost, and a
-      single-machine Docker cluster shows why adding executors on shared hardware
-      does not help.
+      as measured failures. Execution time scales sub-linearly with input size
+      because of a fixed cost ($\sim$39\,s on the Docker cluster, $\sim$25\,s
+      locally), and a single-machine Docker cluster shows why adding executors on
+      shared hardware does not help.
 \end{abstract}
 
 \keywords{Apache Spark, performance engineering, query plans, broadcast join, caching}
@@ -294,35 +292,38 @@ groups, which splits cannot divide~\cite{parquet-format,spark-parquet}.
 \section{Analysis}
 \label{sec:analysis}
 
-\textbf{Dataset scale.} The optimised pipeline was run on 10, 20 and 50\,\% samples
-(the method suggested by the assignment) and on 1, 2, 4 and 8 month files (Figure~\ref{fig:scale}).
-Time grows sub-linearly: 8$\times$ more input costs only 2.7$\times$ more time
-(32.9\,s $\to$ 90.3\,s). A straight line through the month series, $T \approx 2
-      5\,\mathrm{s}+ 66\,\mathrm{s}\cdot f$, shows that about 25\,s of every run is
-fixed: scheduling the $\sim$10 actions per run and, above all, O2's $\sim$2\,300
-small tasks over its cached routes (O2 takes 10.6\,s on one month and 15.8\,s
-on eight), since reduced by Section~\ref{sec:coalesce}. The data-dependent part
-is linear, because after the optimisations no trip rows are shuffled and
-nothing spills at any size. Sampling understates small inputs: \texttt{sample()}
-drops rows after the scan, so a 10\,\% sample (43.0\,s) is slower than a real
-12.5\,\% input (32.9\,s).
+No multi-node cluster was available, so all cluster results come from a
+Docker standalone cluster~\cite{spark-standalone} on the same laptop (one
+master, workers of 2 cores / 2\,GiB, driver in its own container), measured in
+a single session with the final configuration; \texttt{local[*]} runs
+supplement them.
+
+\textbf{Dataset scale.} On 3 workers, the pipeline was run on 10, 20 and 50\,\%
+samples (the method suggested by the assignment) and on 1, 2, 4 and 8 month
+files (Figure~\ref{fig:scale}). Time grows sub-linearly: 8$\times$ more input
+costs only 2.3$\times$ more time (47.2\,s $\to$ 110.7\,s). A straight line
+through the month series, $T \approx 39\,\mathrm{s}+ 73\,\mathrm{s}\cdot f$,
+shows that about 39\,s of every run is fixed: scheduling the $\sim$10 actions
+per run on the executors, their warm-up, and O2's small cached stages. Locally
+the same fit gives $25\,\mathrm{s}+66\,\mathrm{s}\cdot f$, so the cluster adds
+mostly fixed cost. The data-dependent part is linear, because after the
+optimisations no trip rows are shuffled. Sampling understates small inputs:
+\texttt{sample()} drops rows after the scan, so a 10\,\% sample (55.9\,s) is
+slower than a real 12.5\,\% input (47.2\,s).
 
 \begin{figure}[!t]
       \centering
       \Description{Line chart of wall time against dataset fraction for month files and samples, both above a dashed linear-scaling line at small fractions.}
       \includegraphics[width=\columnwidth]{scale.pdf}
       \caption{Wall time of all operations versus dataset fraction (median of 3,
-            bars: min--max), optimised configuration, \texttt{local[*]}.}
+            bars: min--max), final configuration, 3-worker Docker cluster.}
       \label{fig:scale}
 \end{figure}
 
-\textbf{Cluster size.} No multi-node cluster was available, so cluster size was
-studied on a Docker standalone cluster~\cite{spark-standalone} on the same laptop
-(one master, workers of 2 cores / 2\,GiB, driver in its own container), with
-the optimised pipeline on the full data (Table~\ref{tab:docker}). Speedup stays
-far from linear and turns negative at 3 workers. The extra cores are not extra
-hardware: the same work costs more CPU as executors are added (M3 task time
-8\,s with one worker, 21\,s with three), because
+\textbf{Cluster size.} With the full data (Table~\ref{tab:docker}), every added
+worker makes the run slower. The extra cores are not extra hardware: the same
+work costs more task time as executors are added (M3 13\,s with one worker,
+39\,s with three), because
 
 \begin{table}[!t]
       \centering
@@ -331,14 +332,14 @@ hardware: the same work costs more CPU as executors are added (M3 task time
             \toprule
             Workers & Cores & Wall (s), median [min--max] & Speedup & Efficiency \\
             \midrule
-            1       & 2     & 69.3 [66.0--70.5]           & 1.00    & 1.00       \\
-            2       & 4     & 64.2 [62.2--66.0]           & 1.08    & 0.54       \\
-            3       & 6     & 74.0 [73.7--74.5]           & 0.94    & 0.31       \\
+            1       & 2     & 85.7 [84.2--86.7]           & 1.00    & 1.00       \\
+            2       & 4     & 92.5 [91.0--93.7]           & 0.93    & 0.46       \\
+            3       & 6     & 110.2 [108.8--110.8]        & 0.78    & 0.26       \\
             \bottomrule
       \end{tabular}
       \caption{Docker standalone cluster on one laptop (4 cores / 8 threads),
             all operations, 3 runs per size. Speedup and efficiency relative to
-            1 worker. For reference, \texttt{local[*]} takes 90.3\,s.}
+            1 worker. For reference, \texttt{local[*]} takes 76.9\,s.}
       \label{tab:docker}
 \end{table} 6 executor cores, driver and master compete for 4 physical
 cores, the clock drops with more active cores, and every executor \gls{jvm}
@@ -350,9 +351,9 @@ much closer to linearly, while the fixed part would not.
 \textbf{Baseline on the cluster.} The baseline and the final configuration were
 also run on the 3-worker Docker cluster (Table~\ref{tab:dockerbase}), where
 shuffles cross between executor \glspl{jvm} in different containers. The longest
-baseline stages are again the \gls{smj} reduce stages (M2: 9 tasks, 12.8\,s wall,
-476\,MB read; O4: 10.0\,s, 222\,MB read, 1.0\,GB spill); after the optimisations
-the longest is the one-time write of the cleaned copy (21.2\,s). M2's reduce
+baseline stages are again the \gls{smj} reduce stages (M2: 9 tasks, 14.6\,s wall,
+476\,MB read; O4: 11.2\,s, 222\,MB read, 1.0\,GB spill); after the optimisations
+the longest is the one-time write of the cleaned copy (16.6\,s). M2's reduce
 stage no longer spills here, because its tasks are spread over three 1.5\,GiB
 executors instead of sharing one 2\,GiB \gls{jvm}. The overall gain is smaller
 than locally (1.5$\times$ versus 1.8$\times$), since the cleaned-copy write and
@@ -366,15 +367,15 @@ operations whose shuffle the broadcast removes keep the largest speedups.
             \toprule
             Op      & Baseline (s) & Final (s) & Speedup     \\
             \midrule
-            M2      & 42.9         & 12.5      & 3.4$\times$ \\
-            M3      & 19.2         & 10.2      & 1.9$\times$ \\
-            O2      & 26.0         & 17.2      & 1.5$\times$ \\
-            O4      & 32.3         & 9.9       & 3.3$\times$ \\
-            All ops & 168.2        & 113.5     & 1.5$\times$ \\
+            M2      & 44.0         & 13.8      & 3.2$\times$ \\
+            M3      & 19.1         & 10.4      & 1.8$\times$ \\
+            O2      & 26.1         & 16.2      & 1.6$\times$ \\
+            O4      & 27.8         & 10.0      & 2.8$\times$ \\
+            All ops & 163.9        & 110.7     & 1.5$\times$ \\
             \bottomrule
       \end{tabular}
       \caption{Baseline versus final configuration on the 3-worker Docker
-            cluster, median of 3 runs; the final run includes the 22.9\,s
+            cluster, median of 3 runs; the final run includes the 18.0\,s
             cleaned-copy write.}
       \label{tab:dockerbase}
 \end{table}
@@ -400,7 +401,9 @@ remains as a fixed part of every run.  O1 (outside the report scope) still spill
 Docker), so shuffles never cross a network: the measured shuffle cost is a lower
 bound, and the cluster-size results reflect shared hardware rather than added
 nodes. Two series were rerun because unrelated load slowed every operation;
-differences below $\sim$2\,s are noise. Without a cluster, the 2016--2020 data
+differences below $\sim$2\,s are noise. Absolute Docker times varied by up to
+1.7$\times$ between days, so every cluster number comes from one session, in
+which two independent sets of 3-worker runs agree within 0.5\,s. Without a cluster, the 2016--2020 data
 was not processed, so effects that appear only at that scale (spill, skew) may
 be under-represented.
 
