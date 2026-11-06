@@ -138,6 +138,12 @@ class Features:
             "help": "spark.sql.files.maxPartitionBytes in MiB, upper bound of a scan split (Spark default 128)."
         },
     )
+    shuffle_partitions: int = field(
+        default=200,
+        metadata={
+            "help": "spark.sql.shuffle.partitions, partitions of every shuffle before AQE coalescing (Spark default 200)."
+        },
+    )
 
 
 @dataclass(frozen=True)
@@ -935,6 +941,7 @@ def main() -> None:
     )
 
     spark.conf.set("spark.sql.files.maxPartitionBytes", f"{features.max_partition_mb}m")
+    spark.conf.set("spark.sql.shuffle.partitions", str(features.shuffle_partitions))
 
     for f in fields(features):
         logger.info(f"{f.name}={getattr(features, f.name)}")

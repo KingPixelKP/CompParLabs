@@ -292,6 +292,10 @@ instead of 74\,s of task time, and O2 goes from 24.2\,s to 14.8\,s (1.64$\times$
 O2 run alone) with identical output. Smaller scan splits (\texttt{max\allowbreak
       Partition\allowbreak Bytes}) gave no gain\src{all/split-size}: the raw files hold only 32 row
 groups, which splits cannot divide~\cite{parquet-format,spark-parquet}.
+Lowering \texttt{spark.sql.shuffle.partitions} from 200 to 8
+(\texttt{-{}-shuffle-partitions})\src{all/shuffle-partitions} also gave no
+gain beyond noise: \gls{aqe} already coalesces the shuffles, so tasks change
+only in O2 (370$\to$341, 10.5$\to$9.2\,s).
 
 \section{Analysis}
 \label{sec:analysis}
