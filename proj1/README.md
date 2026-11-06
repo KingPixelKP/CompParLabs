@@ -1,11 +1,12 @@
 # Comp Par Project 1
 
-**Run every command in this README from the repository root**, not from `proj1/`: `proj1` is a member of the uv workspace defined by the root `pyproject.toml` and `uv.lock`, and all paths below are relative to the root.
-
-```bash
-git clone https://github.com/KingPixelKP/CompParLabs.git
-cd CompParLabs
-```
+> [!WARNING]
+> **Run every command in this README from the repository root**, not from `proj1/`: `proj1` is a member of the uv workspace defined by the root `pyproject.toml` and `uv.lock`, and all paths below are relative to the root.
+>
+> ```bash
+> git clone https://github.com/KingPixelKP/CompParLabs.git
+> cd CompParLabs
+> ```
 
 ## Setup
 
