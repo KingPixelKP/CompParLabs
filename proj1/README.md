@@ -8,6 +8,11 @@
 > cd CompParLabs
 > ```
 
+## Report
+
+- **PDF: [latex/main.pdf](latex/main.pdf)**, source [latex/main.tex](latex/main.tex). Rebuild with `cd proj1/latex && latexmk -pdf main.tex`.
+- Logs, plans, charts and screenshots behind every number: [reports/](reports/README.md). The report's footnotes and captions name the folder for each result.
+
 ## Setup
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
