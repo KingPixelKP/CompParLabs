@@ -1,7 +1,8 @@
 """Plot `all` wall time vs dataset fraction from the scalability logs, print the table.
 
 Usage: python plot_scale.py <logs_dir> <out_prefix>
-Reads sample_f<f>_<n>.log and months_m<k>_<n>.log, writes <out_prefix>.png and .pdf.
+Reads sample_f<f>_<n>.log and months_m<k>_<n>.log (local), or w3_s<f>_<n>.log, w3_m<k>_<n>.log
+and w3_opt_<n>.log as the full point (Docker session), writes <out_prefix>.png and .pdf.
 """
 
 import glob
@@ -34,7 +35,7 @@ def run_total(path):
 def series(pattern, fraction_of):
     points = {}
     for path in glob.glob(f"{logs}/{pattern}"):
-        key = re.search(r"_(f[\d.]+|m\d+)_\d+\.log$", path).group(1)
+        key = re.search(r"_([fs][\d.]+|m\d+|opt)_\d+\.log$", path).group(1)
         points.setdefault(fraction_of(key), []).append(run_total(path))
     rows = []
     for f in sorted(points):
@@ -53,8 +54,11 @@ def series(pattern, fraction_of):
     return rows
 
 
-months = series("months_m*_*.log", lambda k: int(k[1:]) / MONTHS)
-sample = series("sample_f*_*.log", lambda k: float(k[1:]))
+months = series("*_m[0-9]*_*.log", lambda k: int(k[1:]) / MONTHS)
+sample = series("*_[fs]0.*_*.log", lambda k: float(k[1:]))
+if not any(r[0] == 1.0 for r in months):
+    # Docker session: the full-data runs are <prefix>_opt_<n>.log
+    months += series("*_opt_*.log", lambda k: 1.0)
 full = next(r for r in months if r[0] == 1.0)
 sample.append(full)  # the full dataset is fraction 1.0 of both series
 

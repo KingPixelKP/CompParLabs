@@ -1,0 +1,45 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/11/06 01:48:17 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+INFO:proj1:Spark UI: http://e2a78ba1d3fd:4040
+INFO:proj1:Default parallelism: 4
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=False
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=True
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:coalesce_cache=True
+INFO:proj1:write_once=True
+INFO:proj1:materialise_clean=True
+INFO:proj1:persist_clean_disk=False
+INFO:proj1:max_partition_mb=128
+INFO:proj1:Aggregating .parquet files in /repo/proj1/data
+INFO:proj1:Found ['/repo/proj1/data/yellow_tripdata_2026-01.parquet', '/repo/proj1/data/yellow_tripdata_2026-02.parquet', '/repo/proj1/data/yellow_tripdata_2026-03.parquet', '/repo/proj1/data/yellow_tripdata_2026-04.parquet', '/repo/proj1/data/yellow_tripdata_2026-05.parquet', '/repo/proj1/data/yellow_tripdata_2026-06.parquet', '/repo/proj1/data/yellow_tripdata_2026-07.parquet', '/repo/proj1/data/yellow_tripdata_2026-08.parquet']
+INFO:proj1:Aggregating .csv files in /repo/proj1/data
+INFO:proj1:Found ['/repo/proj1/data/taxi_zone_lookup.csv']
+[clean-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 14.75s (1 stages, 9 tasks) - see profiler.report() / profiler.compare(...)
+[M1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 8.56s (8 stages, 40 tasks) - see profiler.report() / profiler.compare(...)
+[M2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 11.90s (6 stages, 18 tasks) - see profiler.report() / profiler.compare(...)
+[M3-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 9.50s (7 stages, 22 tasks) - see profiler.report() / profiler.compare(...)
+[O1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 25.74s (20 stages, 70 tasks) - see profiler.report() / profiler.compare(...)
+Monthly route counts and shares:
+Top 20 routes per pickup borough:
+Routes with Q1/Q3 share reversals:
+[O2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 14.88s (52 stages, 208 tasks) - see profiler.report() / profiler.compare(...)
+[O4-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 8.35s (11 stages, 41 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+clean-features:explain_plan=False, use_cleansed...        14.75         1           1          9                 51010                 43914       6.1MB      324.3MB               0.0B                0.0B                 0.0B               0.0B
+M1-features:explain_plan=False, use_cleansed=Tr...         8.56         4           8         40                 24645                 21878     127.9KB         0.0B              3.6KB               2.0KB                 0.0B               0.0B
+M2-features:explain_plan=False, use_cleansed=Tr...        11.90         5           6         18                 33154                 27845     619.7KB       37.9KB            341.9KB             341.9KB                 0.0B               0.0B
+M3-features:explain_plan=False, use_cleansed=Tr...         9.50         4           7         22                 22913                 19911     606.9KB         0.0B            410.9KB             410.9KB                 0.0B               0.0B
+O1-features:explain_plan=False, use_cleansed=Tr...        25.74         7          20         70                 88160                 82397     606.9KB         0.0B            227.8MB             227.8MB              896.0MB            111.0MB
+O2-features:explain_plan=False, use_cleansed=Tr...        14.88        15          52        208                 43375                 32073      15.3MB         0.0B             45.6MB              45.6MB                 0.0B               0.0B
+O4-features:explain_plan=False, use_cleansed=Tr...         8.35         6          11         41                 23597                 21964       1.2MB         0.0B            857.0KB             848.6KB                 0.0B               0.0B
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection
