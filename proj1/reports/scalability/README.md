@@ -64,6 +64,9 @@ The Docker dataset-scale series (3 workers, final configuration) is in [docker-s
 
 ## Cluster size (TODO: DI cluster not available yet)
 
+> [!NOTE]
+> This section is a placeholder for the DI cluster runs. Since the DI cluster is not available yet, the numbers below are left as TODOs. The Docker standalone cluster runs are in [docker-session](../docker-session/README.md#cluster-size-3-workers-final-configuration).
+
 Runs: optimised `all` on 2 nodes, then on the full allocation. Report speedup S = T₂ / Tₙ and efficiency E = S / (n / 2), and explain deviations from linear speedup (shuffle over the network, skewed stages, driver-side work, too few partitions).
 
 | Nodes | Cores | Median wall time (s) | Speedup | Efficiency |
