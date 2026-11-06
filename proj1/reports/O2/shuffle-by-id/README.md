@@ -1,8 +1,11 @@
 # O2: shuffle zone ids instead of zone names
 
-- Date: TODO (remeasure, first measured 2026-10-10)
+> [!NOTE]
+> **Not implemented, not part of the report.** Kept as a documented idea: the `--string-to-id` flag exists but has no effect, and the TODO cells below were never measured. The only numbers are the historical preliminary run at the end.
+
+- Date: first measured 2026-10-10 (preliminary only)
 - Data: 2026-01..08 (29.7 M records)
-- Status: hypothesis from a preliminary measurement, to be remeasured with the [measurement protocol](../../README.md#measurement-protocol)
+- Status: hypothesis from a preliminary measurement, not remeasured with the [measurement protocol](../../README.md#measurement-protocol)
 
 ## Bottleneck observed
 

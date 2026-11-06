@@ -6,10 +6,12 @@ Performance engineering notes for Project 1. They are the source material for th
 | -------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------- |
 | [pipeline](./pipeline/README.md)       | Pipeline stages, design decisions, one annotated physical plan                | 1. Introduction, 2. Pipeline |
 | [baseline](./baseline/README.md)       | Setup, baseline measurements, bottlenecks seen in plans and the Spark UI      | 3. Profiling and Baseline    |
-| `<OP>/<short-name>/`                   | One optimisation each (e.g. [O2/shuffle-by-id](./O2/shuffle-by-id/README.md)) | 4. Optimisation Study        |
+| `<OP>/<short-name>/`                   | One optimisation each (e.g. [O2/coalesce-cache](./O2/coalesce-cache/README.md)) | 4. Optimisation Study        |
 | [Summary table](#optimisation-summary) | One row per applied optimisation                                              | 4. (required table)          |
-| [scalability](./scalability/README.md) | Dataset scale and cluster size runs                                           | 5. Analysis                  |
-| [discussion](./discussion.md)          | Remaining bottlenecks, limitations, future work                               | 6. Discussion                |
+| [cumulative](./cumulative/)            | All optimisations re-measured step by step in one session                      | 4. (Figure 2)                |
+| [docker-session](./docker-session/README.md) | Every cluster number: baseline vs final, dataset scale, cluster size     | 3., 5. Analysis              |
+| [scalability](./scalability/README.md) | Dataset scale on `local[*]` (supplement)                                      | 5. Analysis                  |
+| Discussion                             | Remaining bottlenecks, limitations, future work: written directly in the report | 6. Discussion                |
 
 The report covers M1, M2, M3, O2 and O4. O1 is implemented but is not part of the report.
 

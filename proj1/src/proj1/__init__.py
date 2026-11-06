@@ -101,8 +101,8 @@ class Features:
     string_to_id: bool = field(
         default=False,
         metadata={
-            "help": "Convert string columns to integer IDs for joins."
-        },  # TODO: Implement this feature
+            "help": "Not implemented (idea in reports/O2/shuffle-by-id); has no effect." # Though it would be cool with more time :(
+        },
     )
     repartition_pickup: bool = field(
         default=False,
@@ -848,7 +848,7 @@ def run_O4(
     if features.repartition_pickup:
         trip_df = trip_df.repartition(
             "PULocationID"
-        )  # TODO: Write a report on the performance impact of this repartitioning relevant logs under ./logs/O4/repartition and ./logs/O4/baseline.log
+        )  # measured early (logs/O4/repartition), not reported
 
     # NOTE: Possible optimization use numbers instead of strings to identify each class
     buckets = (

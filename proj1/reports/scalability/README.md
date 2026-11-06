@@ -23,8 +23,6 @@ uv run python proj1/reports/tools/plot_scale.py proj1/reports/scalability/logs p
 
 ![Wall time of all operations vs dataset fraction: both series stay well above linear scaling at small fractions](./images/scale.png)
 
-PDF version for LaTeX: [images/scale.pdf](./images/scale.pdf).
-
 | Series | Fraction              | Median (s) [min-max] | of which `clean` write (s) | Time / full |
 | ------ | --------------------- | -------------------- | -------------------------- | ----------- |
 | months | 0.125 (1 file)        | 32.9 [32.5-33.1]     | 5.4                        | 0.36        |
@@ -59,22 +57,13 @@ The Docker dataset-scale series (3 workers, final configuration) is in [docker-s
 | Environment | Data        | Fraction | Records | Median wall time (s) |
 | ----------- | ----------- | -------- | ------- | -------------------- |
 | docker (3 workers) | 2026-01..08 | 0.1      | 10 %    | 55.9                 |
-| DI cluster  | 2016-2020   | 0.1-0.2  | TODO    | TODO                 |
-| DI cluster  | 2016-2020   | 1.0      | TODO    | TODO                 |
 
-## Cluster size (TODO: DI cluster not available yet)
+The DI cluster (2016-2020 data) was not available, so no runs exist for it.
+
+## Cluster size
 
 > [!NOTE]
-> This section is a placeholder for the DI cluster runs. Since the DI cluster is not available yet, the numbers below are left as TODOs. The Docker standalone cluster runs are in [docker-session](../docker-session/README.md#cluster-size-3-workers-final-configuration).
-
-Runs: optimised `all` on 2 nodes, then on the full allocation. Report speedup S = T₂ / Tₙ and efficiency E = S / (n / 2), and explain deviations from linear speedup (shuffle over the network, skewed stages, driver-side work, too few partitions).
-
-| Nodes | Cores | Median wall time (s) | Speedup | Efficiency |
-| ----- | ----- | -------------------- | ------- | ---------- |
-| 2     | TODO  | TODO                 | 1.0     | 1.0        |
-| TODO  | TODO  | TODO                 | TODO    | TODO       |
-
-Record the cluster topology (workers, cores and memory per worker) and the `spark-submit` command in the project README.
+> The DI cluster was not available. The cluster-size runs (1, 2 and 3 Docker workers, speedup and efficiency) are in [docker-session](../docker-session/README.md#cluster-size-final-configuration-full-data).
 
 ### Docker standalone cluster on the laptop (2026-11-01, supplement)
 
