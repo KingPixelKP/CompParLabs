@@ -1,0 +1,45 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/11/06 00:07:29 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+INFO:proj1:Spark UI: http://e2a78ba1d3fd:4040
+INFO:proj1:Default parallelism: 6
+INFO:proj1:autoBroadcastJoinThreshold=-1
+INFO:proj1:explain_plan=False
+INFO:proj1:use_cleansed=True
+INFO:proj1:prune_column=False
+INFO:proj1:broadcast_join=True
+INFO:proj1:cache_dataframe=True
+INFO:proj1:string_to_id=False
+INFO:proj1:repartition_pickup=False
+INFO:proj1:coalesce_cache=True
+INFO:proj1:write_once=True
+INFO:proj1:materialise_clean=True
+INFO:proj1:persist_clean_disk=False
+INFO:proj1:max_partition_mb=128
+INFO:proj1:Aggregating .parquet files in /repo/out/docker/months/data_m1
+INFO:proj1:Found ['/repo/out/docker/months/data_m1/yellow_tripdata_2026-01.parquet']
+INFO:proj1:Aggregating .csv files in /repo/out/docker/months/data_m1
+INFO:proj1:Found ['/repo/out/docker/months/data_m1/taxi_zone_lookup.csv']
+[clean-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 7.01s (1 stages, 6 tasks) - see profiler.report() / profiler.compare(...)
+[M1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 4.99s (8 stages, 28 tasks) - see profiler.report() / profiler.compare(...)
+[M2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 4.84s (6 stages, 19 tasks) - see profiler.report() / profiler.compare(...)
+[M3-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 5.08s (7 stages, 19 tasks) - see profiler.report() / profiler.compare(...)
+[O1-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 12.37s (20 stages, 69 tasks) - see profiler.report() / profiler.compare(...)
+Monthly route counts and shares:
+Top 20 routes per pickup borough:
+Routes with Q1/Q3 share reversals:
+[O2-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 8.56s (52 stages, 175 tasks) - see profiler.report() / profiler.compare(...)
+[O4-features:explain_plan=False, use_cleansed=True, prune_column=False, broadcast_join=True, cache_dataframe=True, string_to_id=False, repartition_pickup=False, coalesce_cache=True, write_once=True, materialise_clean=True, persist_clean_disk=False, max_partition_mb=128] wall time: 4.39s (11 stages, 35 tasks) - see profiler.report() / profiler.compare(...)
+                                                    wall_time_s  num_jobs  num_stages  num_tasks  executor_run_time_ms  executor_cpu_time_ms input_bytes output_bytes shuffle_read_bytes shuffle_write_bytes memory_spilled_bytes disk_spilled_bytes
+run                                                                                                                                                                                                                                                 
+clean-features:explain_plan=False, use_cleansed...         7.01         1           1          6                 18216                 11500     833.8KB       38.6MB               0.0B                0.0B                 0.0B               0.0B
+M1-features:explain_plan=False, use_cleansed=Tr...         4.99         4           8         28                 12928                  6955      65.8KB         0.0B              1.1KB              662.0B                 0.0B               0.0B
+M2-features:explain_plan=False, use_cleansed=Tr...         4.84         5           6         19                 14563                  8175     164.5KB       33.8KB            218.5KB             218.5KB                 0.0B               0.0B
+M3-features:explain_plan=False, use_cleansed=Tr...         5.08         4           7         19                 11237                  6972     151.5KB         0.0B            192.3KB             192.3KB                 0.0B               0.0B
+O1-features:explain_plan=False, use_cleansed=Tr...        12.37         7          20         69                 49910                 29469     151.5KB         0.0B             27.4MB              27.4MB                 0.0B               0.0B
+O2-features:explain_plan=False, use_cleansed=Tr...         8.56        15          52        175                 15861                 10976       2.3MB         0.0B              9.6MB               9.6MB                 0.0B               0.0B
+O4-features:explain_plan=False, use_cleansed=Tr...         4.39         6          11         35                 14006                 10514     278.9KB         0.0B            569.5KB             566.2KB                 0.0B               0.0B
+INFO:proj1:Done
+INFO:py4j.clientserver:Closing down clientserver connection

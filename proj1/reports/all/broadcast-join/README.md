@@ -80,7 +80,7 @@ Per stage ([stages_M2](./logs/stages_M2.txt), [stages_M3](./logs/stages_M3.txt),
 
 O2 barely changes in wall time. Its joins run on monthly route aggregates (≤ 263 × 263 rows per month), not on trips, so the shuffles they remove were small (≤ 6.5 MB each). It still loses 36 stages.
 
-Screenshots: TODO (`images/`: M2 SQL DAG with `BroadcastHashJoin`, M2 scan stage summary without spill, O4 SQL DAG).
+Screenshots: not captured; the plan change is in the logs (`explain("formatted")`) and in Figure 1 of the report.
 
 ## What the profile shows next
 
@@ -90,7 +90,7 @@ With the shuffle gone, the scans dominate, and the ops that run several actions 
 - O2: stages 11, 25 and 45.
 - O4: stages 10 and 13.
 
-That is the next optimisation (reuse of results, see the [backlog](../../README.md#optimisation-backlog)). O1, which is outside the report scope, still spills 1.4 GB in its window over all trips.
+That is the next optimisation (reuse of results, see [reuse-results](../reuse-results/README.md)). O1, which is outside the report scope, still spills 1.4 GB in its window over all trips.
 
 ## Reproducing
 

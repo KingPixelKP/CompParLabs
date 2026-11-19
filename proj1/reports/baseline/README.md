@@ -15,7 +15,7 @@ Source for LaTeX section 3 (Profiling and Baseline).
 | Memory | `spark.driver.memory=2g` (in local mode the driver also runs the tasks) |
 | Non-default config | `spark.sql.autoBroadcastJoinThreshold=-1`, `spark.sql.session.timeZone=UTC` |
 | Defaults that matter | AQE on, `spark.sql.shuffle.partitions=200` (AQE coalesces them) |
-| DI cluster | TODO: not available yet (wall-clock and per-stage baseline on the cluster are required) |
+| DI cluster | not available; the cluster baseline (wall-clock and per-stage) comes from the Docker standalone cluster, see [docker-session](../docker-session/README.md#baseline-vs-final-3-workers) |
 
 Commands:
 

@@ -101,8 +101,8 @@ class Features:
     string_to_id: bool = field(
         default=False,
         metadata={
-            "help": "Convert string columns to integer IDs for joins."
-        },  # TODO: Implement this feature
+            "help": "Not implemented (idea in reports/O2/shuffle-by-id); has no effect." # Though it would be cool with more time :(
+        },
     )
     repartition_pickup: bool = field(
         default=False,
@@ -126,10 +126,22 @@ class Features:
             "help": "Write the cleaned trips once as parquet and run M2-O4 on that copy (M1 still reads the raw files)."
         },
     )
+    persist_clean_disk: bool = field(
+        default=False,
+        metadata={
+            "help": "Like materialise_clean, but persist the cleaned trips with DISK_ONLY instead of writing parquet (comparison)."
+        },
+    )
     max_partition_mb: int = field(
         default=128,
         metadata={
             "help": "spark.sql.files.maxPartitionBytes in MiB, upper bound of a scan split (Spark default 128)."
+        },
+    )
+    shuffle_partitions: int = field(
+        default=200,
+        metadata={
+            "help": "spark.sql.shuffle.partitions, partitions of every shuffle before AQE coalescing (Spark default 200)."
         },
     )
 
@@ -842,7 +854,7 @@ def run_O4(
     if features.repartition_pickup:
         trip_df = trip_df.repartition(
             "PULocationID"
-        )  # TODO: Write a report on the performance impact of this repartitioning relevant logs under ./logs/O4/repartition and ./logs/O4/baseline.log
+        )  # measured early (logs/O4/repartition), not reported
 
     # NOTE: Possible optimization use numbers instead of strings to identify each class
     buckets = (
@@ -929,6 +941,7 @@ def main() -> None:
     )
 
     spark.conf.set("spark.sql.files.maxPartitionBytes", f"{features.max_partition_mb}m")
+    spark.conf.set("spark.sql.shuffle.partitions", str(features.shuffle_partitions))
 
     for f in fields(features):
         logger.info(f"{f.name}={getattr(features, f.name)}")
@@ -984,6 +997,15 @@ def main() -> None:
             materialise_clean(trip_df, clean_path)
         # the copy is already clean, the operations must not filter it again
         op_df = spark.read.parquet(clean_path)
+        op_features = replace(features, use_cleansed=False)
+    elif features.persist_clean_disk and commands != [Command.M1]:
+        with profiler.profile(f"clean-features:{feature_str}"):
+            op_df = (
+                get_clean(trip_df)
+                .select(*CLEAN_COLUMNS)
+                .persist(StorageLevel.DISK_ONLY)
+            )
+            op_df.count()  # build the persisted copy here, so its cost is in this block
         op_features = replace(features, use_cleansed=False)
 
     for command in commands:

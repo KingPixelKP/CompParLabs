@@ -1,5 +1,8 @@
 # Baseline vs optimised on the Docker cluster
 
+> [!NOTE]
+> Superseded by [docker-session](../docker-session/README.md) (2026-11-05), which re-measures this table in one session together with dataset scale and cluster size. The report uses those numbers; this series is kept for reference.
+
 - Date: 2026-11-02
 - Data: 2026-01..08 (29.7 M records), Docker standalone cluster on the laptop: 1 master, 3 workers of 2 cores / 2 GiB (`spark.executor.memory=1536m`), driver in the `jupyter` container (see [scalability](../scalability/README.md#docker-standalone-cluster-on-the-laptop-2026-11-01-supplement) for the topology)
 - Configs: baseline (no flags) and final (`--broadcast-join --cache-dataframe --write-once --materialise-clean --coalesce-cache`)
