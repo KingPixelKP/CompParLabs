@@ -1,6 +1,5 @@
 #include <wb.h>
 
-
 #define TILE_WIDTH 16
 
 /**
@@ -10,47 +9,74 @@
  * @param width Width of rgbImage
  * @param height Height of rgbImage
  */
-__global__ void rgb2gray_cuda(float *grayImage, float *rgbImage, int width, int height) {
+__global__ void rgb2gray_cuda(float *grayImage, float *rgbImage, int width,
+                              int height) {
+  int ii = blockIdx.y * blockDim.y + threadIdx.y;
+  int jj = blockIdx.x * blockDim.x + threadIdx.x;
 
-    ////////////
-    // TODO
-    //
-    // Suggestion: obtain ii and jj from the lab sheet's pseudo code
-    //             by using threadIdx.{x,y}, blockIdx.{x,y} and blockDim..{x,y}
-    ////////////
+  if (ii < height && jj < width) {
+    int rgbIndex = (ii * width + jj) * 3; // Each pixel has 3 channels (R, G, B)
+    int grayIndex = ii * width + jj;      // Grayscale image has 1 channel
 
+    float r = rgbImage[rgbIndex];
+    float g = rgbImage[rgbIndex + 1];
+    float b = rgbImage[rgbIndex + 2];
+
+    grayImage[grayIndex] = 0.21f * r + 0.71f * g + 0.07f * b;
+  }
 }
 
 wbImage_t rgb2gray(wbImage_t inputImage) {
-    const int imageWidth = wbImage_getWidth(inputImage);
-    const int imageHeight = wbImage_getHeight(inputImage);
+  const int imageWidth = wbImage_getWidth(inputImage);
+  const int imageHeight = wbImage_getHeight(inputImage);
 
-    const int imageChannels = wbImage_getChannels(inputImage);   // For this lab the value is always 3
-    float *hostInputImageData = wbImage_getData(inputImage);
+  const int imageChannels =
+      wbImage_getChannels(inputImage); // For this lab the value is always 3
+  float *hostInputImageData = wbImage_getData(inputImage);
 
-    // Since the image is monochromatic, it only contains one channel
-    wbImage_t outputImage = wbImage_new(imageWidth, imageHeight, 1);
-    float *hostOutputImageData = wbImage_getData(outputImage);
+  // Since the image is monochromatic, it only contains one channel
+  wbImage_t outputImage = wbImage_new(imageWidth, imageHeight, 1);
+  float *hostOutputImageData = wbImage_getData(outputImage);
 
+  for (int ii = 0; ii < imageHeight; ii++) {
+    for (int jj = 0; jj < imageWidth; jj++) {
+      int rgbIndex = (ii * imageWidth + jj) * imageChannels;
+      int grayIndex = ii * imageWidth + jj;
 
-    // TODO
+      float r = hostInputImageData[rgbIndex];
+      float g = hostInputImageData[rgbIndex + 1];
+      float b = hostInputImageData[rgbIndex + 2];
 
-    // declare buffers for the images in the device
+      hostOutputImageData[grayIndex] = 0.21f * r + 0.71f * g + 0.07f * b;
+    }
+  }
 
-    // Allocate memory for the buffers in the device.
-    // The size of each buffer is imageWidth * imageHeight * imageChannels * sizeof(float))
-    // where imageChannels is 3 for the RGB image and 1 for the grayscale image
+  float *out, *in;
 
-    // Copy the source image to the device
+  cudaMalloc((void **)&out, imageWidth * imageHeight * sizeof(float));
+  cudaMalloc((void **)&in,
+             imageWidth * imageHeight * imageChannels * sizeof(float));
 
-    // Define a 2-dimensional thread grid of tiles TILE_WIDTH x TILE_WIDTH
+  // Copy the source image to the device
+  cudaMemcpy(in, hostInputImageData,
+             imageWidth * imageHeight * imageChannels * sizeof(float),
+             cudaMemcpyHostToDevice);
+  cudaMemcpy(out, hostOutputImageData, imageWidth * imageHeight * sizeof(float),
+             cudaMemcpyHostToDevice);
 
-    // Execute the kernel
+  // Execute the kernel
+  dim3 dimGrid((imageWidth + TILE_WIDTH - 1) / TILE_WIDTH,
+               (imageHeight + TILE_WIDTH - 1) / TILE_WIDTH, 1);
+  dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
+  rgb2gray_cuda<<<dimGrid, dimBlock>>>(out, in, imageWidth, imageHeight);
 
-    // Copy the result to the main memory
+  // Copy the result to the main memory
+  cudaMemcpy(hostOutputImageData, out, imageWidth * imageHeight * sizeof(float),
+             cudaMemcpyDeviceToHost);
 
-    // Free the buffers on the device
+  // Free the buffers on the device
+  cudaFree(out);
+  cudaFree(in);
 
-    return outputImage;
+  return outputImage;
 }
-

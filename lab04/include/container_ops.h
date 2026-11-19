@@ -1,7 +1,6 @@
 #ifndef CADBLABS_HPP
 #define CADBLABS_HPP
 
-#include <__clang_cuda_builtin_vars.h>
 #include <algorithm>
 #include <array>
 #include <cuda_device_runtime_api.h>

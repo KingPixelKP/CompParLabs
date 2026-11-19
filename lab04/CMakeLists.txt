@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 project(cuda-intro LANGUAGES CXX CUDA)
 
+include(cmake/CPM.cmake)
+
+include(cmake/packages/wb.cmake)
+include(cmake/packages/gtest.cmake)
+
 set(CMAKE_CUDA_FLAGS "" CACHE STRING "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -29,9 +34,6 @@ cuda_select_nvcc_arch_flags(ARCH_FLAGS Auto)
 list(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
 message("-- CUDA Architecture(s): " ${CMAKE_CUDA_ARCHITECTURES})
 
-add_subdirectory(third_party)
-include_directories(${THIRD_PARTY_DIR}/libwb)
-
 # #############################################################
 # Build executables
 # #############################################################
@@ -42,12 +44,24 @@ if(${VECTORIZATION})
     endif()
 endif()
 
-include_directories(include)
+add_library(container_ops INTERFACE)
+target_include_directories(container_ops INTERFACE include)
 
-add_subdirectory(src)
+add_executable(card_info src/card_info.cu)
+target_link_libraries(card_info PRIVATE container_ops)
 
-# #############################################################
-# Tests
-# #############################################################
-include_directories(${GTEST_HOME}/googletest/include)
+add_executable(vector_add src/vector_add_cuda.cu)
+target_link_libraries(vector_add PRIVATE container_ops)
+
+add_executable(image_color_to_grayscale
+        src/image_color_to_grayscale.cu
+        src/image_color_to_grayscale_main.cu)
+target_link_libraries(image_color_to_grayscale PRIVATE wb)
+
+add_executable(image_blur src/image_blur.cu)
+target_link_libraries(image_blur PRIVATE wb)
+
+
+include(GoogleTest)
+enable_testing()
 add_subdirectory(test)
