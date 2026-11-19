@@ -13,5 +13,9 @@
         "toggleable",
         "tpep",
         "venv"
+    ],
+    "cmake.sourceDirectory": "/home/cp02/CompParLabs/lab04",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/lab04/build"
     ]
 }
